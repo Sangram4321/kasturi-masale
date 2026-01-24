@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"_app.js -> locomotive-scroll\":{\"id\":\"_app.js -> locomotive-scroll\",\"files\":[\"static/chunks/node_modules_locomotive-scroll_dist_locomotive-scroll_esm_js.js\"]}}"

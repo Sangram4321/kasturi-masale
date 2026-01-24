@@ -1,0 +1,6 @@
+2026-01-22T12:48:33.060Z - LOGIN REQUEST: user=admin, passProvided=true
+2026-01-22T12:48:33.077Z - Admin NOT found in DB for: admin
+2026-01-22T12:50:49.323Z - LOGIN REQUEST: user=admin, passProvided=true
+2026-01-22T12:50:49.342Z - Admin found: admin
+2026-01-22T12:50:49.413Z - Password match result: true
+2026-01-22T12:50:49.484Z - 2FA not enabled for user admin. Proceeding to login.

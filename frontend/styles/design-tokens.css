@@ -1,0 +1,74 @@
+:root {
+  /* --- PALETTE --- */
+  --color-brand-red: #B1121B;
+  --color-gold: #E0A106;
+  --color-cream: #F9F6F1;
+  --color-text-dark: #2D2A26;
+  --color-text-light: #5D4037;
+  --color-text-muted: #8D7B6F;
+  --color-success: #2E7D32;
+  --color-success-bg: #E8F5E9;
+  --color-error: #D32F2F;
+  --color-error-bg: rgba(211, 47, 47, 0.05);
+
+  /* Gradients */
+  --gradient-dark: linear-gradient(135deg, #2D2A26, #453F39);
+  --gradient-overlay: linear-gradient(to bottom, rgba(43, 26, 20, 0) 0%, rgba(43, 26, 20, 0.2) 60%, rgba(43, 26, 20, 0.8) 100%);
+
+  /* --- STATES --- */
+  --color-state-error: #C62828;
+  --color-state-success: #2E7D32;
+
+  /* --- SHADOWS --- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* --- FONTS --- */
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Jost', sans-serif;
+
+  /* Fallbacks & Aliases */
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Jost', sans-serif;
+  --font-primary: 'Jost', sans-serif;
+  --font-secondary: 'Cormorant Garamond', serif;
+
+  /* --- 📏 FLUID SPACING (Mobile first -> Desktop) --- */
+  /* xs: 8px -> 12px */
+  --space-xs: clamp(0.5rem, 1vh, 0.75rem);
+  /* sm: 16px -> 24px */
+  --space-sm: clamp(1rem, 2vw, 1.5rem);
+  /* md: 32px -> 48px (The Standard Gap) */
+  --space-md: clamp(2rem, 4vw, 3rem);
+  /* lg: 64px -> 80px (Section Padding) */
+  --space-lg: clamp(4rem, 6vw, 5rem);
+  /* xl: 80px -> 100px (Hero Padding) */
+  --space-xl: clamp(5rem, 8vw, 6.25rem);
+
+  /* --- 📐 FLUID TYPOGRAPHY --- */
+  /* Display XL (Hero): 40px -> 80px */
+  --font-display-xl: clamp(2.5rem, 6vw, 5rem);
+
+  /* Display LG (Section Headings): 32px -> 56px */
+  --font-display-lg: clamp(2rem, 5vw, 3.5rem);
+
+  /* Display MD (Card Titles): 24px -> 32px */
+  --font-display-md: clamp(1.5rem, 3vw, 2rem);
+
+  /* Body LG (Lead/Subtext): 16px -> 20px */
+  --font-body-lg: clamp(1rem, 2vw, 1.25rem);
+
+  /* Body MD (Standard): 16px */
+  --font-body-md: 1rem;
+
+  /* --- 🖼️ LAYOUT --- */
+  --container-padding: clamp(1.5rem, 4vw, 2.5rem);
+  /* 24px -> 40px */
+  --border-radius-lg: 24px;
+  --border-radius-md: 16px;
+
+  /* Standardized Section Padding */
+  --section-padding-mobile: 40px 16px;
+  --section-padding-desktop: 80px 48px;
+}
