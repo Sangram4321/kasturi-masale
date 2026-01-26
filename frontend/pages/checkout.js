@@ -94,7 +94,7 @@ export default function Checkout() {
 
   /* ACTIONS */
   const placeOrder = async () => {
-    const animStartTime = Date.now()
+
 
     // 🚚 START ENGINE (Animation triggering)
     // We delay the actual API logic slightly to let the truck "start" backing up
@@ -121,13 +121,7 @@ export default function Checkout() {
           const data = await res.json()
           if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
 
-          // Wait for animation to finish "Order Placed" phase (approx 9s total from start)
-          const elapsed = Date.now() - animStartTime
-          const remaining = 9000 - elapsed
-
-          setTimeout(() => {
-            handleSuccess(data)
-          }, remaining > 0 ? remaining : 0)
+          handleSuccess(data)
 
           /* 2. ONLINE FLOW (RAZORPAY) */
         } else {
@@ -163,12 +157,7 @@ export default function Checkout() {
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
-                  // Calculate remaining animation time for consistency
-                  const vElapsed = Date.now() - animStartTime
-                  const vRemaining = 9000 - vElapsed
-                  setTimeout(() => {
-                    handleSuccess(verifyData);
-                  }, vRemaining > 0 ? vRemaining : 0)
+                  handleSuccess(verifyData);
                 } else {
                   alert("Payment verification failed! Please contact support.");
                   setLoading(false);
