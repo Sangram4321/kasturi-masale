@@ -314,9 +314,9 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                 }
 
                 @keyframes global-truck {
-                    10%, 30% { transform: translateX(-164px); }
-                    40% { transform: translateX(-104px); }
-                    60% { transform: translateX(-224px); }
+                    10%, 30% { transform: translateX(-260px); }
+                    40% { transform: translateX(-200px); }
+                    60% { transform: translateX(-320px); }
                     75%, 100% { transform: translateX(24px); }
                 }
                 @keyframes global-lines {

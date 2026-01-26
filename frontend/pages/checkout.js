@@ -121,9 +121,9 @@ export default function Checkout() {
           const data = await res.json()
           if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
 
-          // Wait for animation to finish "Order Placed" phase (approx 8s total from start)
+          // Wait for animation to finish "Order Placed" phase (approx 9s total from start)
           const elapsed = Date.now() - animStartTime
-          const remaining = 8000 - elapsed
+          const remaining = 9000 - elapsed
 
           setTimeout(() => {
             handleSuccess(data)
@@ -165,7 +165,7 @@ export default function Checkout() {
                 if (verifyData.success) {
                   // Calculate remaining animation time for consistency
                   const vElapsed = Date.now() - animStartTime
-                  const vRemaining = 8000 - vElapsed
+                  const vRemaining = 9000 - vElapsed
                   setTimeout(() => {
                     handleSuccess(verifyData);
                   }, vRemaining > 0 ? vRemaining : 0)
