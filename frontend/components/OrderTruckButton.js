@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
 
 export default function OrderTruckButton({ onClick, isLoading, isValid, label }) {
     const [animate, setAnimate] = useState(false)
@@ -45,9 +44,9 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
             </button>
 
             <style jsx>{`
-                .order {
-                    --primary: #C02729;
-                    --primary-light: #FCA5A5;
+                :global(:root) {
+                    --primary: #275EFE;
+                    --primary-light: #7699FF;
                     --dark: #1C212E;
                     --grey-dark: #3F4656;
                     --grey: #6C7486;
@@ -56,24 +55,25 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     --green: #16BF78;
                     --sand: #DCB773;
                     --sand-light: #EDD9A9;
-
+                }
+                .order {
                     appearance: none;
                     border: 0;
                     background: var(--dark);
                     position: relative;
                     height: 63px;
-                    width: 100%;
+                    width: 100%; /* Adapting 240px to 100% for mobile layout */
                     padding: 0;
                     outline: none;
                     cursor: pointer;
-                    border-radius: 16px;
+                    border-radius: 32px;
                     -webkit-mask-image: -webkit-radial-gradient(white, black);
                     -webkit-tap-highlight-color: transparent;
                     overflow: hidden;
                     transition: transform 0.3s ease;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
+                    display: flex; /* Added for React Layout */
+                    justify-content: center; /* Added for React Layout */
+                    align-items: center; /* Added for React Layout */
                 }
                 .order span {
                     --o: 1;
@@ -85,10 +85,10 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     line-height: 24px;
                     color: var(--white);
                     font-size: 16px;
-                    font-weight: 700;
+                    font-weight: 500;
                     opacity: var(--o);
                     transition: opacity 0.3s ease;
-                    z-index: 2;
+                    z-index: 2; /* Ensure text is above truck */
                 }
                 .order span.default {
                     transition-delay: 0.3s;
@@ -294,48 +294,50 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                 .order.animate .success svg {
                     transition-delay: 7.3s;
                 }
+                
+                /* Using global animation names to ensure scoping works in Next.js/Styled-jsx */
                 .order.animate .truck {
-                    animation: global-truck 10s ease forwards;
+                    animation: truck 10s ease forwards;
                 }
                 .order.animate .truck:before {
-                    animation: global-door1 2.4s ease forwards 0.3s;
+                    animation: door1 2.4s ease forwards 0.3s;
                 }
                 .order.animate .truck:after {
-                    animation: global-door2 2.4s ease forwards 0.6s;
+                    animation: door2 2.4s ease forwards 0.6s;
                 }
                 .order.animate .truck .light:before, .order.animate .truck .light:after {
-                    animation: global-light 10s ease forwards;
+                    animation: light 10s ease forwards;
                 }
                 .order.animate .box {
-                    animation: global-box 10s ease forwards;
+                    animation: box 10s ease forwards;
                 }
                 .order.animate .lines {
-                    animation: global-lines 10s ease forwards;
+                    animation: lines 10s ease forwards;
                 }
 
-                @keyframes global-truck {
-                    10%, 30% { transform: translateX(-260px); }
-                    40% { transform: translateX(-200px); }
-                    60% { transform: translateX(-320px); }
+                @keyframes truck {
+                    10%, 30% { transform: translateX(-164px); }
+                    40% { transform: translateX(-104px); }
+                    60% { transform: translateX(-224px); }
                     75%, 100% { transform: translateX(24px); }
                 }
-                @keyframes global-lines {
+                @keyframes lines {
                     0%, 30% { opacity: 0; transform: scaleY(0.7) translateX(0); }
                     35%, 65% { opacity: 1; }
                     70% { opacity: 0; }
                     100% { transform: scaleY(0.7) translateX(-400px); }
                 }
-                @keyframes global-light {
+                @keyframes light {
                     0%, 30% { opacity: 0; transform: perspective(2px) rotateY(-15deg) scaleX(0.88); }
                     40%, 100% { opacity: 1; transform: perspective(2px) rotateY(-15deg) scaleX(0.94); }
                 }
-                @keyframes global-door1 {
+                @keyframes door1 {
                     30%, 50% { transform: rotate(32deg); }
                 }
-                @keyframes global-door2 {
+                @keyframes door2 {
                     30%, 50% { transform: rotate(-32deg); }
                 }
-                @keyframes global-box {
+                @keyframes box {
                     8%, 10% { transform: translateX(40px); opacity: 1; }
                     25% { transform: translateX(112px); opacity: 1; }
                     26% { transform: translateX(112px); opacity: 0; }
