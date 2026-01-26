@@ -7,6 +7,8 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
     useEffect(() => {
         if (isLoading && !animate) {
             setAnimate(true)
+        } else if (!isLoading && animate) {
+            setAnimate(false)
         }
     }, [isLoading])
 
