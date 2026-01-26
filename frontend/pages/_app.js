@@ -15,6 +15,7 @@ import "../styles/globals.css" /* Import Custom Overrides Last */
 import "../styles/design-tokens.css"
 import "../styles/TruckAnimation.css"
 
+
 export default function App({ Component, pageProps }) {
   const [lang, setLang] = useState("en")
   const router = useRouter()

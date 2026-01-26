@@ -92,106 +92,111 @@ export default function Checkout() {
     customer.address.length > 5 &&
     customer.pincode.length >= 6
 
+  const [showConfirmation, setShowConfirmation] = useState(false)
+
   /* ACTIONS */
-  const placeOrder = async () => {
+  // 1. Called after Truck Animation Finishes
+  const handleTruckAnimationComplete = () => {
+    haptic(50)
+    setShowConfirmation(true)
+  }
 
+  // 2. Called when User clicks "Confirm Order" in Modal
+  const confirmOrder = async () => {
+    setShowConfirmation(false)
+    setLoading(true)
 
-    // 🚚 START ENGINE (Animation triggering)
-    // We delay the actual API logic slightly to let the truck "start" backing up
-    setTimeout(async () => {
-      try {
-        const payload = {
-          customer,
-          items: cart.map(i => ({ variant: i.variant, quantity: i.qty, price: i.price })),
-          paymentMethod: paymentMethod === "cod" ? "COD" : "UPI",
-          pricing: { subtotal: baseTotal, codFee: paymentMethod === "cod" ? COD_FEE : 0, total },
-          userId: user ? user.uid : null,
-          userId: user ? user.uid : null,
-          redeemCoins: redeemCoins,
-          referralCode: referralDiscount > 0 ? referralCode : null
-        }
+    try {
+      const payload = {
+        customer,
+        items: cart.map(i => ({ variant: i.variant, quantity: i.qty, price: i.price })),
+        paymentMethod: paymentMethod === "cod" ? "COD" : "UPI",
+        pricing: { subtotal: baseTotal, codFee: paymentMethod === "cod" ? COD_FEE : 0, total },
+        userId: user ? user.uid : null,
+        redeemCoins: redeemCoins,
+        referralCode: referralDiscount > 0 ? referralCode : null
+      }
 
-        /* 1. COD FLOW */
-        if (paymentMethod === "cod") {
-          const res = await fetch(`${API_BASE}/api/orders/create`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          })
+      /* 1. COD FLOW */
+      if (paymentMethod === "cod") {
+        const res = await fetch(`${API_BASE}/api/orders/create`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
 
-          const data = await res.json()
-          if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
 
-          handleSuccess(data)
+        handleSuccess(data)
 
-          /* 2. ONLINE FLOW (RAZORPAY) */
-        } else {
-          // A. Init Payment on Backend
-          const orderRes = await fetch(`${API_BASE}/api/orders/create-payment`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount: total }) // Amount in Rupees
-          });
-          const orderData = await orderRes.json();
-          if (!orderData.success) throw new Error("Payment initialization failed");
+        /* 2. ONLINE FLOW (RAZORPAY) */
+      } else {
+        // A. Init Payment on Backend
+        const orderRes = await fetch(`${API_BASE}/api/orders/create-payment`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: total }) // Amount in Rupees
+        });
+        const orderData = await orderRes.json();
+        if (!orderData.success) throw new Error("Payment initialization failed");
 
-          // B. Open Razorpay
-          const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Key from .env.local
-            // Actually, key_id is public. Safe to be here or env.
-            amount: orderData.order.amount,
-            currency: "INR",
-            name: "Kasturi Masale",
-            description: "Authentic Kolhapuri Masale",
-            image: "/images/logo.png",
-            order_id: orderData.order.id, // RZP Order ID
-            handler: async function (response) {
-              // C. Verify & Place Order
-              try {
-                const verifyRes = await fetch(`${API_BASE}/api/orders/verify-payment`, {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    orderData: payload // Pass full order details to create it after payment
-                  })
-                });
-                const verifyData = await verifyRes.json();
-                if (verifyData.success) {
-                  handleSuccess(verifyData);
-                } else {
-                  alert("Payment verification failed! Please contact support.");
-                  setLoading(false);
-                }
-              } catch (verErr) {
-                console.error(verErr);
-                alert("Payment verified but order creation failed. Contact support with Payment ID: " + response.razorpay_payment_id);
+        // B. Open Razorpay
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Key from .env.local
+          // Actually, key_id is public. Safe to be here or env.
+          amount: orderData.order.amount,
+          currency: "INR",
+          name: "Kasturi Masale",
+          description: "Authentic Kolhapuri Masale",
+          image: "/images/logo.png",
+          order_id: orderData.order.id, // RZP Order ID
+          handler: async function (response) {
+            // C. Verify & Place Order
+            try {
+              const verifyRes = await fetch(`${API_BASE}/api/orders/verify-payment`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: payload // Pass full order details to create it after payment
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                handleSuccess(verifyData);
+              } else {
+                alert("Payment verification failed! Please contact support.");
                 setLoading(false);
               }
-            },
-            prefill: {
-              name: customer.name,
-              email: "", // collect email if needed
-              contact: customer.phone
-            },
-            theme: {
-              color: "#C02729"
+            } catch (verErr) {
+              console.error(verErr);
+              alert("Payment verified but order creation failed. Contact support with Payment ID: " + response.razorpay_payment_id);
+              setLoading(false);
             }
-          };
+          },
+          prefill: {
+            name: customer.name,
+            email: "", // collect email if needed
+            contact: customer.phone
+          },
+          theme: {
+            color: "#C02729"
+          }
+        };
 
-          const rzp1 = new window.Razorpay(options);
-          rzp1.on('payment.failed', function (response) {
-            alert(response.error.description);
-            setLoading(false);
-          });
-          rzp1.open();
-        }
-
-      } catch (err) {
-        console.error(err)
-        alert(err.message || "Connection failed. Please try again.")
-        setLoading(false)
+        const rzp1 = new window.Razorpay(options);
+        rzp1.on('payment.failed', function (response) {
+          alert(response.error.description);
+          setLoading(false);
+        });
+        rzp1.open();
       }
-    }, 2000)
+
+    } catch (err) {
+      console.error(err)
+      alert(err.message || "Connection failed. Please try again.")
+      setLoading(false)
+    }
   }
 
   const handleSuccess = (data) => {
@@ -374,10 +379,10 @@ export default function Checkout() {
               </section>
             </div>
 
-            {/* FIXED FOOTER ACTION */}
+            {/* FIXED FOOTER ACTION (TRUCK BUTTON) */}
             <div style={styles.footer}>
               <OrderTruckButton
-                onClick={() => { haptic(25); placeOrder(); }}
+                onAnimationCommit={handleTruckAnimationComplete}
                 isLoading={loading}
                 isValid={isValid}
                 label={`Pay ₹${total} & Place Order`}
@@ -385,8 +390,65 @@ export default function Checkout() {
               <div style={styles.trustBadge}>🔒 100% Safe & Secure Payment</div>
             </div>
 
+            {/* 3. CONFIRMATION MODAL OVERLAY */}
+            <AnimatePresence>
+              {showConfirmation && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'fixed', inset: 0, zIndex: 100,
+                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+                  }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 10 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 10 }}
+                    style={{
+                      background: '#fff', borderRadius: 24, padding: 32,
+                      width: '100%', maxWidth: 360, textAlign: 'center',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
+                    <h3 style={{ fontSize: 20, fontWeight: '800', marginBottom: 8, color: '#111827' }}>Confirm Order?</h3>
+                    <p style={{ color: '#4B5563', marginBottom: 24, fontSize: 15 }}>
+                      Ready to ship to <strong>{customer.name.split(' ')[0]}</strong>?
+                    </p>
+
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <button
+                        onClick={() => setShowConfirmation(false)}
+                        style={{
+                          flex: 1, padding: 14, borderRadius: 14, border: 'none',
+                          background: '#F3F4F6', color: '#374151', fontWeight: '600',
+                          fontSize: 15, cursor: 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmOrder}
+                        style={{
+                          flex: 1, padding: 14, borderRadius: 14, border: 'none',
+                          background: '#166534', color: '#fff', fontWeight: '600',
+                          fontSize: 15, cursor: 'pointer'
+                        }}
+                      >
+                        Yes, Place Order
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
           </motion.div>
         ) : (
+
           /* SUCCESS SCREEN */
           <motion.div
             key="success"
