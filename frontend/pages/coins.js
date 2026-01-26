@@ -22,6 +22,8 @@ export default function Coins() {
     const [balance, setBalance] = useState(0)
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
+
+    const [referralCode, setReferralCode] = useState(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -38,7 +40,20 @@ export default function Coins() {
                 const data = await res.json()
                 if (data.success) {
                     setBalance(data.balance)
+
                     setHistory(data.transactions)
+                }
+
+                // Fetch User Details for Referral Code
+                if (user.uid) {
+                    const uRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/sync`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(user) // Sync to ensure code exists
+                    });
+                    const uData = await uRes.json();
+                    if (uData.success && uData.user.referralCode) {
+                        setReferralCode(uData.user.referralCode);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to load wallet", err)
@@ -88,10 +103,27 @@ export default function Coins() {
                     <motion.div variants={fadeInUp} style={styles.infoBox}>
                         <h3>How to earn?</h3>
                         <ul>
+
                             <li>Get <strong>10% coins</strong> on every prepaid order.</li>
-                            <li>Refer a friend to earn <strong>50 coins</strong>.</li>
-                            <li>Use coins to get discounts on your next purchase (1 Coin = ₹1).</li>
+                            <li>Refer a friend: They get ₹50 off, you get <strong>50 coins</strong> after delivery!</li>
+                            <li>Use coins to get discounts on your next purchase (1 Coin = ₹0.80).</li>
                         </ul>
+
+                        {referralCode && (
+                            <div style={{ marginTop: 16, padding: 16, background: '#F3F4F6', borderRadius: 12 }}>
+                                <p style={{ margin: '0 0 8px 0', fontSize: 13, color: '#555' }}>Your Referral Code:</p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <code style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1, color: '#C02729' }}>{referralCode}</code>
+                                    <button
+                                        onClick={() => { navigator.clipboard.writeText(referralCode); alert("Copied!"); }}
+                                        style={{ padding: '4px 8px', fontSize: 11, cursor: 'pointer', border: '1px solid #ddd', borderRadius: 4, background: '#fff' }}
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                     </motion.div>
 
                     {/* HISTORY */}

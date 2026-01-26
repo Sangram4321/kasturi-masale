@@ -1,5 +1,6 @@
-import { motion } from "framer-motion"
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { useState, useEffect } from "react"
+import { playHoverSound } from "../utils/audio"
 
 export default function DifferentiationGrid() {
     const [isMobile, setIsMobile] = useState(false)
@@ -61,43 +62,7 @@ export default function DifferentiationGrid() {
                         </div>
 
                         {diffs.map((item, i) => (
-                            <motion.div
-                                key={i}
-                                style={{
-                                    ...styles.row,
-                                    opacity: hoveredRow !== null && hoveredRow !== i ? 0.4 : 1, // Dim others
-                                    transition: "opacity 0.3s ease"
-                                }}
-                                initial={{ opacity: 0, y: 10 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                onMouseEnter={() => setHoveredRow(i)}
-                            >
-                                <div style={styles.labelCell}>{item.label}</div>
-                                <div style={styles.kasturiCell}>
-                                    <motion.span
-                                        style={styles.check}
-                                        initial={{ scale: 0 }}
-                                        whileInView={{ scale: 1 }}
-                                        transition={{ type: "spring", stiffness: 400, delay: i * 0.1 + 0.2 }}
-                                    >
-                                        ✅
-                                    </motion.span>
-                                    {item.kasturi}
-                                </div>
-                                <div style={styles.marketCell}>
-                                    <motion.span
-                                        style={styles.cross}
-                                        initial={{ scale: 0 }}
-                                        whileInView={{ scale: 1 }}
-                                        transition={{ type: "spring", stiffness: 400, delay: i * 0.1 + 0.3 }}
-                                    >
-                                        ❌
-                                    </motion.span>
-                                    {item.market}
-                                </div>
-                            </motion.div>
+                            <TiltCard key={i} index={i} item={item} setHoveredRow={setHoveredRow} hoveredRow={hoveredRow} />
                         ))}
                     </div>
                 )}
@@ -113,6 +78,90 @@ export default function DifferentiationGrid() {
                 </motion.p>
             </div>
         </section>
+    )
+}
+
+/* 🧊 3D TILT CARD COMPONENT */
+function TiltCard({ item, index, setHoveredRow, hoveredRow }) {
+    const x = useMotionValue(0)
+    const y = useMotionValue(0)
+
+    // Smooth physics
+    const mouseX = useSpring(x, { stiffness: 150, damping: 15 })
+    const mouseY = useSpring(y, { stiffness: 150, damping: 15 })
+
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"])
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"])
+    const brightness = useTransform(mouseY, [-0.5, 0.5], [1.02, 0.98])
+
+    const handleMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        // Calculate normalized position -0.5 to 0.5
+        const width = rect.width
+        const height = rect.height
+        const mouseXVal = e.clientX - rect.left
+        const mouseYVal = e.clientY - rect.top
+
+        const xPct = (mouseXVal / width) - 0.5
+        const yPct = (mouseYVal / height) - 0.5
+
+        x.set(xPct)
+        y.set(yPct)
+    }
+
+    const handleMouseLeave = () => {
+        x.set(0)
+        y.set(0)
+        setHoveredRow(null)
+    }
+
+    const handleMouseEnter = () => {
+        setHoveredRow(index)
+        playHoverSound() // 🔊 AUDIO TRIGGER
+    }
+
+    return (
+        <motion.div
+            style={{
+                ...styles.row,
+                perspective: 1000,
+                opacity: hoveredRow !== null && hoveredRow !== index ? 0.4 : 1,
+                zIndex: hoveredRow === index ? 10 : 1
+            }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <motion.div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: "140px 1fr 1fr",
+                    width: '100%',
+                    alignItems: 'center',
+                    transformStyle: "preserve-3d",
+                    rotateX,
+                    rotateY,
+                    filter: "brightness(1)", // Base for transform
+                }}
+            >
+                {/* CONTENT */}
+                <div style={{ ...styles.labelCell, transform: "translateZ(20px)" }}>{item.label}</div>
+
+                <div style={{ ...styles.kasturiCell, transform: "translateZ(40px)" }}>
+                    <motion.span style={styles.check}>✅</motion.span>
+                    {item.kasturi}
+                </div>
+
+                <div style={{ ...styles.marketCell, transform: "translateZ(30px)" }}>
+                    <motion.span style={styles.cross}>❌</motion.span>
+                    {item.market}
+                </div>
+            </motion.div>
+        </motion.div>
     )
 }
 

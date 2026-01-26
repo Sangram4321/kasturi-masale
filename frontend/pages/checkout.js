@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/router"
 import { useCart } from "../context/CartContext"
-import SoftTruck from "../components/SoftTruck"
+import OrderTruckButton from "../components/OrderTruckButton"
 
 /* ================= CONFIG ================= */
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
@@ -56,6 +56,11 @@ export default function Checkout() {
   const [redeemCoins, setRedeemCoins] = useState(0)
   const [user, setUser] = useState(null)
 
+  /* REFERRAL STATE */
+  const [referralCode, setReferralCode] = useState("")
+  const [referralDiscount, setReferralDiscount] = useState(0)
+  const [referralStatus, setReferralStatus] = useState(null) // { success: boolean, message: string }
+
   useEffect(() => {
     setHasMounted(true)
     // Load Loyalty
@@ -76,7 +81,8 @@ export default function Checkout() {
   /* CALCS */
   const baseTotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const discount = Math.floor(redeemCoins * 0.8)
-  const subTotalAfterDiscount = baseTotal - discount
+
+  const subTotalAfterDiscount = baseTotal - discount - referralDiscount
   const total = paymentMethod === "cod" ? subTotalAfterDiscount + COD_FEE : subTotalAfterDiscount
 
   const isValid =
@@ -100,7 +106,9 @@ export default function Checkout() {
           paymentMethod: paymentMethod === "cod" ? "COD" : "UPI",
           pricing: { subtotal: baseTotal, codFee: paymentMethod === "cod" ? COD_FEE : 0, total },
           userId: user ? user.uid : null,
-          redeemCoins: redeemCoins
+          userId: user ? user.uid : null,
+          redeemCoins: redeemCoins,
+          referralCode: referralDiscount > 0 ? referralCode : null
         }
 
         /* 1. COD FLOW */
@@ -260,6 +268,13 @@ export default function Checkout() {
                       <span>- ₹{discount}</span>
                     </div>
                   )}
+
+                  {referralDiscount > 0 && (
+                    <div style={{ ...styles.receiptRow, color: '#166534', fontWeight: 600 }}>
+                      <span>Referral Discount</span>
+                      <span>- ₹{referralDiscount}</span>
+                    </div>
+                  )}
                   {paymentMethod === "cod" && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} style={styles.receiptRow}>
                       <span style={{ color: "#D97706" }}>+ COD Handling</span> <b style={{ color: "#D97706" }}>₹{COD_FEE}</b>
@@ -292,46 +307,81 @@ export default function Checkout() {
 
                 <div style={styles.divider} />
 
-                {/* COUPON CODE */}
                 <div style={styles.couponBox}>
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 18 }}>🎟️</span>
                     <input
                       type="text"
-                      placeholder="Have a coupon code?"
+                      placeholder="Referral / Coupon Code"
                       style={styles.couponInput}
-                      value={coupon}
-                      onChange={(e) => setCoupon(e.target.value)}
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      disabled={referralDiscount > 0}
                     />
                   </div>
-                  <button style={styles.applyBtn}>Apply</button>
+                  {referralDiscount > 0 ? (
+                    <button
+                      style={{ ...styles.applyBtn, background: '#166534' }}
+                      onClick={() => { setReferralCode(""); setReferralDiscount(0); setReferralStatus(null); }}
+                    >
+                      Applied ✓
+                    </button>
+                  ) : (
+                    <button
+                      style={styles.applyBtn}
+                      onClick={async () => {
+                        if (referralCode.length < 3) return;
+                        setReferralStatus({ loading: true, message: "Checking..." });
+
+                        try {
+                          const res = await fetch(`${API_BASE}/api/user/validate-referral`, {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              code: referralCode,
+                              uid: user ? user.uid : null,
+                              cartTotal: baseTotal,
+                              phone: customer.phone,
+                              address: customer.address
+                            })
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setReferralDiscount(data.discount);
+                            setReferralStatus({ success: true, message: `Referral Applied! saved ₹${data.discount}` });
+                          } else {
+                            setReferralStatus({ success: false, message: data.message });
+                          }
+                        } catch (e) {
+                          setReferralStatus({ success: false, message: "Validation error" });
+                        }
+                      }}
+                    >
+                      Apply
+                    </button>
+                  )}
                 </div>
+                {referralStatus && (
+                  <div style={{
+                    fontSize: 12,
+                    marginTop: 8,
+                    color: referralStatus.success ? '#166534' : '#C02729',
+                    padding: '0 4px',
+                    display: 'flex', alignItems: 'center', gap: 4
+                  }}>
+                    {referralStatus.message}
+                  </div>
+                )}
               </section>
             </div>
 
             {/* FIXED FOOTER ACTION */}
             <div style={styles.footer}>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={!isValid || loading}
+              <OrderTruckButton
                 onClick={() => { haptic(25); placeOrder(); }}
-                style={{
-                  ...styles.payBtn,
-                  background: isValid ? "#C02729" : "#E5E7EB",
-                  color: isValid ? "#fff" : "#9CA3AF",
-                  cursor: isValid ? "pointer" : "not-allowed"
-                }}
-              >
-                {loading ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <SoftTruck isMoving={true} color="white" />
-                    <span style={{ fontWeight: 600 }}>Processing...</span>
-                  </div>
-                ) : (
-                  <span>{isValid ? `Pay ₹${total} & Place Order` : "Fill Details to Proceed"}</span>
-                )}
-              </motion.button>
+                isLoading={loading}
+                isValid={isValid}
+                label={`Pay ₹${total} & Place Order`}
+              />
               <div style={styles.trustBadge}>🔒 100% Safe & Secure Payment</div>
             </div>
 

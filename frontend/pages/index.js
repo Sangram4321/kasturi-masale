@@ -2,6 +2,7 @@ import Hero from "../components/Hero"
 import Hero2 from "../components/Hero2"
 import CurryVideoSection from "../components/CurryVideoSection"
 import DailyOrders from "../components/DailyOrders"
+import TrackingInput from "../components/TrackingInput"
 
 import PremiumMarquee from "../components/PremiumMarquee"
 import KasturiCoinsBlock from "../components/KasturiCoinsBlock"
@@ -48,6 +49,9 @@ export default function Home({ lang = "en" }) {
     <main style={styles.page}>
       {/* 🔥 HERO */}
       <Hero />
+
+      {/* 🔍 TRACKING (New) */}
+      <TrackingInput />
 
       {/* 🍛 CURRY VIDEO SECTION (New) */}
       <CurryVideoSection />
@@ -108,7 +112,7 @@ export default function Home({ lang = "en" }) {
 
 const styles = {
   page: {
-    background: "#FDFBF7", // Warm Porcelain
+    background: "#F9F6F1", // Warm Porcelain (Matched with Globals)
     minHeight: "100vh",
     position: "relative"
   },

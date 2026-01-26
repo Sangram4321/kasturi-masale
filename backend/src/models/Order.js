@@ -83,6 +83,18 @@ const OrderSchema = new mongoose.Schema(
       reason: { type: String, default: null },
       initiatedAt: { type: Date, default: null },
       restocked: { type: Boolean, default: false } // Track inventory restore
+    },
+
+    /* ================= REFERRAL SYSTEM ================= */
+    referral: {
+      code: { type: String, default: null },
+      referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+      rewardStatus: {
+        type: String,
+        enum: ['PENDING_MATURATION', 'ELIGIBLE', 'CREDITED', 'VOID', 'NONE'],
+        default: 'NONE'
+      },
+      discountAmount: { type: Number, default: 0 }
     }
   },
   {

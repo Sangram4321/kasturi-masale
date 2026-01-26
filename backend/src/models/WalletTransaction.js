@@ -29,6 +29,10 @@ const WalletTransactionSchema = new mongoose.Schema(
         expiryDate: {
             type: Date,
             default: null
+        },
+        isExpired: {
+            type: Boolean,
+            default: false
         }
     },
     {

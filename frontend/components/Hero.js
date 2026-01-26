@@ -80,7 +80,7 @@ export default function Hero() {
             animate={{ opacity: 0.9, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
           >
-            TRADITIONALLY HAND-POUNDED · SMALL BATCH
+            We make Kasturi Kanda Lasun Masala using time-honoured methods that preserve its authentic Kolhapuri taste.
           </motion.p>
 
           {/* Main Headline */}
@@ -91,8 +91,8 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
           >
-            Kolhapur’s Heat. <br />
-            Honest Flavor.
+            Market ke masale nahi. <br />
+            Ghar jaisa Kanda Lasun.
           </motion.h1>
 
           {/* Subline */}
@@ -102,22 +102,35 @@ export default function Hero() {
             animate={{ opacity: 0.85, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            No added color • No preservatives • No palm oil
+            Small-batch Kolhapuri masalas made fresh — <br className="mobile-break" />
+            no palm oil, no added colours.
           </motion.p>
 
-          {/* CTA Button */}
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            style={{ marginTop: 28 }}
+            style={{ marginTop: 32, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}
           >
+            {/* Primary */}
             <Link href="/product" passHref style={{ textDecoration: 'none' }}>
-              <div style={{ display: 'inline-block' }}>{/* Wrapper to avoid hydration mismatch if Link tries to pass props to functional component incorrectly */}
+              <div style={{ display: 'inline-block' }}>
                 <MagneticButton>
-                  Shop Kolhapuri Masala
+                  Shop Kanda Lasun Masala
                 </MagneticButton>
               </div>
+            </Link>
+
+            {/* Secondary */}
+            <Link href="/about" passHref style={{ textDecoration: 'none' }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={styles.secondaryBtn}
+              >
+                Why Kasturi?
+              </motion.button>
             </Link>
           </motion.div>
 
@@ -269,11 +282,10 @@ const styles = {
   eyebrow: {
     fontFamily: "var(--font-body)",
     fontSize: "0.85rem",
-    fontWeight: 600,
-    letterSpacing: "0.15em",
-    textTransform: "uppercase",
     color: "rgba(255, 255, 255, 0.9)",
     marginBottom: 12,
+    maxWidth: "400px",
+    lineHeight: "1.5"
   },
 
   // Handled by CSS class .headline
@@ -299,7 +311,7 @@ const styles = {
     display: "inline-block",
     backgroundColor: "var(--color-brand-red)",
     color: "#fff",
-    fontSize: "1.05rem",
+    fontSize: "1.05rem", // slightly larger
     fontWeight: 600,
     padding: "16px 36px",
     borderRadius: "8px",
@@ -307,6 +319,21 @@ const styles = {
     border: "1px solid rgba(255,255,255,0.1)",
     boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
     cursor: "pointer",
+  },
+
+  secondaryBtn: {
+    background: "rgba(255,255,255,0.1)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255,255,255,0.3)",
+    color: "#fff",
+    fontSize: "1rem",
+    fontWeight: 500,
+    padding: "16px 32px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
 
   scrollIndicator: {

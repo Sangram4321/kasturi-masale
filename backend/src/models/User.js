@@ -14,6 +14,8 @@ const UserSchema = new mongoose.Schema(
         otp: { type: String },         // Stores the current OTP
         otpExpires: { type: Date },    // Expiration timestamp
         photo: { type: String, default: "" },
+        referralCode: { type: String, unique: true, sparse: true, index: true }, // Unique Referral Code
+        coins: { type: Number, default: 0 }, // Kasturi Coins Balance
 
         // Role based access can be added here
         role: {

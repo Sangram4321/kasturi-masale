@@ -38,9 +38,12 @@ export default function Login() {
         photo: result.user.photoURL
       }));
 
-      // Sync Backend
+      // Sync Backend with Timeout
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/sync`, {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+        const syncRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -49,16 +52,27 @@ export default function Login() {
             email: result.user.email,
             photo: result.user.photoURL,
             phone: result.user.phoneNumber
-          })
+          }),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+
+        if (!syncRes.ok) {
+          console.warn("User sync response not OK:", syncRes.status);
+        }
+
       } catch (syncErr) {
-        console.error("User sync failed:", syncErr);
+        console.error("User sync failed or timed out:", syncErr);
+        // We proceed anyway because Firebase Auth was successful
       }
 
       router.push('/');
     } catch (error) {
       console.error("Login Error:", error);
       setGoogleLoading(false);
+      // Optional: Show error to user
+      setErrors({ google: "Google sign-in failed. Please try again." });
     }
   };
 

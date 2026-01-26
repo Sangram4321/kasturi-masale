@@ -140,6 +140,27 @@ exports.createOrder = async (req, res) => {
           }
         }
 
+        // 🌟 REFERRAL: Set Status if Applicable
+        if (req.body.referralCode) {
+          const { validateReferralCode } = require("../services/referral.service");
+          // Re-validate to be safe (though validated on frontend)
+          // We can skip strict abuse check here if already done, but safer to do it.
+          // Ideally we trust the passed data if validated, but let's just do a quick check or assume frontend handled it.
+          // Better: We look up the referrer and attach.
+          const { validateReferralCode: vRef } = require("../services/referral.service");
+          const refResult = await vRef(req.body.referralCode, userId, pricing.subtotal, customer.phone, customer.address);
+
+          if (refResult.valid) {
+            order.referral = {
+              code: req.body.referralCode,
+              referredBy: refResult.referrerId,
+              rewardStatus: "PENDING_MATURATION", // Will mature after delivery
+              discountAmount: refResult.discount
+            };
+            await order.save();
+          }
+        }
+
       } catch (err) {
         if (err.code !== 11000) throw err;
         attempts++;
@@ -426,7 +447,14 @@ exports.updateOrderStatus = async (req, res) => {
 
 
     order.status = status;
-    if (status === "DELIVERED") order.shipping.deliveredAt = new Date(); // Track delivery time
+    if (status === "DELIVERED") {
+      order.shipping.deliveredAt = new Date();
+
+      // Referral Logic: Start Maturation
+      if (order.referral && order.referral.referredBy && order.referral.rewardStatus !== 'VOID') {
+        order.referral.rewardStatus = "PENDING_MATURATION";
+      }
+    }
 
     await order.save();
 
@@ -785,6 +813,86 @@ exports.getOrderById = async (req, res) => {
   } catch (error) {
     console.error("GET ORDER ERROR:", error);
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+/* ================= ADMIN: PROCESS REFERRAL REWARDS ================= */
+const { processReferralRewards } = require("../services/referral.service");
+
+exports.processRewards = async (req, res) => {
+  try {
+    const result = await processReferralRewards();
+    return res.json({ success: true, ...result });
+  } catch (error) {
+    console.error("PROCESS REWARDS ERROR:", error);
+    return res.status(500).json({ success: false, message: "Failed to process rewards" });
+  }
+};
+
+/* ================= PUBLIC: TRACK ORDER ================= */
+const { trackShipment } = require("../services/ithink.service");
+
+exports.trackOrder = async (req, res) => {
+  try {
+    const { id } = req.params; // Can be OrderID or AWB
+
+    let awb = id;
+    let order = null;
+
+    // 1. Check if it looks like an internal Order ID (e.g. "ORD-1234")
+    if (id.startsWith("ORD") || id.length < 15) { // Simple heuristic
+      order = await Order.findOne({ orderId: id });
+      if (order) {
+        // If we have an AWB, use it.
+        if (order.shipping && order.shipping.awb) {
+          awb = order.shipping.awb;
+        } else {
+          // Not shipped yet
+          return res.json({
+            success: true,
+            status: "PENDING_SHIPMENT",
+            timeline: [
+              { status: "Ordered", date: order.createdAt, done: true },
+              { status: "Shipped", date: null, done: false },
+              { status: "Delivered", date: null, done: false }
+            ]
+          });
+        }
+      } else {
+        // If ID is numeric/long, it might be AWB directly. If short and not found, it's invalid order.
+        // But let's assume if it fails lookup, we try it as AWB.
+      }
+    }
+
+    // 2. Call Tracking Service
+    const trackingData = await trackShipment(awb);
+
+    if (!trackingData) {
+      return res.json({
+        success: false,
+        message: "Tracking information not available yet. Please try again later."
+      });
+    }
+
+    // 3. Format Timeline from iThink Data
+    // iThink usually returns `shipment_track`: [ { scan_date, scan_time, scan_status, scan_location } ... ]
+    // We need to map this to our UI format.
+
+    const history = trackingData.shipment_track || [];
+    const latestStatus = trackingData.current_status || "In Transit";
+
+    return res.json({
+      success: true,
+      awb: awb,
+      status: latestStatus,
+      history: history, // Raw history for detailed view
+      // Summary for simple stepper
+      eta: trackingData.expected_date || null
+    });
+
+  } catch (error) {
+    console.error("TRACK ORDER ERROR:", error);
+    return res.status(500).json({ success: false, message: "Tracking service unavailable" });
   }
 };
 

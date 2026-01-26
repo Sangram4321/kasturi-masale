@@ -97,6 +97,7 @@ export default function Footer() {
               src="/images/brand/kasturi-logo-red.png"
               alt="Kasturi Masale"
               onClick={scrollToTop}
+              title="Scroll to Top"
               style={{
                 width: 180,
                 marginBottom: 24,
@@ -104,6 +105,7 @@ export default function Footer() {
                 ...(isMobile && { margin: "0 auto 24px" })
               }}
               whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300 }}
             />
 

@@ -32,30 +32,20 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/about": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/about.js"
-    ],
     "/cart": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/cart.js"
     ],
-    "/contact": [
+    "/checkout": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/contact.js"
+      "static/chunks/pages/checkout.js"
     ],
     "/product": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/product.js"
-    ],
-    "/why-kasturi": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/why-kasturi.js"
     ]
   },
   "ampFirstPages": []

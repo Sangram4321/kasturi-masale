@@ -5,6 +5,7 @@ const userController = require("../controllers/user.controller");
 const otpController = require("../controllers/otp.controller");
 
 router.post("/sync", userController.syncUser);
+router.post("/validate-referral", userController.validateReferral);
 router.get("/wallet/:uid", userController.getWallet);
 router.get("/orders/:uid", userController.getUserOrders);
 

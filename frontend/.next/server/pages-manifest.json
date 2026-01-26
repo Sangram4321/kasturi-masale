@@ -3,10 +3,8 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/404": "pages/404.js",
   "/product": "pages/product.js",
+  "/404": "pages/404.js",
   "/cart": "pages/cart.js",
-  "/contact": "pages/contact.js",
-  "/about": "pages/about.js",
-  "/why-kasturi": "pages/why-kasturi.js"
+  "/checkout": "pages/checkout.js"
 }

@@ -292,16 +292,13 @@ const OrderCard = ({ order, variants, onCancel }) => {
                             Cancel Order
                         </button>
                     )}
-                    {order.shipping?.trackingLink && (
-                        <a
-                            href={order.shipping.trackingLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={styles.trackBtn}
-                        >
-                            Track Order
-                        </a>
-                    )}
+                    {/* Always show View Details / Track button linking to internal page */}
+                    <button
+                        onClick={() => window.location.href = `/order/${order.orderId}`}
+                        style={styles.trackBtn}
+                    >
+                        Track / Details
+                    </button>
                 </div>
             </div>
         </motion.div>

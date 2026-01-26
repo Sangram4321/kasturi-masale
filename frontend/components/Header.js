@@ -181,6 +181,11 @@ export default function Header({ lang, setLang }) {
     router.pathname.startsWith("/product") ||
     router.pathname.startsWith("/cart")
 
+  /* 🌍 ROUTE CHECK FOR HEADER STYLE */
+  const isHome = router.pathname === "/"
+  // Force "scrolled" look if not home OR if actually scrolled on home
+  const isScrolled = scrolled || !isHome
+
   const totalQty = cart.reduce((s, i) => s + i.qty, 0)
   const totalPrice = cart.reduce((s, i) => s + i.price * i.qty, 0)
 
@@ -195,10 +200,10 @@ export default function Header({ lang, setLang }) {
         className="main-header"
         style={{
           ...styles.header,
-          background: scrolled ? "rgba(32, 32, 32, 0.95)" : "#252626",
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
-          boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.15)" : "none",
+          background: isScrolled ? "rgba(20, 20, 20, 0.4)" : "transparent",
+          backdropFilter: isScrolled ? "blur(12px)" : "none",
+          borderBottom: isScrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+          boxShadow: isScrolled ? "0 4px 30px rgba(0,0,0,0.1)" : "none",
         }}
       >
         {/* LANGUAGE SWITCHER (Desktop) */}
@@ -372,8 +377,8 @@ export default function Header({ lang, setLang }) {
              height: 90px;
              transition: height 0.3s ease, background 0.3s ease;
           }
-          :global(.main-header[style*="rgba(32, 32, 32, 0.95)"]) {
-             height: 76px; /* Scrolled state targeting via inline style match or class */
+          :global(.main-header[style*="rgba(20, 20, 20, 0.4)"]) {
+             height: 76px; 
           }
           
           /* Force Scrolled class logic via JS was better, but let's override for mobile */
@@ -498,7 +503,7 @@ export default function Header({ lang, setLang }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   )
 }
 
@@ -529,13 +534,13 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    position: "sticky",
+    position: "fixed",
     top: 0,
+    left: 0,
+    width: "100%", // Ensure full width for fixed
     zIndex: 100,
-    background: "rgba(255, 255, 255, 0.85)", // Light Glass
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    borderBottom: "1px solid rgba(0,0,0,0.04)", // Very subtle dark border
+    // background removed here as it's handled inline for scroll logic
+    // backdropFilter removed from here
     transition: "all 0.4s ease"
   },
 
