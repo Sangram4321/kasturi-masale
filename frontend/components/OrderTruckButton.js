@@ -297,47 +297,47 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                 
                 /* Using global animation names to ensure scoping works in Next.js/Styled-jsx */
                 .order.animate .truck {
-                    animation: truck 10s ease forwards;
+                    animation: global-truck 10s ease forwards;
                 }
                 .order.animate .truck:before {
-                    animation: door1 2.4s ease forwards 0.3s;
+                    animation: global-door1 2.4s ease forwards 0.3s;
                 }
                 .order.animate .truck:after {
-                    animation: door2 2.4s ease forwards 0.6s;
+                    animation: global-door2 2.4s ease forwards 0.6s;
                 }
                 .order.animate .truck .light:before, .order.animate .truck .light:after {
-                    animation: light 10s ease forwards;
+                    animation: global-light 10s ease forwards;
                 }
                 .order.animate .box {
-                    animation: box 10s ease forwards;
+                    animation: global-box 10s ease forwards;
                 }
                 .order.animate .lines {
-                    animation: lines 10s ease forwards;
+                    animation: global-lines 10s ease forwards;
                 }
 
-                @keyframes truck {
+                @keyframes global-truck {
                     10%, 30% { transform: translateX(-164px); }
                     40% { transform: translateX(-104px); }
                     60% { transform: translateX(-224px); }
                     75%, 100% { transform: translateX(24px); }
                 }
-                @keyframes lines {
+                @keyframes global-lines {
                     0%, 30% { opacity: 0; transform: scaleY(0.7) translateX(0); }
                     35%, 65% { opacity: 1; }
                     70% { opacity: 0; }
                     100% { transform: scaleY(0.7) translateX(-400px); }
                 }
-                @keyframes light {
+                @keyframes global-light {
                     0%, 30% { opacity: 0; transform: perspective(2px) rotateY(-15deg) scaleX(0.88); }
                     40%, 100% { opacity: 1; transform: perspective(2px) rotateY(-15deg) scaleX(0.94); }
                 }
-                @keyframes door1 {
+                @keyframes global-door1 {
                     30%, 50% { transform: rotate(32deg); }
                 }
-                @keyframes door2 {
+                @keyframes global-door2 {
                     30%, 50% { transform: rotate(-32deg); }
                 }
-                @keyframes box {
+                @keyframes global-box {
                     8%, 10% { transform: translateX(40px); opacity: 1; }
                     25% { transform: translateX(112px); opacity: 1; }
                     26% { transform: translateX(112px); opacity: 0; }
