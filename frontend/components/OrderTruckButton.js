@@ -19,7 +19,7 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
     return (
         <>
             <button
-                className={`order ${animate ? 'animate' : ''}`}
+                className={`order-truck-button ${animate ? 'animate' : ''}`}
                 onClick={handleClick}
                 disabled={!isValid || isLoading}
                 style={{ opacity: isValid ? 1 : 0.6, pointerEvents: isValid ? 'all' : 'none' }}
@@ -43,8 +43,8 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                 <div className="lines"></div>
             </button>
 
-            <style jsx>{`
-                :global(:root) {
+            <style jsx global>{`
+                :root {
                     --primary: #275EFE;
                     --primary-light: #7699FF;
                     --dark: #1C212E;
@@ -56,13 +56,13 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     --sand: #DCB773;
                     --sand-light: #EDD9A9;
                 }
-                .order {
+                .order-truck-button {
                     appearance: none;
                     border: 0;
                     background: var(--dark);
                     position: relative;
                     height: 63px;
-                    width: 100%; /* Adapting 240px to 100% for mobile layout */
+                    width: 100%;
                     padding: 0;
                     outline: none;
                     cursor: pointer;
@@ -71,11 +71,11 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     -webkit-tap-highlight-color: transparent;
                     overflow: hidden;
                     transition: transform 0.3s ease;
-                    display: flex; /* Added for React Layout */
-                    justify-content: center; /* Added for React Layout */
-                    align-items: center; /* Added for React Layout */
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
-                .order span {
+                .order-truck-button span {
                     --o: 1;
                     position: absolute;
                     left: 0;
@@ -88,16 +88,16 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     font-weight: 500;
                     opacity: var(--o);
                     transition: opacity 0.3s ease;
-                    z-index: 2; /* Ensure text is above truck */
+                    z-index: 2;
                 }
-                .order span.default {
+                .order-truck-button span.default {
                     transition-delay: 0.3s;
                 }
-                .order span.success {
+                .order-truck-button span.success {
                     --offset: 16px;
                     --o: 0;
                 }
-                .order span.success svg {
+                .order-truck-button span.success svg {
                     width: 12px;
                     height: 10px;
                     display: inline-block;
@@ -112,10 +112,10 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     stroke-dashoffset: var(--offset);
                     transition: stroke-dashoffset 0.3s ease;
                 }
-                .order:active {
+                .order-truck-button:active {
                     transform: scale(0.96);
                 }
-                .order .lines {
+                .order-truck-button .lines {
                     opacity: 0;
                     position: absolute;
                     height: 3px;
@@ -126,14 +126,14 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     left: 100%;
                     box-shadow: 15px 0 0 var(--white), 30px 0 0 var(--white), 45px 0 0 var(--white), 60px 0 0 var(--white), 75px 0 0 var(--white), 90px 0 0 var(--white), 105px 0 0 var(--white), 120px 0 0 var(--white), 135px 0 0 var(--white), 150px 0 0 var(--white), 165px 0 0 var(--white), 180px 0 0 var(--white), 195px 0 0 var(--white), 210px 0 0 var(--white), 225px 0 0 var(--white), 240px 0 0 var(--white), 255px 0 0 var(--white), 270px 0 0 var(--white), 285px 0 0 var(--white), 300px 0 0 var(--white), 315px 0 0 var(--white), 330px 0 0 var(--white);
                 }
-                .order .back, .order .box {
+                .order-truck-button .back, .order-truck-button .box {
                     --start: var(--white);
                     --stop: var(--grey-light);
                     border-radius: 2px;
                     background: linear-gradient(var(--start), var(--stop));
                     position: absolute;
                 }
-                .order .truck {
+                .order-truck-button .truck {
                     width: 60px;
                     height: 41px;
                     left: 100%;
@@ -142,7 +142,7 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     position: absolute;
                     transform: translateX(24px);
                 }
-                .order .truck:before, .order .truck:after {
+                .order-truck-button .truck:before, .order-truck-button .truck:after {
                     --r: -90deg;
                     content: '';
                     height: 2px;
@@ -155,21 +155,21 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     transform-origin: 100% 50%;
                     transform: rotate(var(--r));
                 }
-                .order .truck:before {
+                .order-truck-button .truck:before {
                     top: 4px;
                 }
-                .order .truck:after {
+                .order-truck-button .truck:after {
                     --r: 90deg;
                     bottom: 4px;
                 }
-                .order .truck .back {
+                .order-truck-button .truck .back {
                     left: 0;
                     top: 0;
                     width: 60px;
                     height: 41px;
                     z-index: 1;
                 }
-                .order .truck .front {
+                .order-truck-button .truck .front {
                     overflow: hidden;
                     position: absolute;
                     border-radius: 2px 9px 9px 2px;
@@ -177,26 +177,26 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     height: 41px;
                     left: 60px;
                 }
-                .order .truck .front:before, .order .truck .front:after {
+                .order-truck-button .truck .front:before, .order-truck-button .truck .front:after {
                     content: '';
                     position: absolute;
                     display: block;
                 }
-                .order .truck .front:before {
+                .order-truck-button .truck .front:before {
                     height: 13px;
                     width: 2px;
                     left: 0;
                     top: 14px;
                     background: linear-gradient(var(--grey), var(--grey-dark));
                 }
-                .order .truck .front:after {
+                .order-truck-button .truck .front:after {
                     border-radius: 2px 9px 9px 2px;
                     background: var(--primary);
                     width: 24px;
                     height: 41px;
                     right: 0;
                 }
-                .order .truck .front .window {
+                .order-truck-button .truck .front .window {
                     overflow: hidden;
                     border-radius: 2px 8px 8px 2px;
                     background: var(--primary-light);
@@ -209,18 +209,18 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     z-index: 1;
                     transform-origin: 0 50%;
                 }
-                .order .truck .front .window:before, .order .truck .front .window:after {
+                .order-truck-button .truck .front .window:before, .order-truck-button .truck .front .window:after {
                     content: '';
                     position: absolute;
                     right: 0;
                 }
-                .order .truck .front .window:before {
+                .order-truck-button .truck .front .window:before {
                     top: 0;
                     bottom: 0;
                     width: 14px;
                     background: var(--dark);
                 }
-                .order .truck .front .window:after {
+                .order-truck-button .truck .front .window:after {
                     width: 14px;
                     top: 7px;
                     height: 4px;
@@ -229,7 +229,7 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     transform: skewY(14deg);
                     box-shadow: 0 7px 0 rgba(255, 255, 255, 0.14);
                 }
-                .order .truck .light {
+                .order-truck-button .truck .light {
                     width: 3px;
                     height: 8px;
                     left: 83px;
@@ -239,7 +239,7 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     transform: scaleX(0.8);
                     background: #f0dc5f;
                 }
-                .order .truck .light:before {
+                .order-truck-button .truck .light:before {
                     content: '';
                     height: 4px;
                     width: 7px;
@@ -252,13 +252,13 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     margin-top: -2px;
                     background: linear-gradient(90deg, #f0dc5f, rgba(240, 220, 95, 0.7), rgba(240, 220, 95, 0));
                 }
-                .order .truck .light.top {
+                .order-truck-button .truck .light.top {
                     top: 4px;
                 }
-                .order .truck .light.bottom {
+                .order-truck-button .truck .light.bottom {
                     bottom: 4px;
                 }
-                .order .box {
+                .order-truck-button .box {
                     --start: var(--sand-light);
                     --stop: var(--sand);
                     width: 21px;
@@ -266,78 +266,75 @@ export default function OrderTruckButton({ onClick, isLoading, isValid, label })
                     right: 100%;
                     top: 21px;
                 }
-                .order .box:before, .order .box:after {
+                .order-truck-button .box:before, .order-truck-button .box:after {
                     content: '';
                     top: 10px;
                     position: absolute;
                     left: 0;
                     right: 0;
                 }
-                .order .box:before {
+                .order-truck-button .box:before {
                     height: 3px;
                     margin-top: -1px;
                     background: rgba(0, 0, 0, 0.1);
                 }
-                .order .box:after {
+                .order-truck-button .box:after {
                     height: 1px;
                     background: rgba(0, 0, 0, 0.15);
                 }
-                .order.animate .default {
+                .order-truck-button.animate .default {
                     --o: 0;
                     transition-delay: 0s;
                 }
-                .order.animate .success {
+                .order-truck-button.animate .success {
                     --offset: 0;
                     --o: 1;
                     transition-delay: 7s;
                 }
-                .order.animate .success svg {
+                .order-truck-button.animate .success svg {
                     transition-delay: 7.3s;
                 }
-                
-                /* Using global animation names to ensure scoping works in Next.js/Styled-jsx */
-                .order.animate .truck {
-                    animation: global-truck 10s ease forwards;
+                .order-truck-button.animate .truck {
+                    animation: truck 10s ease forwards;
                 }
-                .order.animate .truck:before {
-                    animation: global-door1 2.4s ease forwards 0.3s;
+                .order-truck-button.animate .truck:before {
+                    animation: door1 2.4s ease forwards 0.3s;
                 }
-                .order.animate .truck:after {
-                    animation: global-door2 2.4s ease forwards 0.6s;
+                .order-truck-button.animate .truck:after {
+                    animation: door2 2.4s ease forwards 0.6s;
                 }
-                .order.animate .truck .light:before, .order.animate .truck .light:after {
-                    animation: global-light 10s ease forwards;
+                .order-truck-button.animate .truck .light:before, .order-truck-button.animate .truck .light:after {
+                    animation: light 10s ease forwards;
                 }
-                .order.animate .box {
-                    animation: global-box 10s ease forwards;
+                .order-truck-button.animate .box {
+                    animation: box 10s ease forwards;
                 }
-                .order.animate .lines {
-                    animation: global-lines 10s ease forwards;
+                .order-truck-button.animate .lines {
+                    animation: lines 10s ease forwards;
                 }
-
-                @keyframes global-truck {
+                @keyframes truck {
                     10%, 30% { transform: translateX(-164px); }
                     40% { transform: translateX(-104px); }
                     60% { transform: translateX(-224px); }
                     75%, 100% { transform: translateX(24px); }
                 }
-                @keyframes global-lines {
+                @keyframes lines {
                     0%, 30% { opacity: 0; transform: scaleY(0.7) translateX(0); }
                     35%, 65% { opacity: 1; }
                     70% { opacity: 0; }
                     100% { transform: scaleY(0.7) translateX(-400px); }
                 }
-                @keyframes global-light {
+                @keyframes light {
                     0%, 30% { opacity: 0; transform: perspective(2px) rotateY(-15deg) scaleX(0.88); }
                     40%, 100% { opacity: 1; transform: perspective(2px) rotateY(-15deg) scaleX(0.94); }
                 }
-                @keyframes global-door1 {
+                @keyframes door1 {
                     30%, 50% { transform: rotate(32deg); }
                 }
-                @keyframes global-door2 {
+                @keyframes door2 {
                     30%, 50% { transform: rotate(-32deg); }
                 }
-                @keyframes global-box {
+                @keyframes box {
                     8%, 10% { transform: translateX(40px); opacity: 1; }
                     25% { transform: translateX(112px); opacity: 1; }
                     26% { transform: translateX(112px); opacity: 0; }
