@@ -17,7 +17,7 @@ router.post("/webhook/razorpay", paymentWebhookController.handleRazorpayWebhook)
 router.post("/create", controller.createOrder);
 router.post("/create-payment", controller.createPaymentOrder);
 router.post("/verify-payment", controller.verifyPaymentAndCreateOrder);
-router.post("/verify-payment", controller.verifyPaymentAndCreateOrder);
+
 router.post("/user/:orderId/cancel", controller.cancelOrderByUser);
 router.get("/user/:orderId", controller.getSingleUserOrder);
 
