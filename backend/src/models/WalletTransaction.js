@@ -33,6 +33,27 @@ const WalletTransactionSchema = new mongoose.Schema(
         isExpired: {
             type: Boolean,
             default: false
+        },
+        status: {
+            type: String,
+            enum: ["COMPLETED", "PENDING", "FAILED", "VOID"],
+            default: "COMPLETED",
+            index: true
+        },
+        // Admin Audit Fields
+        adminId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Admin",
+            default: null
+        },
+        adjustmentReason: {
+            type: String,
+            enum: ["MANUAL_REWARD", "CUSTOMER_SUPPORT", "ORDER_CORRECTION", "REFUND_ADJUSTMENT", "PROMOTIONAL_GRANT", null],
+            default: null
+        },
+        adminNote: {
+            type: String,
+            default: null
         }
     },
     {

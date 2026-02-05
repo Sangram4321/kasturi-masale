@@ -1,8 +1,11 @@
 :root {
   /* --- PALETTE --- */
   --color-brand-red: #B1121B;
+  /* Kolhapuri Deep Red */
   --color-gold: #E0A106;
+  /* Haldi Yellow */
   --color-cream: #F9F6F1;
+  /* Warm Porcelain/Off-white */
   --color-text-dark: #2D2A26;
   --color-text-light: #5D4037;
   --color-text-muted: #8D7B6F;
@@ -26,12 +29,12 @@
 
   /* --- FONTS --- */
   --font-heading: 'Cormorant Garamond', serif;
-  --font-body: 'Jost', sans-serif;
+  --font-body: 'Inter', sans-serif;
 
   /* Fallbacks & Aliases */
   --font-serif: 'Cormorant Garamond', serif;
-  --font-sans: 'Jost', sans-serif;
-  --font-primary: 'Jost', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-primary: 'Inter', sans-serif;
   --font-secondary: 'Cormorant Garamond', serif;
 
   /* --- 📏 FLUID SPACING (Mobile first -> Desktop) --- */
@@ -71,4 +74,17 @@
   /* Standardized Section Padding */
   --section-padding-mobile: 40px 16px;
   --section-padding-desktop: 80px 48px;
+
+  /* --- GLASSMORPHISM TOKENS (STRICT) --- */
+  --glass-bg: rgba(255, 255, 255, 0.16);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.35);
+  --glass-backdrop: blur(14px);
+  /* Updated Shadow for stronger depth */
+  --glass-shadow:
+    0 36px 68px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --image-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  --glow-gradient: radial-gradient(circle at 70% 30%,
+      rgba(255, 180, 90, 0.55),
+      transparent 65%);
 }

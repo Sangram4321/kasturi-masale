@@ -11,634 +11,404 @@ import {
   AlertCircle,
   ShoppingBag,
   ArrowRight,
-  Copy,
-  ShieldCheck,
-  Eye,
-  EyeOff
+  Truck,
+  RotateCcw,
+  AlertTriangle,
+  Calendar
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FADE_IN_UP, STAGGER_CONTAINER, MODAL_VARIANTS } from "../../utils/motion";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'; // 📊 RECHARTS
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+const API = "";
 
 export default function AdminDashboard() {
-  const getDaysAgo = (dateStr) => {
-    if (!dateStr) return "";
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return days === 0 ? "Today" : `${days}d ago`;
-  };
-
   const router = useRouter();
   const [stats, setStats] = useState(null);
+  const [inventoryStats, setInventoryStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [range, setRange] = useState("30d"); // today, 7d, 30d
 
-  /* 🔐 PASSWORD CHANGE ENFORCEMENT */
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [pwdData, setPwdData] = useState({ new: "", confirm: "" });
-  const [pwdLoading, setPwdLoading] = useState(false);
-  const [showModalPasswords, setShowModalPasswords] = useState({ new: false, confirm: false });
+  // 🎛️ DASHBOARD CONTROLS
+  const [selectedMetric, setSelectedMetric] = useState("delivered"); // delivered, orders, income, stock
+  const [incomeTimeRange, setIncomeTimeRange] = useState("1M"); // 1M, 3M, 6M, FY, PREV
+  const [chartData, setChartData] = useState([]);
 
-  const [show2FASetup, setShow2FASetup] = useState(false);
-  const [qrData, setQrData] = useState(null);
-  const [otp, setOtp] = useState("");
-  const [setupLoading, setSetupLoading] = useState(false);
+  useEffect(() => {
+    if (selectedMetric === 'stock' && inventoryStats?.chartData) {
+      setChartData(inventoryStats.chartData.map(d => ({
+        name: new Date(d.date).getDate(), // Just day number for compactness
+        fullDate: d.date,
+        in: d.stockIn,
+        out: (d.stockOut_Online + d.stockOut_Offline) // Combine for simpler view
+      })));
+    } else if (stats?.dailyTrend) {
+      // ... existing logic for other metrics if any ...
+      // For now, assuming static/stats-based data for others or handled locally
+    }
+  }, [selectedMetric, inventoryStats, stats]);
 
-  /* 🔒 ADMIN AUTH GUARD & 2FA ENFORCEMENT */
+  /* 🔐 AUTH & FETCH LOGIC */
   useEffect(() => {
     const auth = localStorage.getItem("admin_auth");
-    const userStr = localStorage.getItem("admin_user");
-    const time = localStorage.getItem("admin_auth_time");
-
-    if (!auth || !time || (Date.now() - Number(time) > 24 * 60 * 60 * 1000)) {
-      router.replace("/admin/login");
-      return;
-    }
-
-    if (userStr) {
-      const user = JSON.parse(userStr);
-
-      // 1. Check Password Change First
-      if (user.isPasswordChangeRequired) {
-        setShowPasswordChange(true);
-        return; // Stop here, don't show 2FA yet
-      }
-
-      // 2. Check 2FA
-      if (!user.isTwoFactorEnabled) {
-        setShow2FASetup(true);
-        initiate2FASetup();
-      }
-    }
+    if (!auth) { router.replace("/admin/login"); return; }
+    fetchStats();
   }, []);
 
-  /* 📊 FETCH DASHBOARD STATS */
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/orders/admin/stats?range=${range}`, {
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (err) {
-      console.error("Stats Error:", err);
-    } finally {
-      setLoading(false);
-    }
+      // Parallel Fetch
+      const [orderRes, invRes] = await Promise.all([
+        fetch(`${API}/api/orders/admin/stats?range=30d`),
+        fetch(`${API}/api/batches/stats`)
+      ]);
+
+      const orderData = await orderRes.json();
+      const invData = await invRes.json();
+
+      if (orderData.success) setStats(orderData.data);
+      if (invData.success) setInventoryStats(invData);
+
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    if (!showPasswordChange) { // Only fetch if not stuck on password change
-      fetchStats();
-      // Real-time refresh every 60s
-      const interval = setInterval(fetchStats, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [range, showPasswordChange]);
-
-  const initiate2FASetup = async () => {
-    try {
-      const res = await fetch(`${API}/api/admin/setup-2fa`, {
-        headers: { "Content-Type": "application/json" }, // Auth handled by cookie
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (data.success) {
-        setQrData(data);
-      }
-    } catch (err) {
-      console.error("2FA Setup Error:", err);
-    }
-  };
-
-  const verifyAndEnable2FA = async () => {
-    setSetupLoading(true);
-    try {
-      const res = await fetch(`${API}/api/admin/verify-2fa`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token: otp })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("2FA Secured! Please login again.");
-        // Logout to force re-login with 2FA
-        localStorage.removeItem("admin_auth");
-        router.replace("/admin/login");
-      } else {
-        alert("Invalid Code. Please try again.");
-      }
-    } catch (err) {
-      alert("Verification failed.");
-    } finally {
-      setSetupLoading(false);
-    }
-  };
-
-  const handlePasswordChange = async () => {
-    if (pwdData.new !== pwdData.confirm) {
-      alert("Passwords do not match");
-      return;
-    }
-    if (pwdData.new.length < 8) {
-      alert("Password must be at least 8 characters");
-      return;
-    }
-
-    setPwdLoading(true);
-    try {
-      const res = await fetch(`${API}/api/admin/change-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("admin_token")}`
-        },
-        credentials: "include",
-        body: JSON.stringify({ newPassword: pwdData.new })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("Password Updated! Please login with your new password.");
-        localStorage.removeItem("admin_auth");
-        router.replace("/admin/login");
-      } else {
-        alert(data.message || "Update Failed");
-      }
-    } catch (err) {
-      alert("Error updating password");
-    } finally {
-      setPwdLoading(false);
-    }
-  };
-
-  if (!stats && loading && !show2FASetup && !showPasswordChange) return (
+  if (loading) return (
     <AdminLayout>
       <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <h2 style={{ color: '#6B7280' }}>Loading Dashboard...</h2>
+        <h2 style={{ color: '#9CA3AF' }}>Loading Neural Dashboard...</h2>
       </div>
     </AdminLayout>
   );
 
+  const couriers = stats?.couriers || [];
+
   return (
     <AdminLayout>
-      {/* HEADER CONTROLS */}
+      {/* HEADER */}
       <div style={styles.pageHeader}>
         <div>
-          <h1 style={styles.title}>Dashboard Overview</h1>
-          <p style={styles.subtitle}>Welcome back, here's what's happening today.</p>
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            style={styles.title}
+          >
+            Dashboard Overview
+          </motion.h1>
+          <p style={styles.subtitle}>Real-time performance analytics.</p>
         </div>
         <div style={styles.controls}>
-          <select style={styles.select} value={range} onChange={(e) => setRange(e.target.value)}>
-            <option value="today">Today</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-          </select>
-          <button onClick={fetchStats} style={styles.refreshBtn}>
-            Refresh
-          </button>
+          <button style={styles.refreshBtn} onClick={fetchStats}>Refresh Data</button>
         </div>
       </div>
 
-      {/* 💵 REVENUE METRICS */}
-      <motion.div
-        variants={STAGGER_CONTAINER}
-        initial="hidden"
-        animate="visible"
-        style={styles.grid}
-      >
-        <StatCard
-          label="Gross Revenue"
-          value={`₹${stats?.revenue?.gross?.toLocaleString() || 0}`}
-          icon={DollarSign}
-          color="blue"
-        />
-        <StatCard
-          label="Delivered Revenue"
-          value={`₹${stats?.revenue?.delivered?.toLocaleString() || 0}`}
-          icon={CheckCircle}
-          color="green"
-          sub={stats?.revenue?.delivered === 0 ? "No delivered orders" : "Cash Banked"}
-          trend={stats?.revenue?.trend}
-        />
-        <StatCard
-          label="COD Pending"
-          value={`₹${stats?.revenue?.codPending?.toLocaleString() || 0}`}
-          icon={Clock}
-          color="orange"
-          sub="Risk Amount"
-          meta={stats?.codMeta?.count > 0 ? `${stats.codMeta.count} Orders • Oldest: ${getDaysAgo(stats.codMeta.oldest)}` : "No pending COD"}
-        />
-        <StatCard
-          label="Active Orders"
-          value={stats?.orders?.active || 0}
-          icon={Package}
-          color="indigo"
-          sub="Processing / In Transit"
-        />
-      </motion.div>
+      {/* 🔮 MAIN INTERACTIVE GRID */}
+      <div className="top-grid" style={styles.topGrid}>
 
-      {/* ⚠️ RISK & HEALTH */}
-      <motion.div
-        variants={STAGGER_CONTAINER}
-        initial="hidden"
-        animate="visible"
-        style={{ ...styles.grid, marginTop: 24, gridTemplateColumns: "1fr 1fr" }}
-      >
-        <StatCard
-          label="Total Orders"
-          value={stats?.orders?.total || 0}
-          icon={ShoppingBag}
-          color="gray"
-        />
-        <RtoCard stats={stats} />
-      </motion.div>
-
-      {/* 📊 STATUS BREAKDOWN */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-        style={{ marginTop: 40 }}
-      >
-        <h2 style={styles.sectionTitle}>Order Status Breakdown</h2>
-        <div style={styles.statusGrid}>
-          {Object.entries(stats?.statusBreakdown || {}).map(([status, count], i) => (
-            <motion.div
-              key={status}
-              style={styles.statusPill}
-              whileHover={{ y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-            >
-              <span style={styles.statusName}>{status.replace(/_/g, " ")}</span>
-              <span style={styles.statusCount}>{count}</span>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* 🕒 RECENT ORDERS */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        style={{ marginTop: 40 }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ ...styles.sectionTitle, marginBottom: 0 }}>Recent Activity</h2>
-          <button onClick={() => router.push('/admin/orders')} style={styles.viewAllBtn}>
-            View All Orders <ArrowRight size={16} />
-          </button>
+        {/* LEFT: METRIC CARDS (Selectable) */}
+        <div style={styles.metricColumn}>
+          <InteractiveCard
+            label="Delivered Revenue"
+            value={`₹${stats?.revenue?.delivered?.toLocaleString() || 0}`}
+            icon={CheckCircle}
+            color="green"
+            active={selectedMetric === 'delivered'}
+            onClick={() => setSelectedMetric('delivered')}
+            sub="Cash Banked"
+          />
+          <InteractiveCard
+            label="Total Orders"
+            value={stats?.orders?.total || 0}
+            icon={ShoppingBag}
+            color="purple"
+            active={selectedMetric === 'orders'}
+            onClick={() => setSelectedMetric('orders')}
+          />
+          <InteractiveCard
+            label="Net Stock Change (Month)"
+            value={inventoryStats?.monthStats?.net > 0 ? `+${inventoryStats.monthStats.net}` : inventoryStats?.monthStats?.net || 0}
+            icon={Package}
+            color="blue"
+            active={selectedMetric === 'stock'}
+            onClick={() => setSelectedMetric('stock')}
+            sub={`In: ${inventoryStats?.monthStats?.in || 0}  •  Out: ${inventoryStats?.monthStats?.out || 0}`}
+          />
+          <InteractiveCard
+            label="Total Income"
+            value={`₹${stats?.revenue?.profit?.toLocaleString() || 0}`}
+            icon={DollarSign}
+            color="gold"
+            active={selectedMetric === 'income'}
+            onClick={() => setSelectedMetric('income')}
+            sub="Net Profit (Calculated)"
+          />
         </div>
 
-        {stats?.recent?.length > 0 ? (
-          <div style={styles.tableCard}>
-            <table style={styles.table}>
-              <thead>
-                <tr style={styles.thead}>
-                  <th style={styles.th}>Order ID</th>
-                  <th style={styles.th}>Customer</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats?.recent?.map((o, i) => (
-                  <tr
-                    key={o.orderId}
-                    style={{ ...styles.tr, cursor: "pointer" }}
-                    className="hover:bg-gray-50"
-                    onClick={() => router.push(`/admin/orders/${o.orderId}`)}
+        {/* RIGHT: FUTURISTIC CHART AREA */}
+        <motion.div
+          layout
+          style={styles.chartContainer}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div style={styles.chartHeader}>
+            <div>
+              <h3 style={styles.chartTitle}>
+                {selectedMetric === 'delivered' && "Delivered Revenue Trend"}
+                {selectedMetric === 'orders' && "Order Volume Analysis"}
+                {selectedMetric === 'stock' && "Stock Movement (30 Days)"}
+                {selectedMetric === 'income' && "Net Income Growth"}
+              </h3>
+              <p style={styles.chartSubtitle}>
+                {selectedMetric === 'stock' ? 'In vs Out flow' : `Performance over ${incomeTimeRange === '1M' ? 'Last Month' : incomeTimeRange}`}
+              </p>
+            </div>
+
+            {/* TIME FILTERS */}
+            {selectedMetric !== 'stock' && (
+              <div style={styles.timeFilters}>
+                {['1M', '3M', '6M', 'FY', 'PREV'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setIncomeTimeRange(t)}
+                    style={incomeTimeRange === t ? styles.timeBtnActive : styles.timeBtn}
                   >
-                    <td
-                      style={{ ...styles.td, color: "#4F46E5", fontWeight: 600 }}
-                    >
-                      #{o.orderId.slice(-6).toUpperCase()}
-                    </td>
-                    <td style={styles.td}>
-                      <div style={{ fontWeight: 600, color: '#111827' }}>{o.customer?.name}</div>
-                      <div style={{ fontSize: 12, color: '#6B7280' }}>{o.customer?.phone}</div>
-                    </td>
-                    <td style={styles.td}>₹{o.pricing?.total}</td>
-                    <td style={styles.td}>
-                      <StatusBadge status={o.status} />
-                    </td>
-                    <td style={styles.td}>{new Date(o.createdAt).toLocaleString()}</td>
-                  </tr>
+                    {t}
+                  </button>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ ...styles.kpibox, textAlign: 'center', padding: 40, color: '#6B7280' }}>
-            No recent orders found.
-          </div>
-        )}
-      </motion.div>
 
-      {/* 🛡️ MANDATORY 2FA SETUP MODAL */}
-      <AnimatePresence>
-        {show2FASetup && qrData && !showPasswordChange && (
-          <div style={styles.modalOverlay}>
-            <motion.div
-              variants={MODAL_VARIANTS}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              style={{ ...styles.modalBox, textAlign: 'center' }}
-            >
-              <div style={{ margin: '0 auto 16px', background: '#ECFDF5', padding: 12, borderRadius: '50%', width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={32} color="#059669" />
+          <div style={{ height: "40vh", minHeight: 300, width: "100%", marginTop: 20 }}>
+            {(!chartData || chartData.length === 0) && selectedMetric !== 'stock' ? (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4B5563', flexDirection: 'column' }}>
+                <TrendingUp size={48} opacity={0.2} style={{ marginBottom: 16 }} />
+                No Data Available for this period
               </div>
-              <h3 style={styles.modalTitle}>Secure Your Account</h3>
-              <p style={styles.modalDesc}>
-                Mandatory Security Update: Please set up Google Authenticator to continue accessing the dashboard.
-              </p>
-
-              <div style={{ background: '#F9FAFB', padding: 20, borderRadius: 12, margin: '20px 0' }}>
-                {qrData.qrCode ? (
-                  <img src={qrData.qrCode} alt="2FA QR" style={{ width: 160, height: 160, margin: '0 auto' }} />
-                ) : (
-                  <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading QR...</div>
-                )}
-                <div style={{ marginTop: 16, fontSize: 13, color: '#4B5563', fontFamily: 'monospace', background: '#fff', padding: 8, borderRadius: 6, border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  {qrData.secret}
-                  <Copy size={12} style={{ cursor: 'pointer' }} onClick={() => navigator.clipboard.writeText(qrData.secret)} />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <label style={styles.inputLabel}>Enter 6-digit Code from App</label>
-                <input
-                  type="text"
-                  placeholder="000 000"
-                  value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                  maxLength={6}
-                  style={{ ...styles.select, textAlign: 'center', fontSize: 18, letterSpacing: 4 }}
-                />
-              </div>
-
-              <button
-                onClick={verifyAndEnable2FA}
-                disabled={otp.length !== 6 || setupLoading}
-                style={{ ...styles.refreshBtn, width: '100%', padding: 14 }}
-              >
-                {setupLoading ? "Verifying..." : "Verify & Enable 2FA"}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* 🔐 PASSWORD CHANGE MODAL */}
-      <AnimatePresence>
-        {showPasswordChange && (
-          <div style={styles.modalOverlay}>
-            <motion.div
-              variants={MODAL_VARIANTS}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              style={{ ...styles.modalBox, textAlign: 'center' }}
-            >
-              <div style={{ margin: '0 auto 16px', background: '#FEF2F2', padding: 12, borderRadius: '50%', width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={32} color="#DC2626" />
-              </div>
-              <h3 style={styles.modalTitle}>Change Password Required</h3>
-              <p style={styles.modalDesc}>
-                For your security, you must change the default password before continuing.
-              </p>
-
-              <div style={{ marginBottom: 16, textAlign: 'left' }}>
-                <label style={styles.inputLabel}>New Password</label>
-                <div style={styles.passwordWrapper}>
-                  <input
-                    type={showModalPasswords.new ? "text" : "password"}
-                    style={{ ...styles.select, width: '100%', paddingRight: 40 }}
-                    placeholder="Min 8 characters"
-                    value={pwdData.new}
-                    onChange={e => setPwdData({ ...pwdData, new: e.target.value })}
+            ) : selectedMetric === 'stock' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                  <XAxis dataKey="name" stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    labelFormatter={(label, payload) => payload[0]?.payload?.fullDate || label}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowModalPasswords({ ...showModalPasswords, new: !showModalPasswords.new })}
-                    style={styles.eyeBtn}
-                  >
-                    {showModalPasswords.new ? <EyeOff size={18} color="#6B7280" /> : <Eye size={18} color="#6B7280" />}
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 24, textAlign: 'left' }}>
-                <label style={styles.inputLabel}>Confirm New Password</label>
-                <div style={styles.passwordWrapper}>
-                  <input
-                    type={showModalPasswords.confirm ? "text" : "password"}
-                    style={{ ...styles.select, width: '100%', paddingRight: 40 }}
-                    placeholder="Re-enter password"
-                    value={pwdData.confirm}
-                    onChange={e => setPwdData({ ...pwdData, confirm: e.target.value })}
+                  <Legend wrapperStyle={{ paddingTop: 20 }} />
+                  <Bar dataKey="in" name="Stock In" fill="#10B981" radius={[4, 4, 0, 0]} stackId="a" />
+                  <Bar dataKey="out" name="Stock Out" fill="#EF4444" radius={[4, 4, 0, 0]} stackId="a" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={getMetricColor(selectedMetric)} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={getMetricColor(selectedMetric)} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#6B7280"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowModalPasswords({ ...showModalPasswords, confirm: !showModalPasswords.confirm })}
-                    style={styles.eyeBtn}
-                  >
-                    {showModalPasswords.confirm ? <EyeOff size={18} color="#6B7280" /> : <Eye size={18} color="#6B7280" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={handlePasswordChange}
-                disabled={pwdLoading}
-                style={{ ...styles.refreshBtn, width: '100%', padding: 14, background: '#DC2626' }}
-              >
-                {pwdLoading ? "Updating..." : "Update Password"}
-              </button>
-            </motion.div>
+                  <YAxis
+                    stroke="#6B7280"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(val) => selectedMetric === 'orders' ? val : `₹${val / 1000}k`}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={getMetricColor(selectedMetric)}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorValue)"
+                    animationDuration={1500}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      </div>
+
+      {/* 🚨 ALERTS & STATUS */}
+      <div className="grid-2" style={styles.grid2}>
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Order Status</h3>
+          <div style={styles.statusGrid}>
+            {Object.entries(stats?.statusBreakdown || {}).map(([status, count], i) => (
+              <div key={status} style={styles.statusRow}>
+                <span style={styles.statusName}>{status.replace(/_/g, " ")}</span>
+                <span style={styles.statusCount}>{count}</span>
+              </div>
+            ))}
+            {Object.keys(stats?.statusBreakdown || {}).length === 0 && (
+              <div style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', padding: 20 }}>No Orders Yet</div>
+            )}
+          </div>
+        </div>
+
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Courier Health</h3>
+          {couriers.length > 0 ? couriers.map((c, i) => (
+            <div key={i} style={styles.courierRow}>
+              <span style={styles.courierName}>{c.courier}</span>
+              <div style={styles.courierBar}>
+                <div style={{ ...styles.courierFill, width: `${c.deliveredPercent}%` }} />
+              </div>
+              <span style={styles.courierVal}>{c.deliveredPercent.toFixed(0)}%</span>
+            </div>
+          )) : (
+            <div style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', padding: 20 }}>No Courier Data</div>
+          )}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .top-grid {
+          grid-template-columns: 1fr 2.5fr;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+        @media (max-width: 1024px) {
+          .top-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .grid-2 {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 640px) {
+           .top-grid { gap: 16px; }
+           .grid-2 { gap: 16px; }
+        }
+      `}</style>
     </AdminLayout>
   );
 }
 
-/* --- COMPONENTS --- */
+// 🎨 HELPERS
+const getMetricColor = (metric) => {
+  switch (metric) {
+    case 'gross': return '#3B82F6'; // Blue
+    case 'delivered': return '#10B981'; // Green
+    case 'orders': return '#A855F7'; // Purple
+    case 'income': return '#EAB308'; // Gold
+    case 'stock': return '#3B82F6'; // Blue for stock default
+    default: return '#3B82F6';
+  }
+}
 
-const StatCard = ({ label, value, icon: Icon, color, sub, trend, meta }) => {
-  const colors = {
-    blue: { bg: '#EFF6FF', text: '#3B82F6' },
-    green: { bg: '#ECFDF5', text: '#10B981' },
-    orange: { bg: '#FFF7ED', text: '#F59E0B' },
-    indigo: { bg: '#EEF2FF', text: '#6366F1' },
-    gray: { bg: '#F3F4F6', text: '#6B7280' },
-  };
-
-  const theme = colors[color] || colors.gray;
+// 🧩 COMPONENTS
+const InteractiveCard = ({ label, value, icon: Icon, color, active, onClick, trend, sub }) => {
+  const activeStyle = active ? {
+    borderColor: getMetricColor(color === 'gold' ? 'income' : color === 'purple' ? 'orders' : color === 'green' ? 'delivered' : 'gross'),
+    background: 'rgba(31, 41, 55, 0.6)',
+    boxShadow: `0 0 20px -5px ${getMetricColor(color === 'gold' ? 'income' : color === 'purple' ? 'orders' : color === 'green' ? 'delivered' : 'gross')}30`
+  } : {};
 
   return (
     <motion.div
-      variants={FADE_IN_UP}
-      style={styles.kpibox}
-      whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      style={{ ...styles.metricCard, ...activeStyle }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
-          <div style={styles.kpiLabel}>{label}</div>
-          <div style={{ ...styles.kpiValue }}>{value}</div>
+          <p style={styles.mcLabel}>{label}</p>
+          <h4 style={styles.mcValue}>{value}</h4>
+          {sub && <p style={styles.mcSub}>{sub}</p>}
         </div>
-        <div style={{
-          padding: 10,
-          borderRadius: 12,
-          background: theme.bg,
-          color: theme.text
-        }}>
+        <div style={{ ...styles.iconBox, color: getMetricColor(color === 'gold' ? 'income' : color === 'purple' ? 'orders' : color === 'green' ? 'delivered' : 'gross') }}>
           <Icon size={24} />
         </div>
       </div>
-
-      {/* Subtext or Trend */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-        {sub && <div style={styles.kpiSub}>{sub}</div>}
-
-        {trend !== undefined && trend !== null && (
-          <div style={{
-            ...styles.badge,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            background: Number(trend) >= 0 ? '#ECFDF5' : '#FEF2F2',
-            color: Number(trend) >= 0 ? '#059669' : '#DC2626',
-          }}>
-            {Number(trend) >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            {Math.abs(Number(trend))}%
-          </div>
-        )}
-      </div>
-
-      {meta && (
-        <div style={{ fontSize: 11, color: '#6B7280', marginTop: 12, borderTop: '1px solid #F3F4F6', paddingTop: 8 }}>
-          {meta}
+      {trend && (
+        <div style={styles.trendBadge}>
+          <TrendingUp size={14} /> +{trend}%
         </div>
       )}
     </motion.div>
-  );
-};
+  )
+}
 
-const RtoCard = ({ stats }) => (
-  <motion.div
-    variants={FADE_IN_UP}
-    style={styles.kpibox}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div style={styles.kpiLabel}>RTO Rate</div>
-      <div style={{ padding: 10, borderRadius: 12, background: '#FEF2F2', color: '#EF4444' }}>
-        <AlertCircle size={24} />
-      </div>
-    </div>
-
-    <div style={{
-      ...styles.kpiValue,
-      color: stats?.orders?.rtoRate > 15 ? "#DC2626" : "#059669"
-    }}>
-      {(!stats?.orders?.shipped || stats.orders.shipped === 0) ? "0%" : `${stats.orders.rtoRate}%`}
-    </div>
-
-    <div style={styles.kpiSub}>
-      {(!stats?.orders?.shipped || stats.orders.shipped === 0)
-        ? "No shipped orders to calculate RTO"
-        : `${stats?.orders?.rto} RTOs out of ${stats?.orders?.shipped} Shipped`}
-    </div>
-  </motion.div>
-);
-
-const StatusBadge = ({ status }) => {
-  const getStyle = (s) => {
-    switch (s) {
-      case 'DELIVERED': return { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' };
-      case 'CANCELLED': return { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' };
-      case 'SHIPPED':
-      case 'OUT_FOR_DELIVERY': return { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' };
-      case 'PACKED': return { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' };
-      default: return { bg: '#F3F4F6', color: '#4B5563', border: '#E5E7EB' };
-    }
-  };
-
-  const style = getStyle(status);
-
-  return (
-    <span style={{
-      ...styles.badge,
-      background: style.bg,
-      color: style.color,
-      border: `1px solid ${style.border}`,
-      fontSize: 11
-    }}>
-      {status}
-    </span>
-  );
-};
-
-/* --- STYLES --- */
 const styles = {
-  pageHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 },
-  title: { fontSize: 24, fontWeight: 700, color: "#111827", margin: 0, letterSpacing: '-0.02em' },
-  subtitle: { fontSize: 14, color: "#6B7280", marginTop: 4 },
-  controls: { display: "flex", gap: 12 },
-  select: {
-    padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.05)", background: "rgba(255,255,255,0.6)", fontWeight: 500, fontSize: 14, outline: 'none',
-    boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 0 0 1px rgba(255,255,255,0.2) inset", transition: "all 0.2s"
-  },
-  refreshBtn: {
-    padding: "10px 16px", borderRadius: 12, border: "none", background: "#111827", color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 14,
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)", transition: "all 0.2s"
-  },
-  viewAllBtn: { display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#4F46E5', fontWeight: 600, cursor: 'pointer', fontSize: 14 },
+  // 🌑 DASH DARK THEME VARIABLES
+  pageHeader: { marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
+  title: { fontSize: 28, fontWeight: 700, color: "#fff", margin: 0 },
+  subtitle: { color: "#9CA3AF", marginTop: 4 },
+  refreshBtn: { background: "#1F2937", color: "#fff", border: "1px solid #374151", padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 500 },
 
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 },
-  kpibox: {
-    background: "rgba(255, 255, 255, 0.7)", padding: 24, borderRadius: 24,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.03)", border: "1px solid rgba(255, 255, 255, 0.6)", backdropFilter: "blur(12px)"
-  },
-  kpiLabel: { fontSize: 12, color: "#6B7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" },
-  kpiValue: { fontSize: 32, fontWeight: 700, marginTop: 4, letterSpacing: "-1px", color: '#111827' },
-  kpiSub: { fontSize: 13, color: "#6B7280", fontWeight: 500 },
+  // 📐 LAYOUT - Responsive via CSS now
+  topGrid: { display: "grid", gap: 24, marginBottom: 32 },
+  metricColumn: { display: "flex", flexDirection: "column", gap: 16 },
 
-  sectionTitle: { fontSize: 18, fontWeight: 700, color: "#111827", marginBottom: 16 },
-  statusGrid: { display: "flex", flexWrap: "wrap", gap: 12 },
-  statusPill: {
-    background: "rgba(255,255,255,0.6)", padding: "10px 16px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", gap: 10,
-    boxShadow: "0 2px 4px rgba(0,0,0,0.02)", cursor: 'default', backdropFilter: "blur(4px)"
+  // 🃏 CARDS
+  metricCard: {
+    background: "#111827",
+    padding: 20,
+    borderRadius: 16,
+    border: "1px solid #1F2937",
+    cursor: "pointer",
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
+    overflow: "hidden"
   },
-  statusName: { fontSize: 13, fontWeight: 600, color: "#374151" },
-  statusCount: { background: "rgba(0,0,0,0.05)", padding: "2px 8px", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#111827" },
+  mcLabel: { fontSize: 13, color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", margin: 0 },
+  mcValue: { fontSize: 28, color: "#fff", fontWeight: 700, margin: "6px 0", letterSpacing: "-0.5px" },
+  mcSub: { fontSize: 12, color: "#6B7280" },
+  iconBox: { background: "rgba(255,255,255,0.05)", padding: 10, borderRadius: 12, height: 'fit-content' },
+  trendBadge: { position: 'absolute', bottom: 20, right: 20, display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: 6 },
 
-  tableCard: {
-    background: "rgba(255,255,255,0.7)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.5)", overflow: "hidden",
-    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)", backdropFilter: "blur(8px)"
+  // 📈 CHART AREA
+  chartContainer: {
+    background: "#111827",
+    padding: 24,
+    borderRadius: 20,
+    border: "1px solid #1F2937",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.3)"
   },
-  table: { width: "100%", borderCollapse: "collapse" },
-  thead: { background: "rgba(249, 250, 251, 0.6)", borderBottom: "1px solid rgba(0,0,0,0.03)" },
-  th: { padding: "16px 24px", textAlign: "left", fontSize: 12, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: '0.5px' },
-  tr: { borderBottom: "1px solid rgba(0,0,0,0.03)", transition: 'background 0.2s' },
-  td: { padding: "16px 24px", fontSize: 14, color: "#111827", fontWeight: 500 },
-  badge: { padding: "4px 8px", borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: '0.05em', boxShadow: "0 1px 2px rgba(0,0,0,0.02)" },
+  chartHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
+  chartTitle: { fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 },
+  chartSubtitle: { fontSize: 13, color: "#9CA3AF", marginTop: 4 },
+  timeFilters: { display: "flex", gap: 8, background: "#1F2937", padding: 4, borderRadius: 10 },
+  timeBtn: { padding: "6px 12px", borderRadius: 8, background: "transparent", border: "none", color: "#9CA3AF", fontSize: 12, cursor: "pointer", fontWeight: 600 },
+  timeBtnActive: { padding: "6px 12px", borderRadius: 8, background: "#374151", border: "none", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 600, boxShadow: "0 1px 2px rgba(0,0,0,0.2)" },
 
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 },
-  modalBox: {
-    background: 'rgba(255,255,255,0.9)', padding: 40, borderRadius: 32, width: 440, maxWidth: '90%',
-    boxShadow: '0 40px 80px -20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.5) inset', border: '1px solid rgba(255,255,255,0.5)'
-  },
-  modalTitle: { fontSize: 24, fontWeight: 800, marginBottom: 8, color: '#111827', letterSpacing: '-0.02em' },
-  modalDesc: { fontSize: 15, color: '#6B7280', marginBottom: 24, lineHeight: 1.5 },
-  inputLabel: { display: 'block', marginBottom: 12, fontWeight: 600, fontSize: 14, color: '#374151', textAlign: 'left' },
-  passwordWrapper: { position: "relative", width: "100%" },
-  eyeBtn: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: '50%' },
+  // 🧱 SECONDARY GRID
+  grid2: { display: "grid", gap: 24 },
+  card: { background: "#111827", padding: 24, borderRadius: 16, border: "1px solid #1F2937" },
+  sectionTitle: { fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 20, borderBottom: "1px solid #1F2937", pb: 10 },
 
+  // STATUS LIST
+  statusGrid: { display: 'flex', flexDirection: 'column', gap: 12 },
+  statusRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" },
+  statusName: { fontSize: 14, color: "#D1D5DB" },
+  statusCount: { background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700, color: "#fff" },
+
+  // COURIER LIST
+  courierRow: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 },
+  courierName: { width: 80, fontSize: 13, color: "#D1D5DB", fontWeight: 500 },
+  courierBar: { flex: 1, height: 6, background: "#374151", borderRadius: 3 },
+  courierFill: { height: '100%', background: "#10B981", borderRadius: 3 },
+  courierVal: { width: 40, fontSize: 13, color: "#fff", textAlign: 'right' }
 };

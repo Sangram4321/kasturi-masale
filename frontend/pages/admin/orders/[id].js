@@ -14,12 +14,13 @@ import {
     CreditCard,
     Clock,
     Phone,
-    AlertCircle
+    AlertCircle,
+    RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MODAL_VARIANTS } from "../../../utils/motion";
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+const API = "";
 
 export default function OrderDetails() {
     const router = useRouter();
@@ -27,6 +28,7 @@ export default function OrderDetails() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [modal, setModal] = useState({ type: null, open: false }); // type: 'CANCEL' | 'RTO'
     const [reason, setReason] = useState("");
 
@@ -38,14 +40,26 @@ export default function OrderDetails() {
     const fetchOrder = async () => {
         setLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+
             // Try fetching single order first
-            const resSingle = await fetch(`${API}/api/orders/admin/${id}`);
+            const resSingle = await fetch(`${API}/api/orders/admin/${id}`, {
+                headers,
+                credentials: "include"
+            });
             if (resSingle.ok) {
                 const data = await resSingle.json();
                 if (data.success) setOrder(data.order);
             } else {
                 // Fallback
-                const resAll = await fetch(`${API}/api/orders/admin/all`);
+                const resAll = await fetch(`${API}/api/orders/admin/all`, {
+                    headers,
+                    credentials: "include"
+                });
                 const d = await resAll.json();
                 const found = d.orders?.find(o => o.orderId === id || o._id === id);
                 setOrder(found);
@@ -57,15 +71,47 @@ export default function OrderDetails() {
         }
     };
 
+    const handleRefresh = async () => {
+        if (!order?.orderId) return;
+        setRefreshing(true);
+        try {
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`${API}/api/orders/admin/orders/refresh-tracking`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ orderIds: [order.orderId] }),
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchOrder(); // Reload data
+            } else {
+                alert("Tracking refresh failed");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     const handleAction = async () => {
         if (!reason && modal.type === 'RTO') return alert("Reason is mandatory for RTO");
 
         setActionLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
             const endpoint = modal.type === 'CANCEL' ? 'cancel' : 'rto';
             const res = await fetch(`${API}/api/orders/admin/${order._id}/${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                credentials: "include",
                 body: JSON.stringify({ reason })
             });
             const data = await res.json();
@@ -118,7 +164,7 @@ export default function OrderDetails() {
                 transition={{ duration: 0.3 }}
             >
                 {/* HEADER */}
-                <header style={styles.header}>
+                <header style={styles.header} className="admin-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <button onClick={() => router.push("/admin/orders")} style={styles.backBtn}>
                             <ChevronLeft size={20} />
@@ -130,12 +176,24 @@ export default function OrderDetails() {
                             </div>
                             <div style={styles.meta}>
                                 Placed on {new Date(order.createdAt).toLocaleString()}
+                                {order.shipping?.lastSync && (
+                                    <span style={{ marginLeft: 8, color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        • Live Synced {Math.floor((Date.now() - new Date(order.shipping.lastSync).getTime()) / 60000)}m ago
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <div style={styles.actions}>
-                        {/* ACTION BUTTONS */}
+                    <div style={styles.actions} className="admin-actions">
+                        {/* UPDATE ACTION BUTTONS */}
+                        {order.shipping?.awbNumber && (
+                            <button onClick={handleRefresh} disabled={refreshing} style={styles.btnSec}>
+                                <RefreshCw size={16} className={refreshing ? "spin" : ""} />
+                                {refreshing ? "Syncing..." : "Refresh"}
+                            </button>
+                        )}
+
                         {canCancel && (
                             <button onClick={() => setModal({ type: 'CANCEL', open: true })} style={styles.btnDanger}>
                                 <Ban size={16} /> Cancel Order
@@ -187,11 +245,11 @@ export default function OrderDetails() {
                     </div>
                 )}
 
-                <div style={styles.grid}>
+                <div style={styles.grid} className="admin-grid">
                     {/* LEFT COLUMN */}
                     <div style={styles.col}>
                         {/* ORDER ITEMS */}
-                        <section style={styles.card}>
+                        <section style={styles.card} className="admin-card">
                             <h3 style={styles.cardTitle}>
                                 <Package size={18} style={{ color: '#6B7280' }} /> Order Items
                             </h3>
@@ -228,7 +286,7 @@ export default function OrderDetails() {
                         </section>
 
                         {/* CUSTOMER DETAILS */}
-                        <section style={styles.card}>
+                        <section style={styles.card} className="admin-card">
                             <h3 style={styles.cardTitle}>
                                 <User size={18} style={{ color: '#6B7280' }} /> Customer Details
                             </h3>
@@ -255,7 +313,7 @@ export default function OrderDetails() {
                         </section>
 
                         {/* SHIPPING ADDRESS */}
-                        <section style={styles.card}>
+                        <section style={styles.card} className="admin-card">
                             <h3 style={styles.cardTitle}>
                                 <MapPin size={18} style={{ color: '#6B7280' }} /> Delivery Address
                             </h3>
@@ -269,7 +327,7 @@ export default function OrderDetails() {
 
                     {/* RIGHT COLUMN: TIMELINE */}
                     <div style={styles.col}>
-                        <section style={styles.card}>
+                        <section style={styles.card} className="admin-card">
                             <h3 style={styles.cardTitle}>
                                 <Truck size={18} style={{ color: '#6B7280' }} /> Shipment Timeline
                             </h3>
@@ -361,6 +419,7 @@ export default function OrderDetails() {
                     </div>
                 )}
             </AnimatePresence>
+            <MobileStyles />
         </AdminLayout>
     );
 }
@@ -396,11 +455,41 @@ const StatusBadge = ({ status }) => {
     );
 };
 
+/* 📱 RESPONSIVE STYLES */
+const MobileStyles = () => (
+    <style jsx global>{`
+        @media (max-width: 768px) {
+            .admin-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 20px !important;
+            }
+            .admin-actions {
+                width: 100%;
+                flex-wrap: wrap !important;
+                gap: 12px !important;
+            }
+            .admin-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+            .admin-card {
+                padding: 16px !important;
+            }
+            .admin-actions button {
+                flex: 1;
+                justify-content: center;
+                white-space: nowrap;
+            }
+        }
+    `}</style>
+);
+
 /* STYLES */
 const styles = {
     header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 },
-    title: { fontSize: 24, fontWeight: 700, color: "#111827", margin: 0, letterSpacing: '-0.5px' },
-    meta: { fontSize: 13, color: "#6B7280", marginTop: 4 },
+    title: { fontSize: 24, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: '-0.5px' },
+    meta: { fontSize: 13, color: "#9CA3AF", marginTop: 4 },
     backBtn: { background: "white", border: "1px solid #E5E7EB", borderRadius: 8, padding: 8, cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#374151', transition: 'all 0.2s', '&:hover': { background: '#F9FAFB' } },
 
     actions: { display: "flex", gap: 12 },

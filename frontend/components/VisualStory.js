@@ -1,6 +1,7 @@
 
 import { motion, useScroll, useTransform, useSpring, useVelocity } from "framer-motion"
 import { useState } from "react"
+import RevealText from "./RevealText"
 
 export default function VisualStory() {
     const images = [
@@ -30,14 +31,9 @@ export default function VisualStory() {
             <div style={styles.vignette} />
 
             <div style={styles.container}>
-                <motion.h2
-                    style={styles.headline}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
+                <RevealText style={styles.headline}>
                     Authentic. <span style={styles.italic}>Raw.</span> Pure.
-                </motion.h2>
+                </RevealText>
 
                 <p style={styles.subtext}>The Art of Traditional Masala Making</p>
 

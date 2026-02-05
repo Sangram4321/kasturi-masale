@@ -20,7 +20,7 @@ export default function Shipping() {
                     <p><strong>Delays:</strong> In rare cases of high order volumes or unforeseen circumstances, processing times may be delayed. We will notify you via email or phone in such cases.</p>
 
                     <h3 style={styles.heading}>3. Shipping Charges</h3>
-                    <p><strong>No Additional Shipping Fees:</strong> All shipping charges are already included in the MRP of the product. You will not be charged any additional shipping fees at checkout.</p>
+                    <p><strong>Free Shipping above ₹500:</strong> We offer free shipping on all orders with a value above ₹500. For orders below this amount, a standard shipping fee of ₹50 applies. COD handling charges (₹40) are separate and applicable if Cash on Delivery is selected.</p>
 
                     <h3 style={styles.heading}>4. Delivery Time</h3>
                     <p><strong>Standard Delivery:</strong> Orders are typically delivered within 3-7 business days after they are shipped, depending on your location.</p>

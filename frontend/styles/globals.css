@@ -31,8 +31,14 @@ body {
   font-weight: 400;
   /* Standard Body */
   line-height: 1.6;
-  /* Clean reading experience */
+  /* scroll-behavior: smooth; <-- MOVED TO DESKTOP ONLY */
   color: var(--color-text-dark);
+}
+
+@media (min-width: 769px) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @media (max-width: 768px) {
@@ -41,8 +47,45 @@ body {
   body {
     overflow-y: auto !important;
     height: auto !important;
+    scroll-behavior: auto !important;
+    /* Force instant scroll on mobile */
   }
 }
+
+/* --- iOS 26 POLISH --- */
+/* 1. SELECTION COLOR */
+::selection {
+  background: #E0A106;
+  /* Brand Gold */
+  color: #FFF;
+}
+
+::-moz-selection {
+  background: #E0A106;
+  color: #FFF;
+}
+
+/* 2. INVISIBLE SCROLLBARS (Clean App Look) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE */
+}
+
+/* 3. ULTRA-SHARP TEXT */
+html,
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* --------------------- */
 
 h1 {
   font-size: clamp(22px, 4vw, 36px);
@@ -102,4 +145,41 @@ p {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.04;
   }
+}
+
+/* --- GLASSMORPHISM UTILITIES (STRICT) --- */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
+}
+
+.ambient-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle,
+      rgba(255, 180, 90, 0.55),
+      transparent 55%);
+  filter: blur(48px);
+  z-index: 0;
+  pointer-events: none;
+  /* Centering helper */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.glass-contrast {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #ffd29a, #ebb467);
+  z-index: 0;
+  border-radius: 20px;
+  /* Match card radius */
+  transform: scale(0.98);
+  /* Slightly smaller to hide edges or exact fit? User said "contrast behind the card". */
 }

@@ -71,8 +71,18 @@ export default function ProductHero() {
 
           {/* CTA */}
           <div style={styles.ctaRow}>
-            <button style={styles.primaryBtn}>Add to Cart</button>
-            <button style={styles.secondaryBtn}>Buy Now</button>
+            <button
+              style={styles.primaryBtn}
+              onClick={() => import('../lib/feedback').then(({ feedback }) => feedback.trigger('add_to_cart'))}
+            >
+              Add to Cart
+            </button>
+            <button
+              style={styles.secondaryBtn}
+              onClick={() => import('../lib/feedback').then(({ feedback }) => feedback.trigger('add_to_cart'))}
+            >
+              Buy Now
+            </button>
           </div>
 
           <p style={styles.whatsapp}>

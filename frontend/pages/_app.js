@@ -5,66 +5,154 @@ import { useRouter } from "next/router"
 import Script from "next/script"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
+
 import Preloader from "../components/Preloader"
 import CustomCursor from "../components/CustomCursor"
 import NoiseOverlay from "../components/NoiseOverlay"
+import PageTransition from "../components/PageTransition"
 import { CartProvider } from "../context/CartContext"
 import { TruckProvider } from "../context/TruckContext"
-import "locomotive-scroll/dist/locomotive-scroll.css" /* Import Library CSS First */
 import "../styles/globals.css" /* Import Custom Overrides Last */
 import "../styles/design-tokens.css"
 import "../styles/TruckAnimation.css"
 
 
+
+import WhatsAppChat from "../components/WhatsAppChat"
+
+// Force Rebuild
 export default function App({ Component, pageProps }) {
   const [lang, setLang] = useState("en")
   const router = useRouter()
   const scrollRef = useRef(null)
 
-  /* 🔹 LOCOMOTIVE SCROLL + SKEW EFFECT */
-  useEffect(() => {
-    // Only run on desktop/larger screens (Tablet Landscape + Desktop)
-    if (typeof window !== "undefined" && window.innerWidth < 1024) return
+  const isAdmin = router.pathname.startsWith("/admin");
 
-    let scroll
+  /* 🔹 LENIS SMOOTH SCROLL + GSAP */
+  useEffect(() => {
+    // Disable for Admin only. Mobile now ALLOWED but uses Native Scroll + GSAP.
+    if (isAdmin) return;
+
+    // Check device type
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+
+    let lenis;
+    let gsapModule;
+    let ScrollTrigger;
 
     const initScroll = async () => {
       try {
-        const locomotiveModule = await import("locomotive-scroll")
-        const LocomotiveScroll = locomotiveModule.default
+        // Dynamic imports for SSR safety
+        // const Lenis = (await import("lenis")).default; // Moved inside if (!isMobile)
+        gsapModule = (await import("gsap")).default;
+        ScrollTrigger = (await import("gsap/ScrollTrigger")).default;
 
-        scroll = new LocomotiveScroll({
-          el: scrollRef.current,
-          smooth: true,
-          smoothMobile: false,
-          multiplier: 1,
-          class: "is-reveal",
-        })
+        gsapModule.registerPlugin(ScrollTrigger);
 
+        // 1. Initialize Lenis (DESKTOP ONLY)
+        if (!isMobile) {
+          const Lenis = (await import("lenis")).default; // Import Lenis only if needed
+          lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            smoothTouch: false,
+            touchMultiplier: 2,
+          });
+
+          window.lenis = lenis;
+
+          // Sync Lenis with GSAP Ticker
+          gsapModule.ticker.add((time) => {
+            lenis.raf(time * 1000);
+          });
+
+          // Disable lag smoothing for smoother scroll sync
+          gsapModule.ticker.lagSmoothing(0);
+
+          // ⚡ SCROLL SKEW EFFECT (DESKTOP ONLY)
+          lenis.on('scroll', (e) => {
+            ScrollTrigger.update();
+            if (e.velocity) {
+              const skew = Math.min(Math.max(e.velocity * 0.15, -2), 2);
+              document.documentElement.style.setProperty('--scroll-skew', `${skew}deg`);
+            }
+          });
+        }
       } catch (error) {
-        console.warn("Locomotive Scroll failed to load:", error)
+        console.warn("Lenis/GSAP failed to load:", error);
       }
-    }
+    };
 
-    initScroll()
+    initScroll();
 
     // Handle Route Changes
     const handleRouteChange = () => {
-      if (scroll) {
-        setTimeout(() => {
-          scroll.update()
-          scroll.scrollTo(0, { duration: 0, disableLerp: true })
-        }, 500) // Increase delay slightly to account for exit transition
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true });
+      } else {
+        // Fallback for native scroll (Mobile)
+        window.scrollTo(0, 0);
       }
-    }
-    router.events.on('routeChangeComplete', handleRouteChange)
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
 
     return () => {
-      if (scroll) scroll.destroy()
-      router.events.off('routeChangeComplete', handleRouteChange)
-    }
-  }, [router.events])
+      if (lenis) {
+        lenis.destroy();
+        window.lenis = null;
+      }
+      if (gsapModule && lenis) { // Only remove ticker if lenis was initialized and added to ticker
+        gsapModule.ticker.remove((time) => lenis.raf(time * 1000));
+      }
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events, isAdmin]);
 
+  // ⚡ HANDLER: FLASHBACK SCROLL (Instant Top)
+  useEffect(() => {
+    const handleQuickScroll = () => {
+      // 1. Lenis
+      if (window.lenis) {
+        window.lenis.scrollTo(0, { immediate: true })
+      }
+      // 2. Window (Fallback/Mobile)
+      window.scrollTo(0, 0)
+    }
+
+    window.addEventListener('nav-to-top', handleQuickScroll)
+    return () => window.removeEventListener('nav-to-top', handleQuickScroll)
+  }, [])
+
+  /* ------------------------------------------- */
+  /* ⚡ ADMIN PANEL: LIGHTWEIGHT LAYOUT         */
+  /* ------------------------------------------- */
+  /* ------------------------------------------- */
+  /* ⚡ ADMIN PANEL: LIGHTWEIGHT LAYOUT         */
+  /* ------------------------------------------- */
+  if (isAdmin) {
+    return (
+      <>
+        <Head>
+          <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+          />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        </Head>
+
+        {/* Render Page Directly (No Animations, No Header/Footer) */}
+        <Component {...pageProps} />
+      </>
+    );
+  }
+
+  /* ------------------------------------------- */
+  /* 🛍️ CUSTOMER APP: ANIMATED LAYOUT           */
+  /* ------------------------------------------- */
   return (
     <>
       <Preloader />
@@ -91,40 +179,54 @@ export default function App({ Component, pageProps }) {
       {/* 🔤 GOOGLE FONT – NOTO SANS DEVANAGARI */}
       <Head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
+        <link rel="preload" href="/images/brand/kasturi-logo-red.png" as="image" />
         {/* Locomotive CSS removed from here to prevent duplicate/override issues */}
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
       </Head>
-
       <TruckProvider>
         <CartProvider>
-          {/* HEADER (Fixed) - Placed OUTSIDE scroll container for stability */}
+          {/* HEADER (Smart Scroll) - Placed OUTSIDE scroll container for correct fixed positioning */}
           <Header lang={lang} setLang={setLang} />
 
           {/* MAIN SCROLL CONTAINER */}
-          <main data-scroll-container ref={scrollRef} style={{ minHeight: '100vh', width: '100%' }}>
+          <main
+            ref={scrollRef}
+            style={{
+              minHeight: '100vh',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              transformOrigin: "center center",
+              // With Smart Scroll/Headroom, we need initial padding so content isn't hidden behind header
+              paddingTop: router.pathname === '/' ? 0 : 'calc(72px + env(safe-area-inset-top))',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            {/* HEADER MOVED OUTSIDE */}
 
             {/* PAGE TRANSITIONS */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={router.asPath}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                style={{ minHeight: '100vh' }}
-              >
+            <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
+              <PageTransition key={router.asPath}>
                 <Component {...pageProps} lang={lang} setLang={setLang} />
-              </motion.div>
+              </PageTransition>
             </AnimatePresence>
 
-            <Footer />
+            <div>
+              <Footer />
+            </div>
+
+            {/* 🛑 GLOBAL SCROLL SPACER (Fix for Footer Cut-off) */}
+            <div style={{ height: 200, width: '100%', pointerEvents: 'none' }} />
+
           </main>
         </CartProvider>
       </TruckProvider>
     </>
   )
 }
+

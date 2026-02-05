@@ -36,6 +36,7 @@ export default function VisualProofSection() {
             autoPlay
             loop
             muted
+            defaultMuted={true} // React Safe Mute
             playsInline
           />
         </motion.div>

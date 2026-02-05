@@ -38,7 +38,8 @@ export default function OrderDetails() {
             // I'll add `GET /api/orders/user/:orderId` to `order.controller.js` quickly or use the tracking endpoint if I modified it to return order details (I didn't).
 
             // let's fetch tracking data first.
-            const trackRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/orders/track/${id}`);
+            const API = "";
+            const trackRes = await fetch(`/api/orders/track/${id}`);
             const trackData = await trackRes.json();
 
             if (trackData.success) {

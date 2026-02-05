@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
+import RevealText from "./RevealText"
 
 export default function Guarantee() {
     const [isMobile, setIsMobile] = useState(false)
@@ -72,12 +73,12 @@ export default function Guarantee() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
                 >
-                    <h2 style={{
+                    <RevealText style={{
                         ...styles.headline,
                         marginBottom: isMobile ? 40 : 50
                     }}>
                         Taste & Freshness Guarantee
-                    </h2>
+                    </RevealText>
 
                     <motion.div
                         style={{

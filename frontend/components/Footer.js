@@ -1,358 +1,625 @@
-import { motion } from "framer-motion"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import React from 'react'
+import { motion, AnimatePresence } from "framer-motion"
+import { Phone, Mail, MapPin } from "lucide-react"
 import GoogleReviewBadge from "./GoogleReviewBadge"
 
-const INSTAGRAM_ICON = (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-  </svg>
-)
-
-const FACEBOOK_ICON = (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-  </svg>
-)
-
-const WHATSAPP_ICON = (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-  </svg>
-)
+/* 
+  FINAL PRODUCTION FOOTER
+  - Strict Safe Zones
+  - 4-Column Grid (Desktop) / Stack (Mobile)
+  - No Overflow
+  - Compliance Ready (FSSAI + GSTIN)
+  - Flashback Scroll Effect
+  - Animated Buttons
+*/
 
 export default function Footer() {
-  const [isMobile, setIsMobile] = useState(false)
+    const [flash, setFlash] = React.useState(false)
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
-    check()
-    window.addEventListener("resize", check)
-    return () => window.removeEventListener("resize", check)
-  }, [])
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.22, 1, 0.36, 1],
-        staggerChildren: 0.15
-      }
+    const handleLogoClick = () => {
+        setFlash(true)
+        setTimeout(() => {
+            // Dispatch event for _app.js to handle scroll (Locomotive or Native)
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent('nav-to-top'))
+            }
+            // keep flash for a split second after scroll to hide the jump
+            setTimeout(() => setFlash(false), 50)
+        }, 150) // Flash duration before jump
     }
-  }
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
-  }
+    // 🔄 FIX: Force Scroll Update on Mount (to fix cut-off issues)
+    React.useEffect(() => {
+        const updateScroll = () => {
+            try {
+                if (window.locomotiveScrollInstance && typeof window.locomotiveScrollInstance.update === 'function') {
+                    window.locomotiveScrollInstance.update();
+                }
+            } catch (error) {
+                console.warn("Locomotive Scroll update failed:", error);
+            }
+        }
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    })
-  }
+        // Update immediately
+        // Safe update with a small delay to allow DOM to settle
+        const timer = setTimeout(updateScroll, 500);
+        return () => clearTimeout(timer);
 
-  return (
-    <footer style={styles.footer}>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        style={{
-          // Removed undefined glass style
-          padding: isMobile ? "60px 24px 20px" : "80px 48px 20px"
-        }}
-      >
-        {/* GRID */}
-        <div
-          style={{
-            ...styles.grid,
-            gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "2fr 1fr 1fr 1fr",
-            gap: isMobile ? "32px 16px" : 60,
-            textAlign: isMobile ? "left" : "left",
+    }, []);
 
-            /* DESKTOP CENTERING */
-            maxWidth: isMobile ? "100%" : 1200,
-            margin: isMobile ? "0" : "0 auto"
-          }}
-        >
-          {/* BRAND */}
-          <motion.div
-            variants={itemVariants}
-            style={{
-              ...styles.brandBlock,
-              gridColumn: isMobile ? "1 / -1" : "auto",
-              textAlign: isMobile ? "center" : "left",
-              margin: isMobile ? "0 auto" : "0"
-            }}
-          >
-            <motion.img
-              src="/images/brand/kasturi-logo-red.png"
-              alt="Kasturi Masale"
-              onClick={scrollToTop}
-              title="Scroll to Top"
-              style={{
-                width: 180,
-                marginBottom: 24,
-                cursor: "pointer",
-                ...(isMobile && { margin: "0 auto 24px" })
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            />
+    return (
+        <footer className="footer-wrapper">
+            <AnimatePresence>
+                {flash && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            padding: 0,
+                            margin: 0,
+                            background: '#fff',
+                            zIndex: 9999,
+                            pointerEvents: 'none'
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+            <div className="footer-safe-area">
 
-            <p style={styles.mission}>
-              Bringing the authentic, fiery taste of Kolhapur to your kitchen. Hand-pounded, pure, and filled with love.
-            </p>
+                {/* --- MAIN GRID SECTION --- */}
+                <div className="footer-grid">
 
-            <p style={styles.address}>
-              Gawaliwada Lane, Yavaluj<br />
-              Panhala, Kolhapur 416205
-            </p>
+                    {/* COLUMN 1: BRAND & ADDRESS */}
+                    <div className="col brand-col">
+                        <motion.div
+                            className="brand-header"
+                            onClick={handleLogoClick}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <img
+                                src="/images/brand/kasturi-logo-red.png"
+                                alt="Kasturi Masale"
+                                className="brand-logo"
+                            />
+                        </motion.div>
 
-            <div style={{ marginTop: 24, display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              <GoogleReviewBadge />
+                        <div className="text-content">
+                            <p className="brand-desc">
+                                Authentic Kolhapuri spices, pounded to perfection.
+                                We bring the legacy of pure taste and tradition straight to your kitchen.
+                            </p>
+
+                            <div className="address-box">
+                                <MapPin className="icon-shrink" size={18} />
+                                <address className="address-text">
+                                    Gawaliwada Lane, Yavaluj<br />
+                                    Panhala, Kolhapur – 416205
+                                </address>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* COLUMN 2: DISCOVER */}
+                    <div className="col links-col">
+                        <h4 className="col-heading">Discover</h4>
+                        <nav className="nav-stack">
+                            <FooterLink href="/product" label="Our Spices" />
+                            <FooterLink href="/about" label="Our Heritage" />
+                            <FooterLink href="/blog" label="Masala Guide" />
+                            <FooterLink href="/wholesale" label="Bulk & Wholesale" />
+                            <FooterLink href="/coins" label="Kasturi Rewards" />
+                        </nav>
+                    </div>
+
+                    {/* COLUMN 3: SUPPORT */}
+                    <div className="col links-col">
+                        <h4 className="col-heading">Support</h4>
+                        <nav className="nav-stack">
+                            <FooterLink href="/contact" label="Support" />
+                            <FooterLink href="/coins" label="Coins Policy" />
+                            <FooterLink href="/shipping" label="Shipping & Delivery" />
+                            <FooterLink href="/refund" label="Returns Policy" />
+                            <FooterLink href="/privacy" label="Privacy Policy" />
+                            <FooterLink href="/terms" label="Terms of Use" />
+                        </nav>
+                    </div>
+
+                    {/* COLUMN 4: CONNECT */}
+                    <div className="col connect-col">
+                        <h4 className="col-heading">Connect</h4>
+
+                        {/* Socials - Animated */}
+                        <div className="social-row">
+                            <SocialIcon href="https://instagram.com" src="/images/icons/instagram.svg" label="Instagram" />
+                            <SocialIcon href="https://facebook.com" src="/images/icons/facebook.svg" label="Facebook" />
+                            <SocialIcon href="https://wa.me/917737379292" src="/images/icons/whatsapp.svg" label="WhatsApp" />
+                        </div>
+
+                        {/* Contacts - Animated */}
+                        <div className="contact-stack">
+                            <motion.div whileHover={{ x: 5 }} whileTap={{ scale: 0.98 }}>
+                                <a href="mailto:support@kasturimasale.in" className="contact-pill">
+                                    <div className="icon-circle">
+                                        <Mail size={16} />
+                                    </div>
+                                    <span className="pill-text">support@kasturimasale.in</span>
+                                </a>
+                            </motion.div>
+
+                            <motion.div whileHover={{ x: 5 }} whileTap={{ scale: 0.98 }}>
+                                <a href="tel:+917737379292" className="contact-pill">
+                                    <div className="icon-circle">
+                                        <Phone size={16} />
+                                    </div>
+                                    <span className="pill-text">+91 77373 79292</span>
+                                </a>
+                            </motion.div>
+
+                            {/* Bulk Order Link (Direct WhatsApp) */}
+                            <div
+                                onClick={() => window.open("https://wa.me/917737379292", "_blank")}
+                                style={{
+                                    marginTop: 8,
+                                    fontWeight: 700,
+                                    color: '#475569',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    textDecoration: 'underline',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                Hotel & Bulk Orders? WhatsApp Us
+                            </div>
+                        </div>
+
+                        {/* Google Badge */}
+                        <div className="badge-container">
+                            <GoogleReviewBadge theme="light" />
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* --- BOTTOM BAR (COMPLIANCE) --- */}
+                <div className="bottom-bar">
+                    <div className="copyright">
+                        © {new Date().getFullYear()} Kasturi Masale. Crafted with ❤️ in Kolhapur.
+                    </div>
+
+                    <div className="compliance-badges">
+                        <span className="compliance-item">FSSAI: 115240860001170</span>
+                        <span className="dot">•</span>
+                        <span className="compliance-item">GSTIN: 27DXFPP4385E1Z5</span>
+                    </div>
+
+                    {/* SENSORY TOGGLE */}
+                    <div className="sensory-toggle-wrapper">
+                        <SensoryToggle />
+                    </div>
+                </div>
+
             </div>
-          </motion.div>
 
-          {/* SHOP */}
-          <motion.div variants={itemVariants} style={styles.col}>
-            <h4 style={styles.heading}>Shop & Learn</h4>
-            <ActionLink href="/product">All Products</ActionLink>
-            <ActionLink href="/about">About Us</ActionLink>
-            <ActionLink href="/wholesale">Bulk Orders</ActionLink>
-          </motion.div>
+            <style jsx>{`
+        /* 1. WRAPPER & SAFE ZONES */
+        .footer-wrapper {
+          width: 100%;
+          background-color: #FFFBF7;
+          border-top: 1px solid #F1E5D1;
+          color: #475569;
+          font-family: 'Inter', sans-serif;
+          position: relative;
+        }
 
-          {/* SUPPORT */}
-          <motion.div variants={itemVariants} style={styles.col}>
-            <h4 style={styles.heading}>Support</h4>
-            <ActionLink href="/contact">Contact Us</ActionLink>
-            <ActionLink href="/shipping">Shipping Policy</ActionLink>
-            <ActionLink href="/refund">Refunds</ActionLink>
-            <ActionLink href="/privacy">Privacy</ActionLink>
-            <ActionLink href="/terms">Terms & Conds</ActionLink>
-            <ActionLink href="/accessibility">Accessibility</ActionLink>
-          </motion.div>
+        .footer-safe-area {
+            width: 100%;
+            max-width: 1280px; /* STRICT MAX WIDTH */
+            margin: 0 auto;
+            padding: 64px 24px 100px; /* Mobile: 100px for Chat Widget */
+            box-sizing: border-box;
+        }
 
-          {/* CONNECT */}
-          <motion.div
-            variants={itemVariants}
-            style={{
-              ...styles.col,
-              gridColumn: isMobile ? "1 / -1" : "auto",
-              alignItems: isMobile ? "center" : "flex-start",
-              textAlign: isMobile ? "center" : "left"
-            }}
-          >
-            <h4 style={styles.heading}>Connect</h4>
+        @media (min-width: 1024px) {
+            .footer-safe-area {
+                padding-bottom: 80px; /* Desktop: Clean spacing */
+            }
+        }
 
-            <div style={{ ...styles.socialRow, justifyContent: isMobile ? "center" : "flex-start" }}>
-              <SocialBtn href="https://instagram.com">{INSTAGRAM_ICON}</SocialBtn>
-              <SocialBtn href="https://facebook.com">{FACEBOOK_ICON}</SocialBtn>
-              <SocialBtn href="https://wa.me/917737379292">{WHATSAPP_ICON}</SocialBtn>
-            </div>
+        /* 2. GRID LAYOUT */
+        .footer-grid {
+            display: grid;
+            /* Mobile: 2 Columns by default */
+            grid-template-columns: 1fr 1fr;
+            gap: 32px 16px; /* Vertical 32px, Horizontal 16px */
+            margin-bottom: 64px;
+            width: 100%;
+        }
 
-            <a href="mailto:support@kasturimasale.in" style={styles.emailLink}>
-              support@kasturimasale.in
+        /* 3. COLUMNS & CONTAINMENT */
+        .col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 0; 
+        }
+
+        /* Mobile Specific Spans & Alignment */
+        .brand-col {
+            grid-column: 1 / -1; /* Full Width */
+            align-items: flex-start; /* CHANGED: Force Left Align */
+            text-align: left; /* CHANGED: Force Left Align */
+        }
+        .connect-col {
+            grid-column: 1 / -1; /* Full Width */
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+           .footer-grid {
+                grid-template-columns: 1fr 1fr; /* Tablet: 2 equal columns */
+                gap: 48px;
+           }
+            /* Reset Spans & Alignment for Tablet+ */
+            .brand-col {
+                grid-column: auto;
+                align-items: flex-start;
+                text-align: left;
+            }
+            .connect-col {
+                grid-column: auto;
+                align-items: flex-start;
+            }
+            /* Reset Inner Elements */
+            .address-box, .social-row {
+                justify-content: flex-start;
+            }
+            .contact-stack {
+                align-items: flex-start;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .footer-grid {
+                /* Desktop: Balanced Columns */
+                grid-template-columns: 1.4fr 0.8fr 0.8fr 1.2fr;
+                gap: 40px;
+            }
+        }
+
+        .col-heading {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94A3B8;
+            margin-bottom: 24px;
+        }
+
+        /* 4. BRAND CONTENT (STRICT WRAPPING) */
+        .brand-header {
+            margin-bottom: 24px;
+            cursor: pointer;
+            /* Mobile: Centered Logo */
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .brand-logo {
+            height: 120px; /* Mobile: Balanced Size */
+            width: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        @media (min-width: 768px) {
+            .brand-header {
+                justify-content: flex-start; /* Desktop: Left Align */
+            }
+            .brand-logo {
+                height: 180px; /* Desktop: Original Size */
+            }
+        }
+
+        .text-content {
+            width: 100%;
+            max-width: 100%; /* Force containment */
+        }
+
+        .brand-desc {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #334155;
+            margin-bottom: 24px;
+            /* FORCE WRAP */
+            width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+        }
+
+        .address-box {
+            display: flex;
+            gap: 10px; /* CHANGED: 10px spacing */
+            align-items: flex-start;
+            width: 100%;
+            justify-content: flex-start; /* CHANGED: Force Left Align */
+        }
+        .icon-shrink {
+            flex-shrink: 0; /* Icon never shrinks */
+            color: #DC2626;
+            margin-top: 2px;
+        }
+        .address-text {
+            font-size: 14px;
+            line-height: 1.5;
+            font-style: normal;
+            color: #475569;
+            /* FORCE WRAP */
+            flex: 1;
+            min-width: 0;
+            overflow-wrap: break-word;
+        }
+
+        /* 5. LINKS */
+        .nav-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* 6. SOCIAL & CONNECT */
+        .social-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            justify-content: center; /* Mobile: Center */
+        }
+
+        /* Note: Styles for motion components are inline-styles or scoped inside the component func */
+
+        .contact-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 32px;
+            align-items: center; /* Mobile: Center */
+        }
+
+        .badge-container {
+            width: 100%;
+            overflow: hidden; /* Prevent iframe blowout */
+        }
+
+        /* ----------------------- */
+        /* COMPONENT STYLES (MOVED) */
+        /* ----------------------- */
+        .contact-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            color: #475569 !important; /* Force override blue */
+            text-decoration: none !important; /* Force override underline */
+            width: fit-content;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            backdrop-filter: blur(4px);
+        }
+        .contact-pill:hover {
+            border-color: #DC2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+            background: #fff;
+        }
+        .contact-pill:hover .icon-circle {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+        .contact-pill:hover .pill-text {
+            color: #0F172A;
+        }
+
+        .icon-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #F1F5F9;
+            color: #64748B;
+            transition: all 0.3s ease;
+        }
+        .pill-text {
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            transition: color 0.2s;
+        }
+
+        /* 7. BOTTOM BAR */
+        .bottom-bar {
+            padding-top: 32px;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        .compliance-badges {
+            display: flex;
+            flex-wrap: wrap; /* Safety wrap for small screens */
+            gap: 12px;
+            align-items: center;
+            background: #F1F5F9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Geist Mono', monospace;
+            color: #475569;
+        }
+
+        @media (min-width: 1024px) {
+           .bottom-bar {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+           }
+        }
+      `}</style>
+        </footer>
+    )
+}
+
+function FooterLink({ href, label }) {
+    return (
+        <Link href={href} legacyBehavior>
+            <a className="footer-link">
+                <span className="link-text">{label}</span>
+                <div className="link-line" />
+                <style jsx>{`
+                    .footer-link {
+                        color: #64748B;
+                        text-decoration: none;
+                        font-size: 15px;
+                        position: relative;
+                        display: inline-flex;
+                        flex-direction: column;
+                        width: fit-content;
+                    }
+                    .footer-link:hover .link-text {
+                        color: #A61B1E;
+                    }
+                    
+                    /* GO-THROUGH ANIMATION */
+                    .link-line {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        height: 1px;
+                        background: #A61B1E;
+                        width: 100%;
+                        transform: scaleX(0);
+                        transform-origin: bottom right;
+                        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    }
+                    
+                    .footer-link:hover .link-line {
+                        transform: scaleX(1);
+                        transform-origin: bottom left;
+                    }
+                `}</style>
             </a>
-            <a href="tel:+917737379292" style={styles.phoneLink}>
-              +91 77373 79292
-            </a>
-          </motion.div>
+        </Link>
+    )
+}
 
-        </div>
-
-        <motion.div variants={itemVariants} style={styles.divider} />
-
-        {/* BOTTOM BAR */}
+function SocialIcon({ href, src, label }) {
+    return (
         <motion.div
-          variants={itemVariants}
-          style={{
-            ...styles.bottomBar,
-            maxWidth: isMobile ? "100%" : 1200,
-            margin: "0 auto"
-          }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
         >
-          <motion.span
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            whileHover={{ letterSpacing: "0.5px", color: "#C02729" }}
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#2D2A26"
-            }}
-          >
-            © 2024 by Kasturi Masale, a product of The Spice Emperor
-          </motion.span>
-
-          <span style={styles.madeWith}>Made with ❤️ in Kolhapur</span>
+            <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-btn"
+                aria-label={label}
+            >
+                <img src={src} alt={label} className="icon-img" />
+            </a>
+            <style jsx>{`
+                .social-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    background: #fff;
+                    border: 1px solid #E2E8F0;
+                    text-decoration: none !important;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                }
+                .social-btn:hover {
+                   border-color: #DC2626;
+                   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+                }
+                .icon-img {
+                    width: 44px;
+                    height: 44px;
+                    object-fit: contain;
+                }
+            `}</style>
         </motion.div>
-      </motion.div>
-    </footer>
-  )
+    )
 }
 
-/* COMPONENTS */
+function SensoryToggle() {
+    const [muted, setMuted] = React.useState(false)
 
-function ActionLink({ href, children }) {
-  return (
-    <Link href={href} legacyBehavior>
-      <motion.a
-        style={styles.link}
-        initial="rest"
-        whileHover="hover"
-        animate="rest"
-      >
-        <motion.span
-          variants={{
-            rest: { x: 0, color: "#5D5A56" },
-            hover: { x: 2, color: "#B1121B" }
-          }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-        >
-          {children}
-        </motion.span>
-        <motion.span
-          variants={{
-            rest: { opacity: 0, x: -5 },
-            hover: { opacity: 1, x: 5 }
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          style={{ marginLeft: 4, display: "inline-block", color: "#B1121B", fontWeight: "bold" }}
-        >
-          →
-        </motion.span>
-      </motion.a>
-    </Link>
-  )
-}
+    React.useEffect(() => {
+        const isMuted = localStorage.getItem("kasturi_mute") === "true"
+        setMuted(isMuted)
+    }, [])
 
-function SocialBtn({ href, children }) {
-  return (
-    <motion.a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={styles.socialBtn}
-      whileHover={{ y: -5, backgroundColor: "#B1121B", color: "#fff" }}
-      whileTap={{ scale: 0.9 }}
-    >
-      {children}
-    </motion.a>
-  )
-}
+    const toggle = () => {
+        const newState = !muted
+        setMuted(newState)
+        import('../lib/feedback').then(({ feedback }) => {
+            feedback.setMuted(newState)
+            if (!newState) feedback.trigger('tap')
+        })
+    }
 
-/* STYLES */
-
-const styles = {
-  footer: {
-    background: "#FDFBF7", // Warm Porcelain
-    color: "#2D2A26",
-    borderTop: "1px solid rgba(0,0,0,0.06)",
-    position: "relative",
-    overflow: "hidden"
-  },
-  grid: {
-    display: "grid"
-  },
-  brandBlock: {
-    maxWidth: 320
-  },
-  mission: {
-    fontSize: 16,
-    lineHeight: 1.7,
-    color: "#5D5A56",
-    fontFamily: "var(--font-body)"
-  },
-  address: {
-    fontSize: 15,
-    marginTop: 16,
-    color: "#8D7B6F",
-    lineHeight: 1.6,
-    fontFamily: "var(--font-body)"
-  },
-  col: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 14
-  },
-  heading: {
-    fontWeight: 700,
-    marginBottom: 16,
-    fontFamily: "var(--font-heading)",
-    fontSize: 20,
-    letterSpacing: "0.02em"
-  },
-  socialRow: {
-    display: "flex",
-    gap: 14,
-    marginBottom: 20
-  },
-  socialBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px solid rgba(45, 42, 38, 0.1)",
-    color: "#2D2A26",
-    transition: "all 0.3s ease",
-    cursor: "pointer"
-  },
-  link: {
-    textDecoration: "none",
-    color: "#5D5A56",
-    fontSize: 16,
-    fontFamily: "var(--font-body)",
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center"
-  },
-  emailLink: {
-    marginTop: 8,
-    display: "block",
-    textDecoration: "none",
-    color: "#2D2A26",
-    fontWeight: 600,
-    fontSize: 16,
-    cursor: "pointer"
-  },
-  phoneLink: {
-    marginTop: 4,
-    display: "block",
-    textDecoration: "none",
-    color: "#2D2A26",
-    fontWeight: 600,
-    fontSize: 16,
-    cursor: "pointer"
-  },
-  divider: {
-    height: 1,
-    background: "rgba(0,0,0,0.06)",
-    margin: "60px 0 32px"
-  },
-  bottomBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 16,
-    paddingBottom: 32
-  },
-  madeWith: {
-    fontSize: 14,
-    color: "#8D7B6F",
-    fontFamily: "var(--font-body)"
-  }
+    return (
+        <button onClick={toggle} className="sensory-btn" aria-label="Toggle Sound">
+            {muted ? (
+                <>
+                    <span style={{ opacity: 0.5 }}>🔇</span> <span className="st-label">Sound Off</span>
+                </>
+            ) : (
+                <>
+                    <span>🔊</span> <span className="st-label">Sound On</span>
+                </>
+            )}
+            <style jsx>{`
+                .sensory-btn {
+                    background: none;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 20px;
+                    padding: 6px 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    color: #64748B;
+                    transition: all 0.2s;
+                }
+                .sensory-btn:hover {
+                    background: #fff;
+                    border-color: #CBD5E1;
+                    color: #0F172A;
+                }
+                .st-label {
+                    font-weight: 500;
+                }
+            `}</style>
+        </button>
+    )
 }

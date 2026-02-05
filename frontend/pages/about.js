@@ -98,7 +98,7 @@ export default function About({ lang, setLang }) {
                             <h2 style={styles.sectionTitle} className="section-title">{t.aboutStoryTitle}</h2>
                             <p style={styles.bodyText}>{t.aboutStoryText}</p>
                         </div>
-                        <div style={styles.imageCard}>
+                        <div style={styles.imageCard} className="image-card">
                             <span style={{ fontSize: 80 }}>📜</span>
                         </div>
                     </div>
@@ -146,6 +146,12 @@ export default function About({ lang, setLang }) {
                     
                     .section-title { font-size: 28px !important; text-align: center !important; }
                     .section-title-center { font-size: 28px !important; }
+
+                    .image-card {
+                        height: auto !important;
+                        aspect-ratio: 1/1 !important;
+                        width: 100% !important;
+                    }
                     
                     .ingredient-badge { 
                         display: flex !important; flex-direction: column; gap: 12px; 

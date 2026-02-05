@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function SmellCraving() {
     return (
@@ -34,11 +35,15 @@ export default function SmellCraving() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
-                        <img
-                            src="/images/hero/hero-ingredients-2.png"
-                            alt="Fresh spices and texture"
-                            style={styles.realImage}
-                        />
+                        <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 32, overflow: 'hidden' }}>
+                            <Image
+                                src="/images/hero/hero-ingredients-2.png"
+                                alt="Fresh spices and texture"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                style={{ objectFit: 'cover' }}
+                            />
+                        </div>
                     </motion.div>
 
                     <motion.div

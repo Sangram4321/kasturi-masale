@@ -4,11 +4,13 @@ const CartContext = createContext()
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([])
+  const [hydrated, setHydrated] = useState(false)
 
   // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("kasturi_cart")
     if (saved) setCart(JSON.parse(saved))
+    setHydrated(true)
   }, [])
 
   // Save to localStorage
@@ -43,7 +45,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, updateQty, removeItem, clearCart }}
+      value={{ cart, addToCart, updateQty, removeItem, clearCart, hydrated }}
     >
       {children}
     </CartContext.Provider>

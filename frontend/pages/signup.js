@@ -39,7 +39,7 @@ export default function Signup() {
 
             // Sync Backend
             try {
-                await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/sync`, {
+                await fetch(`/api/user/sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -106,7 +106,7 @@ export default function Signup() {
 
             // Sync Backend
             try {
-                await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/sync`, {
+                await fetch(`/api/user/sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

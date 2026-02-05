@@ -53,6 +53,8 @@ export default function CurryVideoSection() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
+                    data-scroll
+                    data-scroll-speed="0.1"
                 >
                     <video
                         src="/images/curry-video/kasturi-mutton-curry.mp4"
@@ -60,6 +62,7 @@ export default function CurryVideoSection() {
                         autoPlay
                         loop
                         muted
+                        defaultMuted={true}
                         playsInline
                     />
                 </motion.div>
@@ -71,7 +74,10 @@ export default function CurryVideoSection() {
                     textAlign: isMobile ? "center" : "left",
                     paddingLeft: isMobile ? 0 : 60,
                     paddingTop: isMobile ? 40 : 0
-                }}>
+                }}
+                    data-scroll
+                    data-scroll-speed="-0.1"
+                >
                     <motion.h2
                         style={styles.headline}
                         variants={typewriterContainer}

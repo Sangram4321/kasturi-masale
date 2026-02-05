@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-function Error({ statusCode }) {
+function ErrorPage({ statusCode }) {
     return (
         <section style={styles.section}>
             <div style={styles.container}>
@@ -20,12 +20,12 @@ function Error({ statusCode }) {
     )
 }
 
-Error.getInitialProps = ({ res, err }) => {
+ErrorPage.getInitialProps = ({ res, err }) => {
     const statusCode = res ? res.statusCode : err ? err.statusCode : 404
     return { statusCode }
 }
 
-export default Error
+export default ErrorPage
 
 const styles = {
     section: {

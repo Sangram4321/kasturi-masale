@@ -21,7 +21,10 @@ const OrderSchema = new mongoose.Schema(
         variant: String, // "1KG", "500G"
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
-        name: String
+        name: String,
+        // 🏭 BATCH TRACKING
+        batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
+        costAtTimeOfOrder: { type: Number, default: 0 } // Snapshot of Batch.costPerUnit
       }
     ],
     pricing: {
@@ -46,6 +49,7 @@ const OrderSchema = new mongoose.Schema(
 
       shippedAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },
+      lastSync: { type: Date, default: null }, // ⚡ For Live Tracking Freshness
 
       // Full tracking history from Courier
       logs: [
@@ -53,7 +57,8 @@ const OrderSchema = new mongoose.Schema(
           status: String,
           description: String,
           timestamp: { type: Date, default: Date.now },
-          raw_code: String
+          raw_code: String,
+          location: String
         }
       ]
     },
@@ -70,7 +75,10 @@ const OrderSchema = new mongoose.Schema(
       index: true
     },
     transactionId: { type: String, default: null },
-    userId: { type: String, default: null }, // Link to User ID (optional)
+    // 📌 CANONICAL USER REFERENCE
+    // Currently type: String for compatibility.
+    // Going forward, this will store the MongoDB ObjectId (as string) for logged-in users.
+    userId: { type: String, default: null },
     coinsCredited: { type: Boolean, default: false },
 
     /* ================= CANCELLATION & RTO ================= */
@@ -95,6 +103,24 @@ const OrderSchema = new mongoose.Schema(
         default: 'NONE'
       },
       discountAmount: { type: Number, default: 0 }
+    },
+
+    /* ================= FINANCIAL SNAPSHOT (Immutable) ================= */
+    financials: {
+      // REVENUE SIDE
+      grossRevenue: { type: Number, default: 0 }, // Total paid by customer (inc. tax)
+      taxableValue: { type: Number, default: 0 }, // Revenue excluding GST
+      gstAmount: { type: Number, default: 0 },    // Tax Liability
+
+      // COST SIDE (Snapshotted at fulfillment)
+      totalProductCost: { type: Number, default: 0 }, // Sum of batch costs
+      shippingCost: { type: Number, default: 0 },     // Actual or Flat rate
+      packagingCost: { type: Number, default: 0 },    // Box/Tape cost
+      platformFee: { type: Number, default: 0 },      // Gateway charges (~2%)
+
+      // PROFITABILITY
+      netProfit: { type: Number, default: 0 },      // taxableValue - costs
+      profitMargin: { type: Number, default: 0 }    // %
     }
   },
   {

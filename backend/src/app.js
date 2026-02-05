@@ -28,21 +28,25 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   origin: function (origin, callback) {
+    // 🔒 SECURE CORS POLICY
     const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://192.168.1.5:3000",
-      "http://192.168.1.5:3001"
+      process.env.FRONTEND_URL, // Production
+      "https://kasturimasale.in",
+      "https://www.kasturimasale.in"
     ];
+
+    // Dev Environments
+    if (process.env.NODE_ENV === 'development') {
+      allowedOrigins.push("http://localhost:3000");
+      allowedOrigins.push("http://localhost:3001");
+    }
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
+
     if (allowedOrigins.indexOf(origin) === -1) {
-      // Create a more readable error specifically for debugging
-      // return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-      // For Dev: Allow it but log it
-      console.log("⚠️ CORS Warning for Origin:", origin);
-      return callback(null, true);
+      console.error(`🚫 CORS BLOCKED: ${origin}`);
+      return callback(new Error('CORS Policy Blocked'), false);
     }
     return callback(null, true);
   },
@@ -57,6 +61,19 @@ app.get("/", (req, res) => {
 /* ROUTES */
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminAuthRoutes);
+app.use("/api/admin/wallet", require("./routes/admin.wallet.routes")); // 🪙 Admin Wallet Panel
 app.use("/api/user", userRoutes);
+app.use("/api/batches", require("./routes/batch.routes")); // 📦 Inventory
+
+/* GLOBAL ERROR HANDLER */
+app.use((err, req, res, next) => {
+  console.error("🔥 UNHANDLED ERROR:", err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    // Only show stack in development
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 module.exports = app;

@@ -3,7 +3,7 @@ import AdminLayout from "../../components/admin/AdminLayout";
 import { Lock, CheckCircle, AlertOctagon, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+const API = "";
 
 export default function AdminSettings() {
     const [formData, setFormData] = useState({
@@ -217,9 +217,9 @@ const styles = {
     },
     cardTitle: { fontSize: 18, fontWeight: 600, color: "#111827", margin: 0 },
     cardDesc: { fontSize: 14, color: "#6B7280", margin: "4px 0 0 0" },
-    form: { padding: 32 },
-    inputGroup: { display: "flex", flexDirection: "column", gap: 10, flex: 1 },
-    row: { display: "flex", gap: 24, margin: "24px 0" },
+    form: { padding: 24 },
+    inputGroup: { display: "flex", flexDirection: "column", gap: 10, flex: 1, minWidth: 250 },
+    row: { display: "flex", gap: 24, margin: "24px 0", flexWrap: "wrap" },
     label: { fontSize: 13, fontWeight: 600, color: "#374151", marginLeft: 4 },
     input: {
         padding: "14px 18px",

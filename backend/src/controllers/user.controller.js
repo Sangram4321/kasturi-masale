@@ -2,8 +2,8 @@ const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
 const Order = require("../models/Order");
-
 const { generateReferralCode, validateReferralCode } = require("../services/referral.service");
+const jwt = require("jsonwebtoken");
 
 /* ================= SYNC USER (LOGIN/SIGNUP) ================= */
 exports.syncUser = async (req, res) => {
@@ -51,9 +51,15 @@ exports.syncUser = async (req, res) => {
             await user.save();
         }
 
+        // GENERATE TOKEN (For Secure API Access)
+        const token = jwt.sign({ id: user._id, uid: user.uid }, process.env.JWT_SECRET || "default_secret_key_change_me", {
+            expiresIn: "30d"
+        });
+
         return res.status(200).json({
             success: true,
-            user
+            user,
+            token // Return token for frontend use
         });
 
     } catch (error) {
@@ -87,7 +93,85 @@ exports.validateReferral = async (req, res) => {
     }
 };
 
-/* ================= GET WALLLET ================= */
+/* ================= GET MY WALLET (SECURE) ================= */
+exports.getMyWallet = async (req, res) => {
+    try {
+        const user = req.user; // From protectUser middleware
+
+        // 1. Calculate Balances via Aggregation
+        const stats = await WalletTransaction.aggregate([
+            { $match: { userId: user._id } },
+            {
+                $group: {
+                    _id: "$status",
+                    total: {
+                        $sum: {
+                            $cond: [{ $eq: ["$type", "CREDIT"] }, "$amount", { $multiply: ["$amount", -1] }]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        let activeBalance = 0;
+        let pendingBalance = 0;
+
+        stats.forEach(s => {
+            if (s._id === "COMPLETED") activeBalance += s.total;
+            if (s._id === "PENDING") pendingBalance += s.total;
+        });
+
+        // 2. Fetch History (Append Only / Ledger)
+        const history = await WalletTransaction.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        // 3. Tier Logic (Bronze: 0-99, Silver: 100-299, Gold: 300+)
+        let tier = "Bronze";
+        let nextTier = "Silver";
+        let progress = 0;
+        let coinsToNext = 0;
+
+        if (activeBalance >= 300) {
+            tier = "Gold";
+            nextTier = "Max";
+            progress = 100;
+            coinsToNext = 0;
+        } else if (activeBalance >= 100) {
+            tier = "Silver";
+            nextTier = "Gold";
+            // 100 to 300 range (size 200). Progress = (current - 100) / 200 * 100
+            progress = Math.min(100, Math.floor(((activeBalance - 100) / 200) * 100));
+            coinsToNext = 300 - activeBalance;
+        } else {
+            tier = "Bronze";
+            nextTier = "Silver";
+            // 0 to 100 range.
+            progress = Math.min(100, Math.floor((activeBalance / 100) * 100));
+            coinsToNext = 100 - activeBalance;
+        }
+
+        return res.json({
+            success: true,
+            balance: activeBalance, // Main display
+            pendingBalance: pendingBalance,
+            tier,
+            nextTier,
+            progress,
+            coinsToNext,
+            history
+        });
+
+    } catch (error) {
+        console.error("GET MY WALLET ERROR 👉", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch wallet"
+        });
+    }
+};
+
+/* ================= GET WALLLET (Legacy / Public) ================= */
 exports.getWallet = async (req, res) => {
     try {
         const { uid } = req.params;

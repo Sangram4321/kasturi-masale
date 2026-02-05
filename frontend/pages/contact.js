@@ -61,7 +61,7 @@ export default function Contact() {
                             <a href="mailto:support@kasturimasale.in" style={styles.link}>
                                 support@kasturimasale.in
                             </a>
-                            <p style={{ marginTop: 8 }}>call 7737379292</p>
+                            <p style={{ marginTop: 8 }}>contact : +91 7737379292</p>
                         </div>
                     </motion.div>
 

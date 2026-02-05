@@ -10,7 +10,8 @@ import {
     LogOut,
     Menu,
     X,
-    ChevronRight
+    ChevronRight,
+    DollarSign
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -46,6 +47,8 @@ export default function AdminLayout({ children }) {
 
     const navItems = [
         { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+        { name: "Financials", icon: DollarSign, path: "/admin/financials" }, // 💰 NEW 
+        { name: "Inventory", icon: Package, path: "/admin/inventory" }, // 📦 NEW
         { name: "Orders", icon: ShoppingBag, path: "/admin/orders" },
         // { name: "Products", icon: Package, path: "/admin/products" },
         // { name: "Customers", icon: Users, path: "/admin/customers" },
@@ -84,9 +87,11 @@ export default function AdminLayout({ children }) {
                                 src="/images/kasturi-logo.png"
                                 alt="Kasturi Admin"
                                 style={{
-                                    height: 64,
+                                    height: 160,
                                     objectFit: 'contain',
-                                    filter: "brightness(0) saturate(100%) invert(23%) sepia(99%) saturate(4975%) hue-rotate(352deg) brightness(88%) contrast(110%)"
+                                    // Make logo white for dark theme (assuming original is dark/colored)
+                                    // If original is already white, remove filter. Safe bet:
+                                    filter: "brightness(0) invert(1)"
                                 }}
                             />
                             {isMobile && (
@@ -105,7 +110,9 @@ export default function AdminLayout({ children }) {
 
                 <nav style={styles.nav}>
                     {navItems.map((item) => {
-                        const isActive = router.pathname === item.path || router.pathname.startsWith(`${item.path}/`);
+                        const isActive = item.path === "/admin"
+                            ? router.pathname === item.path
+                            : (router.pathname === item.path || router.pathname.startsWith(`${item.path}/`));
                         return (
                             <Link href={item.path} key={item.path} style={{ textDecoration: "none" }}>
                                 <div
@@ -126,9 +133,7 @@ export default function AdminLayout({ children }) {
                                             {item.name}
                                         </motion.span>
                                     )}
-                                    {isSidebarOpen && isActive && (
-                                        <motion.div layoutId="activeIndicator" style={styles.activeIndicator} />
-                                    )}
+
                                 </div>
                             </Link>
                         );
@@ -136,9 +141,25 @@ export default function AdminLayout({ children }) {
                 </nav>
 
                 <div style={styles.footer}>
-                    <button onClick={handleLogout} style={styles.logoutBtn} title="Logout">
-                        <LogOut size={20} color="#EF4444" />
-                        {isSidebarOpen && <span style={styles.logoutText}>Logout</span>}
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            width: '100%',
+                            padding: '12px',
+                            background: '#1E293B',
+                            color: 'white',
+                            border: '1px solid #334155',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontSize: 14,
+                            fontWeight: 600
+                        }}
+                    >
+                        <LogOut size={18} />
+                        Logout
                     </button>
                 </div>
             </motion.aside>
@@ -158,15 +179,38 @@ export default function AdminLayout({ children }) {
                     </button>
 
                     <div style={styles.headerRight}>
+                        {isMobile && (
+                            <button
+                                onClick={handleLogout}
+                                style={{
+                                    background: '#EF4444',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    padding: 8,
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    marginRight: 8
+                                }}
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        )}
                         <div style={styles.adminProfile}>
-                            <div style={styles.avatar}>A</div>
+                            <img src="/images/admin-photo/me.jpeg" alt="Admin" style={{ ...styles.avatar, objectFit: 'cover', background: 'transparent' }} />
                             <span style={styles.adminName}>Admin User</span>
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <div style={{ padding: "32px 40px", maxWidth: 1600, margin: "0 auto" }}>
+                <div style={{
+                    padding: isMobile ? "20px 16px" : "32px 40px",
+                    maxWidth: 1600,
+                    margin: "0 auto",
+                    overflowX: 'hidden' // Prevent full page scroll
+                }}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -180,7 +224,7 @@ export default function AdminLayout({ children }) {
             {/* Global Admin Styles */}
             <style jsx global>{`
         body {
-          background-color: #F3F4F6;
+          background-color: #0B0E14;
           margin: 0;
           font-family: 'Inter', sans-serif;
         }
@@ -197,12 +241,12 @@ export default function AdminLayout({ children }) {
 }
 
 const styles = {
+    // 🌌 SIDEBAR: Professional Dark (High Contrast)
     sidebar: {
-        height: "100vh", // Fallback
-        height: "100dvh",
-        background: "rgba(17, 24, 39, 0.95)", // High opacity dark glass
-        backdropFilter: "blur(20px)",
-        color: "white",
+        height: "100dvh", // Fixed 100vh issue on mobile
+
+        background: "#0F172A", // Slate 900 - Solid & Deep
+        color: "#94A3B8", // Slate 400 - Readable Grey
         position: "fixed",
         left: 0,
         top: 0,
@@ -210,47 +254,39 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        boxShadow: "4px 0 24px rgba(0,0,0,0.1)",
-        borderRight: "1px solid rgba(255,255,255,0.1)"
+        borderRight: "1px solid #1E293B", // Slate 800
+        width: 280,
+        boxShadow: "4px 0 24px rgba(0,0,0,0.4)" // Stronger shadow
     },
     overlay: {
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.3)',
+        background: 'rgba(0,0,0,0.7)',
         backdropFilter: "blur(4px)",
         zIndex: 40,
     },
     logoContainer: {
-        height: 80,
+        height: 120,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        position: 'relative'
+        borderBottom: "1px solid #1E293B",
+        position: 'relative',
+        background: "#0F172A"
     },
     mobileCloseBtn: {
         position: 'absolute',
         right: 16,
-        background: 'rgba(255,255,255,0.1)',
-        border: 'none',
+        background: '#1E293B',
+        border: '1px solid #334155',
         borderRadius: 8,
         width: 32,
         height: 32,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: 'pointer'
-    },
-    logo: {
-        fontSize: 24,
-        fontWeight: "800",
-        letterSpacing: "-0.5px",
-        margin: 0,
-    },
-    miniLogo: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#D97706",
+        cursor: 'pointer',
+        transition: '0.2s',
     },
     nav: {
         flex: 1,
@@ -258,25 +294,30 @@ const styles = {
         display: "flex",
         flexDirection: "column",
         gap: 8,
+        overflowY: "auto"
     },
     navItem: {
         display: "flex",
         alignItems: "center",
         padding: "12px 16px",
-        borderRadius: 16, // Softer rounding
+        borderRadius: 8, // Sharper corners
         cursor: "pointer",
         position: "relative",
-        transition: "all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        color: "#9CA3AF",
+        transition: "all 0.2s ease",
+        color: "#94A3B8", // Slate 400
         gap: 12,
         whiteSpace: "nowrap",
+        fontSize: 14,
+        fontWeight: 500,
+        border: "1px solid transparent",
     },
+    // 🟣 ACTIVE STATE: High Contrast
     activeNavItem: {
-        background: "rgba(255, 255, 255, 0.12)",
-        color: "#fff",
+        background: "#1E293B", // Slate 800
+        color: "#F8FAFC", // Slate 50 (White)
         fontWeight: "600",
-        backdropFilter: "blur(4px)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+        border: "1px solid #334155", // Slate 700
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     },
     navText: {
         fontSize: 14,
@@ -284,50 +325,38 @@ const styles = {
     },
     footer: {
         padding: 16,
-        borderTop: "1px solid rgba(255,255,255,0.08)",
+        borderTop: "1px solid #1E293B",
+        background: "#0F172A"
     },
-    logoutBtn: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        width: "100%",
-        padding: "12px 16px",
-        background: "transparent",
-        border: "none",
-        color: "#EF4444",
-        cursor: "pointer",
-        borderRadius: 12,
-        transition: "all 0.2s",
-        justifyContent: "flex-start",
-    },
+
+    // 🌑 MAIN CONTENT: Clean & Professional
     main: {
         flex: 1,
         minHeight: "100vh",
-        transition: "margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transition: "margin-left 0.3s ease",
         width: "100%",
-        background: "#F3F4F6", // Ensure robust background
+        background: "#020617", // Slate 950 (Start Dark)
+        color: "#FFF"
     },
     header: {
-        height: 80,
-        background: "rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(20px) saturate(180%)", // High saturation glass
-        borderBottom: "1px solid rgba(255, 255, 255, 0.5)",
+        height: 64, // Reduced height for mobile/desktop parity or keep 80 if preferred, checking component usage
+        background: "#0F172A", // Match sidebar
+        borderBottom: "1px solid #1E293B",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 32px",
+        padding: "0 20px", // Reduced padding
         position: "sticky",
         top: 0,
         zIndex: 40,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
     },
     menuBtn: {
-        background: "rgba(255,255,255,0.5)",
-        border: "1px solid rgba(0,0,0,0.05)",
+        background: "#1E293B",
+        border: "1px solid #334155",
         cursor: "pointer",
         padding: 8,
-        borderRadius: 10,
-        color: "#374151",
+        borderRadius: 8,
+        color: "#FFF",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -342,31 +371,28 @@ const styles = {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "6px 8px 6px 6px",
-        background: "rgba(255,255,255,0.6)",
-        border: "1px solid rgba(0,0,0,0.05)",
+        padding: "6px 16px 6px 6px",
+        background: "#1E293B",
+        border: "1px solid #334155",
         borderRadius: 50,
-        backdropFilter: "blur(8px)",
-        transition: "all 0.2s",
-        cursor: "default"
+        cursor: "default",
     },
     avatar: {
         width: 32,
         height: 32,
         borderRadius: "50%",
-        background: "linear-gradient(135deg, #111827 0%, #374151 100%)",
+        background: "#6366F1", // Indigo 500
         color: "#fff",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 14,
         fontWeight: 700,
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
     },
     adminName: {
         fontSize: 14,
-        fontWeight: 600,
-        color: "#374151",
-        marginRight: 8,
+        fontWeight: 500,
+        color: "#E2E8F0", // Slate 200
+        marginRight: 4,
     },
 };

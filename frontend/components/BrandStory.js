@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 
+
 const STORY = {
   en: {
     heading: "From Kolhapur, to Your Kitchen",
     body: [
       "Kasturi Masale is not a factory brand.",
-      "It began in a Kolhapur household, where masala was first pounded on a sil-batta — slowly, thoughtfully, with understanding.",
-      "Today, we use modern pounding machines, but the taste remains unchanged.",
+      "It began in a Kolhapur household, utilizing the traditional Kandap machine method — slowly, thoughtfully, with understanding.",
+      "We ensure it is not factory-pulverized, so the taste remains unchanged.",
       "Because the process matters more than the tool.",
       "For over 25 years, our father prepared masalas for local Kolhapur customers — never selling outside.",
       "Today, Sangram Madhukar Patil carries that same legacy forward through Kasturi Masale, under The Spice Emperor.",
@@ -19,8 +20,8 @@ const STORY = {
     heading: "कोल्हापुर से, आपके रसोई तक",
     body: [
       "कस्तूरी मसाले कोई फैक्ट्री ब्रांड नहीं है।",
-      "इसकी शुरुआत कोल्हापुर के घर से हुई — जहाँ मसाला पहले सिलबट्टे पर कूटा जाता था, समझदारी से।",
-      "आज हम मशीन से कूटते हैं, लेकिन स्वाद वही रखते हैं।",
+      "इसकी शुरुआत कोल्हापुर के घर से हुई — जहाँ मसाला कांदप मशीन (Kandap machine) से कूटा जाता था।",
+      "हम इसे फैक्ट्री में पल्वराइज़ नहीं करते, इसलिए स्वाद वही रहता है।",
       "क्योंकि तरीका औज़ार से ज़्यादा मायने रखता है।",
       "२५ सालों तक हमारे पिता कोल्हापुर में स्थानीय ग्राहकों के लिए मसाले बनाते रहे।",
       "आज वही परंपरा संग्राम मधुकर पाटिल कस्तूरी मसाले के ज़रिये आगे बढ़ा रहे हैं — The Spice Emperor के अंतर्गत।",
@@ -32,8 +33,8 @@ const STORY = {
     heading: "कोल्हापूरातून, तुमच्या स्वयंपाकघरात",
     body: [
       "कस्तुरी मसाले हा कुठलाही फॅक्टरी ब्रँड नाही.",
-      "याची सुरुवात कोल्हापूरच्या घरातून झाली — जिथे मसाला सिलबट्ट्यावर कुटला जायचा, समजून.",
-      "आज आम्ही मशीन वापरतो, पण चव बदललेली नाही.",
+      "याची सुरुवात कोल्हापूरच्या घरातून झाली — जिथे मसाला कांदप मशीन (Kandap machine) द्वारे कुटला जायचा.",
+      "आम्ही फॅक्टरी पल्वरायझर वापरत नाही, त्यामुळे चव बदललेली नाही.",
       "कारण पद्धत ही साधनापेक्षा महत्त्वाची असते.",
       "२५ वर्षे आमचे वडील कोल्हापुरात स्थानिक ग्राहकांसाठी मसाले बनवत होते.",
       "आज तीच परंपरा संग्राम मधुकर पाटील कस्तुरी मसालेद्वारे पुढे नेत आहेत — The Spice Emperor अंतर्गत.",
@@ -43,20 +44,23 @@ const STORY = {
 }
 
 export default function BrandStory({ lang = "en" }) {
-  const [activeLang, setActiveLang] = useState(lang)
+  // STRICT RULE: Default to 'en' to avoid premium perception dilution
+  const [activeLang, setActiveLang] = useState("en")
 
   return (
     <section className="brandSection" style={styles.section}>
+      <div style={styles.bgOverlayLeft} />
+      <div style={styles.bgOverlayRight} />
       <div style={styles.wrapper}>
         {/* ... content ... */}
       </div>
       <style jsx>{`
         .brandSection {
-            padding: 40px 16px 80px; /* Mobile Safe Zone (16px) */
+            padding: 24px 16px 40px; /* Mobile Safe Zone (16px) */
         }
         @media (min-width: 768px) {
             .brandSection {
-                padding: 60px 32px 100px; /* Tablet Safe Zone (32px) */
+                padding: 40px 32px 60px; /* Tablet Safe Zone (32px) */
             }
         }
       `}</style>
@@ -118,7 +122,42 @@ export default function BrandStory({ lang = "en" }) {
 const styles = {
   section: {
     // padding handled by CSS .brandSection
-    background: "#F7EFDB"
+    background: "#F7EFDB",
+    position: "relative",
+    overflow: "hidden"
+  },
+
+  // LEFT SIDE DECORATION
+  bgOverlayLeft: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "25%", // Reduced width slightly to avoid overlap
+    height: "100%",
+    backgroundImage: "url('/images/png-masala-images/spice-love.png')",
+    backgroundSize: "contain",
+    backgroundPosition: "center left",
+    backgroundRepeat: "no-repeat",
+    opacity: 0.12, // 4%
+    pointerEvents: "none",
+    zIndex: 0,
+    transform: "scaleX(-1)" // Mirror for symmetry
+  },
+
+  // RIGHT SIDE DECORATION
+  bgOverlayRight: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: "25%",
+    height: "100%",
+    backgroundImage: "url('/images/png-masala-images/spice-love.png')",
+    backgroundSize: "contain",
+    backgroundPosition: "center right",
+    backgroundRepeat: "no-repeat",
+    opacity: 0.12, // 4%
+    pointerEvents: "none",
+    zIndex: 0
   },
 
   wrapper: {

@@ -1,8 +1,12 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, useSpring, useMotionTemplate } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import translations from '../languages/translations'
+import TrustComparisonSection from '../components/TrustComparisonSection'
+import ComparisonGrid from '../components/ComparisonGrid'
+import PremiumJustificationBar from '../components/PremiumJustificationBar'
+import GuaranteeBox from '../components/GuaranteeBox'
 
 /* ================= CUSTOM COMPONENTS ================= */
 
@@ -52,10 +56,12 @@ export default function WhyKasturi({ lang, setLang }) {
     const t = translations[lang] || translations.en
     const { scrollY } = useScroll()
 
-    /* PARALLAX TRANSFORMS */
-    const yHero = useTransform(scrollY, [0, 500], [0, 200])
-    const yBg = useTransform(scrollY, [0, 1000], [0, -150])
-    const rotateBg = useTransform(scrollY, [0, 1000], [0, 20])
+    /* PARALLAX TRANSFORMS - DISABLED FOR "NO SCROLL EFFECT" REQUEST */
+    const yHero = 0 // useTransform(scrollY, [0, 500], [0, 200])
+    const opacityHero = 1 // useTransform(scrollY, [0, 400], [1, 0]) 
+    const yBg = 0 // useTransform(scrollY, [0, 1000], [0, -150])
+    const rotateBg = 0 // useTransform(scrollY, [0, 1000], [0, 20])
+    // const yBlob2 = 0 // useTransform(scrollY, [0, 1000], [0, 100])
 
     return (
         <div style={styles.page}>
@@ -63,11 +69,11 @@ export default function WhyKasturi({ lang, setLang }) {
                 <title>{t.whyHeroTitle} | Kasturi Masale</title>
             </Head>
 
-            <GrainOverlay />
+            {/* <GrainOverlay /> // Disabled for performance (stuttering) */}
 
             {/* 🌶️ ANIMATED BACKGROUND BLOBS */}
             <motion.div style={{ ...styles.blob, top: -100, right: -100, background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%)', y: yBg, rotate: rotateBg }} />
-            <motion.div style={{ ...styles.blob, top: '40%', left: -200, background: 'radial-gradient(circle, rgba(192, 39, 41, 0.08) 0%, transparent 70%)', y: useTransform(scrollY, [0, 1000], [0, 100]) }} />
+            <motion.div style={{ ...styles.blob, top: '40%', left: -200, background: 'radial-gradient(circle, rgba(192, 39, 41, 0.08) 0%, transparent 70%)', y: 0 }} />
 
             {/* LANGUAGE SWITCHER */}
             <div className="lang-switcher">
@@ -96,7 +102,7 @@ export default function WhyKasturi({ lang, setLang }) {
             {/* ================= HERO SECTION ================= */}
             <section style={styles.hero} className="hero-section">
                 <div style={styles.container}>
-                    <motion.div style={{ y: yHero, position: 'relative', zIndex: 10 }}>
+                    <motion.div style={{ opacity: opacityHero, position: 'relative', zIndex: 1 }}>
 
                         <motion.h1
                             initial={{ opacity: 0, y: 40 }}
@@ -105,7 +111,7 @@ export default function WhyKasturi({ lang, setLang }) {
                             style={styles.heroTitle}
                             className="hero-title"
                         >
-                            {t.whyHeroTitle}
+                            <div style={{ whiteSpace: 'pre-wrap' }}>{t.whyPremiumTitle}</div>
                         </motion.h1>
 
                         <motion.h2
@@ -115,30 +121,54 @@ export default function WhyKasturi({ lang, setLang }) {
                             style={styles.heroSub}
                             className="hero-sub"
                         >
-                            {t.whyHeroSub}
+                            {t.whyPremiumSub}
                         </motion.h2>
 
-                        <motion.p
+                        <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
-                            style={styles.heroText}
+                            style={styles.centered}
                             className="hero-text"
                         >
-                            {t.whyHeroText}
-                        </motion.p>
+                            <p style={styles.bodyText}>
+                                {t.whyPremiumBody1}
+                            </p>
+                            <p style={styles.bodyText}>
+                                {t.whyPremiumBody2}
+                            </p>
+                            <p style={styles.bodyText}>
+                                <span style={{ whiteSpace: 'pre-wrap' }}>{t.whyPremiumBody3}</span>
+                            </p>
+                            <p style={{ ...styles.bodyText, fontWeight: 700, color: '#111827', marginTop: 24 }}>
+                                <span style={{ whiteSpace: 'pre-wrap' }}>{t.whyPremiumBody4}</span>
+                            </p>
+                        </motion.div>
 
                         <motion.div
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
-                            style={styles.btnGroup}
+                            style={{ marginTop: 40 }}
+                        >
+                            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
+                                <div style={styles.trustLine}>✔ {t.whyCleanNoPalm}</div>
+                                <div style={styles.trustLine}>✔ {t.whyCleanNoPreserve || "No Excess Salt"}</div> {/* Fallback/Adjust key if needed */}
+                                <div style={styles.trustLine}>✔ {t.whyCleanNoColor}</div>
+                            </div>
+
+                            <div style={styles.noteBox}>
+                                <strong>{t.whyGuarantee}</strong>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8 }}
+                            style={{ ...styles.btnGroup, marginTop: 40 }}
                             className="btn-group"
                         >
                             <MagneticButton href="/product" style={styles.primaryBtn}>
-                                {t.whyCtaBtn1 || t.shopNow}
-                            </MagneticButton>
-                            <MagneticButton href="#process" style={styles.secondaryBtn}>
-                                {t.whyCtaBtn2 || t.viewProduct}
+                                {t.whyCtaBtn1 || "Shop Now"}
                             </MagneticButton>
                         </motion.div>
 
@@ -146,223 +176,11 @@ export default function WhyKasturi({ lang, setLang }) {
                 </div>
             </section>
 
-            {/* ================= 1. ROOTED IN KOLHAPUR ================= */}
-            <Section id="origin">
-                <div style={styles.grid2} className="grid-2">
-                    <ParallaxCard delay={0.1}>
-                        <div style={styles.mapGraphic} className="map-graphic">
-                            <motion.div
-                                animate={{ y: [0, -10, 0] }}
-                                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                                style={styles.mapPin}
-                                className="map-pin"
-                            >
-                                📍
-                            </motion.div>
-                            <span style={styles.mapLabel}>KOLHAPUR</span>
-                            <div style={styles.mapRing} className="map-ring" />
-                            <div style={{ ...styles.mapRing, width: 200, height: 200, opacity: 0.1, animationDelay: '1s' }} className="map-ring-large" />
-                        </div>
-                    </ParallaxCard>
-
-                    <div style={{ paddingLeft: 20 }} className="text-content">
-                        <SectionTitle><div className="section-title">{t.whyOriginTitle}</div></SectionTitle>
-                        <p style={styles.bodyText}>
-                            {t.whyOriginText1}
-                        </p>
-                        <p style={styles.bodyText}>
-                            {t.whyOriginText2}
-                        </p>
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 2. TRADITIONAL MAKING METHOD ================= */}
-            <Section bg="rgba(255, 237, 213, 0.2)">
-                <div style={styles.grid2Reverse} className="grid-2-reverse">
-                    <div className="text-content">
-                        <SectionTitle><div className="section-title">{t.whyMethodTitle}</div></SectionTitle>
-                        <ul style={styles.checkList}>
-                            <CheckItem>{t.whyMethodPoint1}</CheckItem>
-                            <CheckItem>{t.whyMethodPoint2}</CheckItem>
-                            <CheckItem>{t.whyMethodPoint3}</CheckItem>
-                        </ul>
-                        <p style={styles.highlightText} className="highlight-text">
-                            {t.whyMethodHighlight}
-                        </p>
-                    </div>
-                    <ParallaxCard>
-                        <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                            <img
-                                src="/images/why-kasturi/Traditionally-Made.png"
-                                alt="Traditional Kandap Pounding Method"
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                            />
-                            <div style={{
-                                position: 'absolute', bottom: 20, right: 20,
-                                background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)',
-                                padding: '8px 20px', borderRadius: 99,
-                                fontSize: 13, fontWeight: 700, color: '#92400E',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}>
-                                Authentic Kandap Process
-                            </div>
-                        </div>
-                    </ParallaxCard>
-                </div>
-            </Section>
-
-            {/* ================= 3. FRESHNESS (AROMA) ================= */}
-            <Section>
-                <div style={styles.grid2} className="grid-2">
-                    <ParallaxCard>
-                        <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                            <img
-                                src="/images/why-kasturi/smell-kandalasun-masala.png"
-                                alt="Fresh Kasturi Masala Aroma"
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                            />
-                            <div style={{
-                                position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-                                background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)',
-                                padding: '8px 20px', borderRadius: 99,
-                                fontSize: 13, fontWeight: 700, color: '#059669',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', whiteSpace: 'nowrap'
-                            }}>
-                                Fresh Aroma Guaranteed
-                            </div>
-                        </div>
-                    </ParallaxCard>
-
-                    <div className="text-content">
-                        <SectionTitle><div className="section-title">{t.whyFreshTitle}</div></SectionTitle>
-                        <p style={styles.bodyText}>{t.whyFreshText}</p>
-                        <ul style={{ ...styles.checkList, marginTop: 10 }}>
-                            <li style={styles.bulletItem}>• {t.whyFreshPoint1}</li>
-                            <li style={styles.bulletItem}>• {t.whyFreshPoint2}</li>
-                            <li style={styles.bulletItem}>• {t.whyFreshPoint3}</li>
-                        </ul>
-                        <div style={{ ...styles.trustLine, marginTop: 24 }}>
-                            "{t.whyFreshTrust}"
-                        </div>
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 4. CLEAN INGREDIENTS ================= */}
-            <Section bg="#fff">
-                <div style={styles.centered}>
-                    <SectionTitle><div style={{ textAlign: 'center' }} className="section-title-center">{t.whyCleanTitle}</div></SectionTitle>
-
-                    <div style={styles.badgeWrapper} className="badge-wrapper">
-                        <Badge type="no" text={t.whyCleanNoPalm} icon="🚫" />
-                        <Badge type="no" text={t.whyCleanNoColor} icon="🎨" />
-                        <Badge type="no" text={t.whyCleanNoPreserve} icon="🧪" />
-                        <Badge type="no" text={t.whyCleanNoChem} icon="☢️" />
-                        <Badge type="yes" text={t.whyCleanNatural} icon="🌿" />
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 5. SHELF LIFE (12 MONTHS) ================= */}
-            <Section bg="linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)">
-                <div style={styles.grid2Reverse} className="grid-2-reverse">
-                    <div className="text-content">
-                        <SectionTitle><div className="section-title">{t.whyShelfTitle}</div></SectionTitle>
-                        <p style={styles.bodyText}>{t.whyShelfText}</p>
-                        <div style={styles.noteBox}>
-                            <strong>Note:</strong> {t.whyShelfNote}
-                        </div>
-                    </div>
-                    <ParallaxCard>
-                        {/* 12 Months Badge */}
-                        <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                            <img
-                                src="/images/why-kasturi/12-months-shelf.png"
-                                alt="12 Months Natural Shelf Life"
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                            />
-                            <div style={{
-                                position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-                                background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)',
-                                padding: '8px 20px', borderRadius: 99,
-                                fontSize: 13, fontWeight: 700, color: '#D97706',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', whiteSpace: 'nowrap'
-                            }}>
-                                12 Months Natural Shelf Life
-                            </div>
-                        </div>
-                    </ParallaxCard>
-                </div>
-            </Section>
-
-            {/* ================= 6. NATURAL FOCUS ================= */}
-            <Section>
-                <div style={styles.grid2} className="grid-2">
-                    <ParallaxCard>
-                        <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                            <img
-                                src="/images/why-kasturi/Pure-Ingredients.png"
-                                alt="Natural Ingredients - Pure Taste"
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                            />
-                            <div style={{
-                                position: 'absolute', bottom: 20, right: 20,
-                                background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)',
-                                padding: '8px 20px', borderRadius: 99,
-                                fontSize: 13, fontWeight: 700, color: '#C02729',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}>
-                                100% Natural
-                            </div>
-                        </div>
-                    </ParallaxCard>
-                    <div className="text-content">
-                        <SectionTitle><div className="section-title">{t.whyNaturalTitle}</div></SectionTitle>
-                        <p style={styles.bodyText}>{t.whyNaturalText}</p>
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 7. INDIAN KITCHEN ================= */}
-            <Section bg="#fff">
-                <div style={styles.centered}>
-                    <SectionTitle><div className="section-title-center" style={{ textAlign: 'center' }}>{t.whyKitchenTitle}</div></SectionTitle>
-                    <div style={styles.grid3} className="grid-3">
-                        <KitchenCard icon="🥘" text={t.whyKitchenPoint1} />
-                        <KitchenCard icon="⚖️" text={t.whyKitchenPoint2} />
-                        <KitchenCard icon="👨‍🍳" text={t.whyKitchenPoint3} />
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 8. TRUST ================= */}
-            <Section>
-                <div style={styles.centered}>
-                    <SectionTitle><div className="section-title-center" style={{ textAlign: 'center' }}>{t.whyTrustTitle}</div></SectionTitle>
-                    <div style={styles.grid4} className="grid-4">
-                        <ProofCard icon="👃" title="Aroma" text={t.whyTrustPoint1} />
-                        <ProofCard icon="🤝" title="Honest" text={t.whyTrustPoint2} />
-                        <ProofCard icon="🏷️" title="Clean" text={t.whyTrustPoint3} />
-                        <ProofCard icon="⏳" title="Durable" text={t.whyTrustPoint4} />
-                    </div>
-                </div>
-            </Section>
-
-            {/* ================= 9. PROMISE ================= */}
-            <section style={styles.promiseSection} className="section-padding">
-                <div style={styles.container}>
-                    <div style={styles.centered}>
-                        <h2 style={{ ...styles.sectionTitleCenter, color: '#FEF3C7' }} className="section-title-center">{t.whyPromiseTitle}</h2>
-                        <div style={styles.promiseGrid} className="promise-grid">
-                            <PromiseItem title={t.whyPromise1} />
-                            <PromiseItem title={t.whyPromise2} />
-                            <PromiseItem title={t.whyPromise3} />
-                            <PromiseItem title={t.whyPromise4} />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* ================= 1. WHY KASTURI IS PREMIUM (#premium) ================= */}
+            {/* Content moved to Hero as it is the main page now. Keeping section for structure/visuals if needed or removing empty section. 
+                 User request puts "Body Content" under "Section 1: Why Kasturi Is Premium". 
+                 The Hero already covers this. I will remove the redundant Section 1 block that had sub-components. 
+             */}
 
             {/* ================= FINAL CTA ================= */}
             <section style={styles.ctaSection} className="cta-section">
@@ -479,8 +297,8 @@ const SectionTitle = ({ children }) => (
 const ParallaxCard = ({ children, delay = 0 }) => (
     <motion.div
         className="glass-img-card"
-        initial={{ opacity: 0, y: 50, scale: 0.95, filter: 'blur(10px)' }}
-        whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ delay, duration: 1.2, ease: [0.16, 1, 0.3, 1] }} // Buttery smooth ease
         whileHover={{
@@ -620,7 +438,7 @@ const styles = {
     grid4: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginTop: 40 },
 
     blob: {
-        position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(80px)', zIndex: 1, pointerEvents: 'none'
+        position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(80px)', zIndex: 1, pointerEvents: 'none', willChange: 'transform'
     },
 
     /* HERO */

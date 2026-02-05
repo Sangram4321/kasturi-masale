@@ -4,9 +4,12 @@ const userController = require("../controllers/user.controller");
 
 const otpController = require("../controllers/otp.controller");
 
+const { protectUser } = require("../middleware/auth.middleware");
+
 router.post("/sync", userController.syncUser);
 router.post("/validate-referral", userController.validateReferral);
-router.get("/wallet/:uid", userController.getWallet);
+router.get("/wallet/me", protectUser, userController.getMyWallet); // Secure Route
+router.get("/wallet/:uid", userController.getWallet); // Legacy insecure route
 router.get("/orders/:uid", userController.getUserOrders);
 
 // OTP Routes

@@ -1,6 +1,8 @@
+
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { useState, useEffect } from "react"
 import { playHoverSound } from "../utils/audio"
+import RevealText from "./RevealText"
 
 export default function DifferentiationGrid() {
     const [isMobile, setIsMobile] = useState(false)
@@ -21,58 +23,78 @@ export default function DifferentiationGrid() {
         { label: "Shelf Life", kasturi: "Natural shelf life", market: "Chemical treated" },
     ]
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.15,
+                delayChildren: 0.1
+            }
+        }
+    }
+
+    const rowVariants = {
+        hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
+        visible: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] }
+        }
+    }
+
+    // Dynamic Styles based on isMobile
+    const gridColumns = isMobile ? "100px 1fr 1fr" : "140px 1fr 1fr"
+    const gap = isMobile ? 10 : 0
+
     return (
-        <section id="differentiation" style={{ ...styles.section, padding: isMobile ? "40px 0" : "100px 20px" }}>
+        <section id="differentiation" style={styles.section}>
             <div style={styles.container}>
-                <motion.h2
-                    style={styles.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                >
+                <RevealText style={{ ...styles.title, fontSize: isMobile ? "1.8rem" : "2.5rem" }}>
                     Har Masala Ek Jaisa Nahi Hota
-                </motion.h2>
+                </RevealText>
 
-                {isMobile ? (
-                    /* MOBILE: Horizontal Swipe */
-                    <div style={styles.mobileScrollContainer}>
-                        {diffs.map((item, i) => (
-                            <div key={i} style={styles.mobileCard}>
-                                <div style={styles.mobileLabel}>{item.label}</div>
-                                <div style={styles.mobileSplitV}>
-                                    <div style={styles.mobileHalfKasturi}>
-                                        <span style={styles.check}>✅</span>
-                                        <span style={styles.mobileText}>{item.kasturi}</span>
-                                    </div>
-                                    <div style={styles.mobileHalfMarket}>
-                                        <span style={styles.cross}>❌</span>
-                                        <span style={styles.mobileText}>{item.market}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    /* DESKTOP: Tight 3-Column Grid representing "Two Sides" */
-                    <div style={styles.grid} onMouseLeave={() => setHoveredRow(null)}>
-                        <div style={styles.rowHeader}>
-                            <div style={styles.colLabel}></div>
-                            <div style={styles.colHeaderKasturi}>Kasturi Masale</div>
-                            <div style={styles.colHeaderMarket}>Market Masala</div>
-                        </div>
+                <motion.div
+                    style={{ ...styles.grid, borderTop: isMobile ? "none" : "2px solid #EEE" }}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                >
+                    {/* HEADER */}
+                    <motion.div style={{
+                        ...styles.rowHeader,
+                        gridTemplateColumns: gridColumns,
+                        fontSize: isMobile ? "0.75rem" : "1rem",
+                        gap: gap
+                    }} variants={rowVariants}>
+                        <div></div>
+                        <div style={styles.colHeaderKasturi}>Kasturi Masale</div>
+                        <div style={styles.colHeaderMarket}>Market Masala</div>
+                    </motion.div>
 
-                        {diffs.map((item, i) => (
-                            <TiltCard key={i} index={i} item={item} setHoveredRow={setHoveredRow} hoveredRow={hoveredRow} />
-                        ))}
-                    </div>
-                )}
+                    {diffs.map((item, i) => (
+                        <TiltCard
+                            key={i}
+                            index={i}
+                            item={item}
+                            hoveredRow={hoveredRow}
+                            setHoveredRow={setHoveredRow}
+                            variants={rowVariants}
+                            isMobile={isMobile}
+                            gridColumns={gridColumns}
+                        />
+                    ))}
+                </motion.div>
 
                 <motion.p
-                    style={styles.finalLine}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
+                    style={{ ...styles.finalLine, fontSize: isMobile ? "1.1rem" : "1.4rem" }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.8, duration: 0.8 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.6 }}
                 >
                     Isliye taste bhi farak padta hai.
                 </motion.p>
@@ -81,83 +103,73 @@ export default function DifferentiationGrid() {
     )
 }
 
-/* 🧊 3D TILT CARD COMPONENT */
-function TiltCard({ item, index, setHoveredRow, hoveredRow }) {
+/* ROW */
+function TiltCard({ item, index, setHoveredRow, hoveredRow, variants, isMobile, gridColumns }) {
     const x = useMotionValue(0)
     const y = useMotionValue(0)
 
-    // Smooth physics
     const mouseX = useSpring(x, { stiffness: 150, damping: 15 })
     const mouseY = useSpring(y, { stiffness: 150, damping: 15 })
 
     const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"])
     const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"])
-    const brightness = useTransform(mouseY, [-0.5, 0.5], [1.02, 0.98])
 
     const handleMouseMove = (e) => {
+        if (isMobile) return // Disable 3D tilt on mobile
         const rect = e.currentTarget.getBoundingClientRect()
-        // Calculate normalized position -0.5 to 0.5
-        const width = rect.width
-        const height = rect.height
-        const mouseXVal = e.clientX - rect.left
-        const mouseYVal = e.clientY - rect.top
-
-        const xPct = (mouseXVal / width) - 0.5
-        const yPct = (mouseYVal / height) - 0.5
-
-        x.set(xPct)
-        y.set(yPct)
-    }
-
-    const handleMouseLeave = () => {
-        x.set(0)
-        y.set(0)
-        setHoveredRow(null)
-    }
-
-    const handleMouseEnter = () => {
-        setHoveredRow(index)
-        playHoverSound() // 🔊 AUDIO TRIGGER
+        x.set((e.clientX - rect.left) / rect.width - 0.5)
+        y.set((e.clientY - rect.top) / rect.height - 0.5)
     }
 
     return (
         <motion.div
+            variants={variants}
             style={{
                 ...styles.row,
-                perspective: 1000,
-                opacity: hoveredRow !== null && hoveredRow !== index ? 0.4 : 1,
-                zIndex: hoveredRow === index ? 10 : 1
+                opacity: hoveredRow !== null && hoveredRow !== index ? 0.4 : 1
             }}
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
+            onMouseEnter={() => {
+                setHoveredRow(index)
+                playHoverSound()
+            }}
+            onMouseLeave={() => setHoveredRow(null)}
             onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
         >
             <motion.div
                 style={{
-                    display: 'grid',
-                    gridTemplateColumns: "140px 1fr 1fr",
-                    width: '100%',
-                    alignItems: 'center',
-                    transformStyle: "preserve-3d",
-                    rotateX,
-                    rotateY,
-                    filter: "brightness(1)", // Base for transform
+                    ...styles.rowInner,
+                    gridTemplateColumns: gridColumns,
+                    rotateX: isMobile ? 0 : rotateX,
+                    rotateY: isMobile ? 0 : rotateY,
+                    minHeight: isMobile ? 80 : 110,
+                    gap: isMobile ? 4 : 0
                 }}
             >
-                {/* CONTENT */}
-                <div style={{ ...styles.labelCell, transform: "translateZ(20px)" }}>{item.label}</div>
+                <div style={{ ...styles.labelCell, fontSize: isMobile ? "0.7rem" : "0.9rem" }}>
+                    {item.label}
+                </div>
 
-                <div style={{ ...styles.kasturiCell, transform: "translateZ(40px)" }}>
-                    <motion.span style={styles.check}>✅</motion.span>
+                <div style={{
+                    ...styles.kasturiCell,
+                    padding: isMobile ? "8px 4px" : "16px 20px",
+                    flexDirection: isMobile ? "column" : "row",
+                    textAlign: "center",
+                    gap: isMobile ? 4 : 10,
+                    fontSize: isMobile ? "0.75rem" : "1rem"
+                }}>
+                    <span>✅</span>
                     {item.kasturi}
                 </div>
 
-                <div style={{ ...styles.marketCell, transform: "translateZ(30px)" }}>
-                    <motion.span style={styles.cross}>❌</motion.span>
+                <div style={{
+                    ...styles.marketCell,
+                    padding: isMobile ? "8px 4px" : "16px 20px",
+                    flexDirection: isMobile ? "column" : "row",
+                    textAlign: "center",
+                    gap: isMobile ? 4 : 10,
+                    fontSize: isMobile ? "0.75rem" : "1rem"
+                }}>
+                    <span>❌</span>
                     {item.market}
                 </div>
             </motion.div>
@@ -165,160 +177,84 @@ function TiltCard({ item, index, setHoveredRow, hoveredRow }) {
     )
 }
 
+/* STYLES */
 const styles = {
-    section: {
-        background: "#FFF",
-        overflow: "hidden" // Prevent overflow from scrollbar bleed
-    },
-    container: {
-        maxWidth: 900,
-        margin: "0 auto",
-        textAlign: "center"
-    },
+    section: { background: "#FFF", padding: "60px 20px" }, // Reduced top padding
+    container: { maxWidth: 900, margin: "0 auto", textAlign: "center" },
+
     title: {
-        fontSize: "clamp(2rem, 4vw, 3rem)",
-        fontFamily: "var(--font-heading)",
         marginBottom: 40,
-        color: "#2D2A26",
-        padding: "0 20px"
+        fontWeight: 700,
+        color: "#111827"
     },
 
-    // DESKTOP GRID
     grid: {
         width: "100%",
-        borderTop: "2px solid #EEE",
+        // Border handled inline
     },
+
     rowHeader: {
         display: "grid",
-        gridTemplateColumns: "140px 1fr 1fr", // Fixed label width, equal split for comparison
-        gap: "0", // Remove gap for solid look
-        padding: "20px 0",
+        alignItems: "center",
+        padding: "16px 0",
         borderBottom: "2px solid #E0E0E0",
-        fontWeight: "700",
-        color: "#2D2A26",
-        fontFamily: "var(--font-heading)",
-        fontSize: "1.2rem",
-        alignItems: "center"
+        fontWeight: 700,
+        letterSpacing: "0.5px"
     },
-    colHeaderKasturi: { color: "#1B5E20", textAlign: "left", paddingLeft: 20 },
-    colHeaderMarket: { color: "#B71C1C", textAlign: "left", paddingLeft: 20 },
+
+    colHeaderKasturi: { textAlign: "center", color: "#166534" }, // Darker Green
+    colHeaderMarket: { textAlign: "center", color: "#B91C1C" },   // Darker Red
 
     row: {
-        display: "grid",
-        gridTemplateColumns: "140px 1fr 1fr",
-        gap: "0",
-        padding: "18px 0",
         borderBottom: "1px solid #F0F0F0",
-        alignItems: "center",
-        textAlign: "left",
-        fontSize: "1.05rem",
-        color: "#4e342e"
+        perspective: 1000
     },
+
+    rowInner: {
+        display: "grid",
+        alignItems: "center",
+        padding: "16px 0",
+        transformStyle: "preserve-3d"
+    },
+
     labelCell: {
-        fontWeight: "600",
-        color: "#8D6E63",
-        fontFamily: "var(--font-body)",
-        fontSize: "0.95rem",
+        fontWeight: 700,
         textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        paddingRight: 10
+        color: "#4B5563",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // Center aligned label
+        textAlign: "center",
+        paddingRight: 4
     },
+
     kasturiCell: {
-        color: "#2E7D32",
-        fontWeight: "500",
-        background: "#F1F8E9", // Subtle row background per cell
-        padding: "16px 20px",
-        marginRight: "10px", // Visual separation
-        borderRadius: "8px",
+        background: "#F0FDF4",
+        borderRadius: 8,
+        width: "96%",
+        justifySelf: "center",
         display: "flex",
         alignItems: "center",
-        gap: "10px"
+        justifyContent: "center",
+        color: "#166534",
+        border: "1px solid #DCFCE7"
     },
+
     marketCell: {
-        color: "#C62828",
-        fontWeight: "400",
-        background: "#FFEBEE",
-        padding: "16px 20px",
-        marginLeft: "10px",
-        borderRadius: "8px",
+        background: "#FEF2F2",
+        borderRadius: 8,
+        width: "96%",
+        justifySelf: "center",
         display: "flex",
         alignItems: "center",
-        gap: "10px"
+        justifyContent: "center",
+        color: "#991B1B",
+        border: "1px solid #FEE2E2"
     },
-
-    // MOBILE SWIPE
-    mobileScrollContainer: {
-        display: "flex",
-        overflowX: "auto",
-        scrollSnapType: "x mandatory",
-        gap: "16px",
-        padding: "0 20px 40px", // Bottom padding for shadow visibility
-        scrollbarWidth: "none", // Firefox
-        msOverflowStyle: "none", // IE
-        WebkitOverflowScrolling: "touch"
-    },
-    mobileCard: {
-        minWidth: "85vw", // Shows next card peeking
-        scrollSnapAlign: "center",
-        background: "#FFF",
-        borderRadius: "20px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-        border: "1px solid #F0F0F0",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden"
-    },
-    mobileLabel: {
-        background: "#2D2A26",
-        color: "#FFF",
-        padding: "10px 0",
-        fontSize: "14px",
-        fontWeight: "600",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        fontFamily: "var(--font-body)"
-    },
-    mobileSplitV: {
-        display: "flex",
-        flexDirection: "column",
-        flex: 1
-    },
-    mobileHalfKasturi: {
-        flex: 1,
-        background: "#F1F8E9",
-        padding: "20px",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        borderBottom: "1px solid rgba(0,0,0,0.05)",
-        color: "#1B5E20",
-        justifyContent: "center"
-    },
-    mobileHalfMarket: {
-        flex: 1,
-        background: "#FFEBEE",
-        padding: "20px",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        color: "#B71C1C",
-        justifyContent: "center"
-    },
-    mobileText: {
-        fontWeight: "500",
-        fontSize: "1rem",
-        textAlign: "left"
-    },
-
-    check: { fontSize: "1.2rem" },
-    cross: { fontSize: "1.2rem" },
 
     finalLine: {
         marginTop: 30,
-        fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
         fontWeight: 800,
-        color: "#3E2723",
-        fontFamily: "var(--font-body)",
-        padding: "0 20px"
+        color: "#374151"
     }
 }

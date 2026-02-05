@@ -1,5 +1,6 @@
 import { useRef } from "react"
 import { motion } from "framer-motion"
+import Image from "next/image"
 
 // Exact 5 images requested
 const IMAGES = [
@@ -13,7 +14,7 @@ const IMAGES = [
 export default function Hero2() {
     return (
         <section className="hero-two-section" style={styles.section}>
-            <div style={styles.header}>
+            <div style={styles.header} data-scroll data-scroll-speed="0.1">
                 <motion.span
                     style={styles.label}
                     initial={{ opacity: 0, y: 10 }}
@@ -41,6 +42,7 @@ export default function Hero2() {
                 ></motion.div>
             </div>
 
+
             {/* Marquee Container */}
             <div style={styles.marqueeParams}>
                 <div style={styles.track}>
@@ -52,7 +54,15 @@ export default function Hero2() {
                             whileHover={{ scale: 1.05, y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }}
                             transition={{ duration: 0.3 }}
                         >
-                            <img src={src} alt={`Kasturi Masala Process ${i}`} style={styles.image} />
+                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                <Image
+                                    src={src}
+                                    alt={`Kasturi Masala Process ${i}`}
+                                    fill
+                                    sizes="(max-width: 768px) 300px, 300px"
+                                    style={{ objectFit: "cover" }}
+                                />
+                            </div>
                         </motion.div>
                     ))}
                 </div>
@@ -71,7 +81,7 @@ export default function Hero2() {
                     }
                 }
             `}</style>
-        </section>
+        </section >
     )
 }
 

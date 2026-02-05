@@ -34,13 +34,13 @@ export default function CoinPromo() {
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
                     >
-                        Get 10% back in coins on every order. Use them for discounts on your next authentic masala purchase.
+                        Get 5% back in coins on every order. Use them for discounts on your next authentic masala purchase.
                     </motion.p>
 
                     <div style={styles.steps}>
                         <Step icon="🛍️" title="Buy Masala" desc="Order your favorites" delay={0.3} />
                         <div style={styles.arrow}>→</div>
-                        <Step icon="🪙" title="Earn Coins" desc="10% value credited" delay={0.4} />
+                        <Step icon="🪙" title="Earn Coins" desc="5% value credited" delay={0.4} />
                         <div style={styles.arrow}>→</div>
                         <Step icon="💸" title="Redeem" desc="Save on next order" delay={0.5} />
                     </div>

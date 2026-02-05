@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+const API = "";
 
 // --- Components ---
 
@@ -271,97 +271,104 @@ export default function AdminLogin() {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Head>
 
-      <main className="login-card">
-        {/* Header */}
-        <div className="header">
-          <img
-            src="/images/logo-circle/kasturi-logo-red-circle.png"
-            alt="Kasturi Masale"
-            className="logo"
-          />
-          <h1 className="title">
-            {show2FA ? "Security Check" : "Admin Portal"}
-          </h1>
-          <p className="subtitle">
-            {show2FA
-              ? "Enter the 2FA code from your authenticator app"
-              : "Sign in to manage your dashboard"
-            }
-          </p>
-        </div>
+      <div className="login-wrapper">
+        {/* 1. Ambient Glow */}
+        <div className="ambient-glow" style={{ zIndex: 0 }} />
+        {/* 2. Contrast Patch */}
+        <div className="glass-contrast" style={{ zIndex: 1 }} />
 
-        {/* Global Error */}
-        {globalError && (
-          <div className="global-error" role="alert">
-            <AlertCircle size={18} />
-            <span>{globalError}</span>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={submit} className="form-stack" noValidate>
-          {!show2FA ? (
-            <>
-              <FloatingInput
-                id="username"
-                label="Username"
-                value={username}
-                onChange={e => {
-                  setUsername(e.target.value);
-                  if (errors.username) setErrors(prev => ({ ...prev, username: null }));
-                }}
-                error={errors.username}
-                disabled={loading}
-                autoFocus
-              />
-              <FloatingInput
-                id="password"
-                label="Password"
-                type="password"
-                value={password}
-                onChange={e => {
-                  setPassword(e.target.value);
-                  if (errors.password) setErrors(prev => ({ ...prev, password: null }));
-                }}
-                error={errors.password}
-                disabled={loading}
-              />
-            </>
-          ) : (
-            <FloatingInput
-              id="token"
-              label="Authenticator Code"
-              value={token}
-              onChange={e => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setToken(e.target.value);
-                  if (errors.token) setErrors(prev => ({ ...prev, token: null }));
-                }
-              }}
-              maxLength={6}
-              error={errors.token}
-              disabled={loading}
-              autoFocus
-              type="tel"
+        <main className="login-card">
+          {/* Header */}
+          <div className="header">
+            <img
+              src="/images/logo-circle/kasturi-logo-red-circle.png"
+              alt="Kasturi Masale"
+              className="logo"
             />
+            <h1 className="title">
+              {show2FA ? "Security Check" : "Admin Portal"}
+            </h1>
+            <p className="subtitle">
+              {show2FA
+                ? "Enter the 2FA code from your authenticator app"
+                : "Sign in to manage your dashboard"
+              }
+            </p>
+          </div>
+
+          {/* Global Error */}
+          {globalError && (
+            <div className="global-error" role="alert">
+              <AlertCircle size={18} />
+              <span>{globalError}</span>
+            </div>
           )}
 
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={loading}
-          >
-            {loading && <Loader2 size={18} className="spin" />}
-            <span>
-              {loading ? "Signing in..." : (show2FA ? "Verify Code" : "Sign In")}
-            </span>
-          </button>
-        </form>
+          {/* Form */}
+          <form onSubmit={submit} className="form-stack" noValidate>
+            {!show2FA ? (
+              <>
+                <FloatingInput
+                  id="username"
+                  label="Username"
+                  value={username}
+                  onChange={e => {
+                    setUsername(e.target.value);
+                    if (errors.username) setErrors(prev => ({ ...prev, username: null }));
+                  }}
+                  error={errors.username}
+                  disabled={loading}
+                  autoFocus
+                />
+                <FloatingInput
+                  id="password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={e => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors(prev => ({ ...prev, password: null }));
+                  }}
+                  error={errors.password}
+                  disabled={loading}
+                />
+              </>
+            ) : (
+              <FloatingInput
+                id="token"
+                label="Authenticator Code"
+                value={token}
+                onChange={e => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    setToken(e.target.value);
+                    if (errors.token) setErrors(prev => ({ ...prev, token: null }));
+                  }
+                }}
+                maxLength={6}
+                error={errors.token}
+                disabled={loading}
+                autoFocus
+                type="tel"
+              />
+            )}
 
-        <div className="footer">
-          <p>Protected by secure 256-bit encryption</p>
-        </div>
-      </main>
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+            >
+              {loading && <Loader2 size={18} className="spin" />}
+              <span>
+                {loading ? "Signing in..." : (show2FA ? "Verify Code" : "Sign In")}
+              </span>
+            </button>
+          </form>
+
+          <div className="footer">
+            <p>Protected by secure 256-bit encryption</p>
+          </div>
+        </main>
+      </div>
 
       <style jsx>{`
         /* SYSTEM FONTS & RESET */
@@ -371,19 +378,41 @@ export default function AdminLogin() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #F9FAFB; /* Clean light grey */
+          background-color: #F9FAFB;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
           padding: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .login-card {
           width: 100%;
-          max-width: 400px;
-          background: #FFFFFF;
+          /* Glassmorphism applied via class */
+          background: var(--glass-bg) !important;
+          backdrop-filter: var(--glass-backdrop) !important;
+          -webkit-backdrop-filter: var(--glass-backdrop) !important;
+          border: var(--glass-border) !important;
+          box-shadow: var(--glass-shadow) !important;
+          
           padding: 48px 40px;
-          border-radius: 24px;
-          /* Minimal shadow */
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
+          border-radius: 20px;
+          
+          position: relative;
+          z-index: 10; /* Top layer */
+        }
+        
+        :global(.glass-contrast) {
+            border-radius: 20px;
         }
 
         /* HEADER */
@@ -483,7 +512,7 @@ export default function AdminLogin() {
         .footer {
           margin-top: 32px;
           text-align: center;
-          border-top: 1px solid #F3F4F6;
+          border-top: 1px solid rgba(0,0,0,0.05);
           padding-top: 24px;
         }
         .footer p {
@@ -500,8 +529,7 @@ export default function AdminLogin() {
            }
            .login-card {
              padding: 32px 24px;
-             box-shadow: none; /* Cleaner on mobile */
-             background: transparent;
+             /* Keep glass style even on mobile? Yes per strict instructions */
            }
            .logo { height: 72px; }
            .title { font-size: 22px; }

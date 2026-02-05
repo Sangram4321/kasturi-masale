@@ -100,6 +100,7 @@ const ShimmerButton = ({ children, style, onClick }) => (
 )
 
 import SoftTruck from "../components/SoftTruck"
+import CartTrustLine from "../components/CartTrustLine"
 
 // AnimatedCheckoutButton (Local Soft Truck)
 const AnimatedCheckoutButton = ({ style }) => {
@@ -193,7 +194,9 @@ export default function Cart() {
     return s + (mrp - i.price) * i.qty
   }, 0)
 
-  const freeDelivery = totalQty >= 2
+  const freeDelivery = subtotal >= 500
+  const deliveryFee = freeDelivery ? 0 : 50
+  const amountToFree = 500 - subtotal
 
   /* 🪙 WALLET LOGIC */
   const [wallet, setWallet] = useState(null)
@@ -206,7 +209,7 @@ export default function Cart() {
       const u = JSON.parse(storedUser)
       setUser(u)
       // Fetch Wallet
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/wallet/${u.uid}`)
+      fetch(`/api/user/wallet/${u.uid}`)
         .then(res => res.json())
         .then(data => {
           if (data.success) setWallet(data)
@@ -221,7 +224,9 @@ export default function Cart() {
   const canRedeem = wallet && wallet.balance >= 100 && maxRedeemableCoins >= 100
 
   const coinDiscount = (redeemCoins && canRedeem) ? Math.floor(maxRedeemableCoins * COIN_VALUE) : 0
-  const finalPayable = subtotal - coinDiscount
+
+  // Final Payable = Subtotal - Discounts + Delivery
+  const finalPayable = subtotal - coinDiscount + deliveryFee
 
   /* 💾 PERSIST SELECTION */
   useEffect(() => {
@@ -238,7 +243,7 @@ export default function Cart() {
       animate={{ opacity: 1 }}
       style={styles.page}
     >
-      <div style={styles.container}>
+      <div style={styles.container} data-scroll-section>
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -250,7 +255,7 @@ export default function Cart() {
         {cart.length === 0 ? (
           <EmptyState />
         ) : (
-          <div style={isMobile ? styles.mobileGrid : styles.grid}>
+          <div id="cart-grid" style={isMobile ? styles.mobileGrid : styles.grid}>
 
             {/* 📦 LEFT COLUMN: ITEMS */}
             <div style={styles.itemsColumn}>
@@ -329,13 +334,29 @@ export default function Cart() {
             </div>
 
             {/* 🧾 RIGHT COLUMN: SUMMARY */}
-            <div style={styles.summaryColumn}>
+            <div
+              style={styles.summaryColumn}
+              data-scroll
+              data-scroll-sticky
+              data-scroll-target="#cart-grid"
+              data-scroll-offset="-100" // Offset from top
+            >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 style={styles.summaryCard}
               >
+                {/* FREE SHIPPING NUDGE */}
+                {!freeDelivery && (
+                  <div style={styles.nudgeBox}>
+                    Add items worth <b style={{ color: '#059669' }}>₹{amountToFree}</b> more for <b style={{ color: '#059669' }}>FREE SHIPPING</b>
+                    <div style={styles.progressBar}>
+                      <div style={{ ...styles.progressFill, width: `${(subtotal / 500) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+
                 <h3 style={styles.summaryTitle}>Order Summary</h3>
 
                 <div style={styles.summaryRow}>
@@ -352,8 +373,8 @@ export default function Cart() {
 
                 <div style={styles.summaryRow}>
                   <span>Delivery</span>
-                  <span style={{ color: freeDelivery ? '#2E7D32' : 'inherit' }}>
-                    {freeDelivery ? "FREE" : "Calc at checkout"}
+                  <span style={{ color: freeDelivery ? '#166534' : '#C02729', fontWeight: freeDelivery ? 700 : 500 }}>
+                    {freeDelivery ? "FREE" : `₹${deliveryFee}`}
                   </span>
                 </div>
 
@@ -404,6 +425,7 @@ export default function Cart() {
                 <p style={styles.gstText}>Inclusive of all taxes</p>
 
                 {/* CHECKOUT BUTTON (Replaced AnimatedCheckoutButton) */}
+                <CartTrustLine />
                 {!isMobile && (
                   <AnimatedCheckoutButton style={styles.checkoutBtn} />
                 )}
@@ -752,5 +774,27 @@ const styles = {
     borderRadius: 99,
     fontSize: 15,
     fontWeight: 700
+  },
+  nudgeBox: {
+    marginBottom: 24,
+    fontSize: 13,
+    color: "#4B5563",
+    background: "#ECFDF5",
+    padding: "12px",
+    borderRadius: 12,
+    border: "1px dashed #6EE7B7"
+  },
+  progressBar: {
+    height: 6,
+    background: "#E5E7EB",
+    borderRadius: 3,
+    marginTop: 8,
+    overflow: "hidden"
+  },
+  progressFill: {
+    height: "100%",
+    background: "#10B981",
+    borderRadius: 3,
+    transition: "width 0.4s ease"
   }
 }

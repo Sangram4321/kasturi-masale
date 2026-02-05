@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import {
     Package, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle,
-    ShoppingBag, ArrowLeft, MoreHorizontal, X
+    ShoppingBag, ArrowLeft, MoreHorizontal, X, Download
 } from "lucide-react";
 
 /* ================= COMPONENT ================= */
@@ -35,12 +35,20 @@ export default function Orders() {
         setUser(userData);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/user/orders/${userData.uid}`);
+            const res = await fetch(`/api/user/orders/${userData.uid}`);
             const data = await res.json();
             if (data.success) {
                 // Sort by newest
                 setOrders(data.orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
             }
+
+            // Fetch Wallet
+            const wRes = await fetch(`/api/user/wallet/${userData.uid}`);
+            const wData = await wRes.json();
+            if (wData.success) {
+                setUser(prev => ({ ...prev, walletBalance: wData.balance }));
+            }
+
         } catch (err) {
             console.error("Failed to load orders", err);
         } finally {
@@ -59,7 +67,7 @@ export default function Orders() {
 
         setCancelling(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/orders/user/${selectedOrder.orderId}/cancel`, {
+            const res = await fetch(`/api/orders/user/${selectedOrder.orderId}/cancel`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -116,7 +124,15 @@ export default function Orders() {
                         <ArrowLeft size={20} />
                     </button>
                     <h1 style={styles.title}>Your Orders</h1>
-                    <div style={{ width: 40 }}></div> {/* Spacer for alignment */}
+
+                    {/* COIN BALANCE */}
+                    <div style={styles.coinPill}>
+                        <div style={{ fontSize: 16 }}>🪙</div>
+                        <div>
+                            <span style={{ fontSize: 10, display: 'block', lineHeight: 1, color: '#B45309' }}>BALANCE</span>
+                            <span style={{ fontWeight: 800, color: '#78350F' }}>{user?.walletBalance || 0}</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* CONTENT */}
@@ -244,6 +260,127 @@ export default function Orders() {
           border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* HEADER SPACER */
+        .spacer { height: 20px; }
+
+        /* INVOICE BUTTON (Uiverse.io by satyamchaudharydev) */
+        .invoice-dl-btn {
+          --width: 110px;
+          --height: 35px;
+          --tooltip-height: 35px;
+          --tooltip-width: 90px;
+          --gap-between-tooltip-to-button: 18px;
+          --button-color: #1163ff;
+          --tooltip-color: #fff;
+          width: var(--width);
+          height: var(--height);
+          background: var(--button-color);
+          position: relative;
+          text-align: center;
+          border-radius: 0.45em;
+          font-family: "Arial";
+          transition: background 0.3s;
+          border: none;
+          cursor: pointer;
+        }
+
+        .invoice-dl-btn::before {
+          position: absolute;
+          content: attr(data-tooltip);
+          width: var(--tooltip-width);
+          height: var(--tooltip-height);
+          background-color: var(--tooltip-color);
+          font-size: 0.9rem;
+          color: #111;
+          border-radius: .25em;
+          line-height: var(--tooltip-height);
+          bottom: calc(var(--height) + var(--gap-between-tooltip-to-button) + 10px);
+          left: calc(50% - var(--tooltip-width) / 2);
+        }
+
+        .invoice-dl-btn::after {
+          position: absolute;
+          content: '';
+          width: 0;
+          height: 0;
+          border: 10px solid transparent;
+          border-top-color: var(--tooltip-color);
+          left: calc(50% - 10px);
+          bottom: calc(100% + var(--gap-between-tooltip-to-button) - 10px);
+        }
+
+        .invoice-dl-btn::after,.invoice-dl-btn::before {
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.5s;
+          pointer-events: none; /* Prevent tooltip blocking hover exit */
+          z-index: 10;
+        }
+
+        .invoice-dl-btn .text {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .button-wrapper, .text, .icon {
+          overflow: hidden;
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          left: 0;
+          top: 0;
+          color: #fff;
+        }
+
+        .invoice-dl-btn .text {
+          top: 0;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .text, .icon {
+          transition: top 0.5s;
+        }
+
+        .icon {
+          color: #fff;
+          top: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .icon svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .invoice-dl-btn:hover {
+          background: #6c18ff;
+        }
+
+        .invoice-dl-btn:hover .text {
+          top: -100%;
+        }
+
+        .invoice-dl-btn:hover .icon {
+          top: 0;
+        }
+
+        .invoice-dl-btn:hover:before, .invoice-dl-btn:hover:after {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .invoice-dl-btn:hover:after {
+          bottom: calc(var(--height) + var(--gap-between-tooltip-to-button) - 20px);
+        }
+
+        .invoice-dl-btn:hover:before {
+          bottom: calc(var(--height) + var(--gap-between-tooltip-to-button));
+        }
       `}</style>
         </div>
     );
@@ -251,6 +388,9 @@ export default function Orders() {
 
 const OrderCard = ({ order, variants, onCancel }) => {
     const isCancellable = order.status === "PENDING_SHIPMENT";
+    // Show invoice if NOT COD (i.e. Prepaid) OR if it is COD but Shipped/Delivered
+    const showInvoice = order.paymentMethod !== 'COD' ||
+        ["SHIPPED", "ON_THE_WAY", "OUT_FOR_DELIVERY", "DELIVERED", "RTO_DELIVERED"].includes(order.status);
 
     return (
         <motion.div variants={variants} style={styles.card}>
@@ -293,6 +433,24 @@ const OrderCard = ({ order, variants, onCancel }) => {
                         </button>
                     )}
                     {/* Always show View Details / Track button linking to internal page */}
+                    {/* Always show View Details / Track button linking to internal page */}
+                    {showInvoice && (
+                        <button
+                            className="invoice-dl-btn"
+                            data-tooltip="Download"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`/order/${order.orderId}/invoice`, '_blank');
+                            }}
+                        >
+                            <div className="button-wrapper">
+                                <div className="text">Invoice</div>
+                                <span className="icon">
+                                    <Download size={20} />
+                                </span>
+                            </div>
+                        </button>
+                    )}
                     <button
                         onClick={() => window.location.href = `/order/${order.orderId}`}
                         style={styles.trackBtn}
@@ -356,6 +514,16 @@ const styles = {
         cursor: "pointer",
         color: "#374151",
         transition: "all 0.2s"
+    },
+    coinPill: {
+        background: "#FFFbeb",
+        border: "1px solid #FCD34D",
+        borderRadius: 24,
+        padding: "4px 12px 4px 8px",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
     },
     title: {
         fontSize: 20,
@@ -516,7 +684,20 @@ const styles = {
         borderRadius: 8,
         fontSize: 13,
         fontWeight: 600,
-        display: "inline-block"
+        display: "inline-block",
+        border: "none",
+        cursor: "pointer"
+    },
+    invoiceBtn: {
+        background: "#fff",
+        border: "1px solid #D1D5DB",
+        color: "#374151",
+        padding: "8px 16px",
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: "pointer",
+        transition: "all 0.2s"
     },
     /* MODAL */
     overlay: {

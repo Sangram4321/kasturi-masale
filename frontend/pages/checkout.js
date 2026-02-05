@@ -6,7 +6,8 @@ import { useCart } from "../context/CartContext"
 import OrderTruckButton from "../components/OrderTruckButton"
 
 /* ================= CONFIG ================= */
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
+// API Configuration: Relative paths via Next.js Proxy
+const API = ""; // Using relative paths
 const COD_FEE = 40
 
 const haptic = (pattern = 10) => {
@@ -40,7 +41,7 @@ const CodIcon = () => (
 
 export default function Checkout() {
   const router = useRouter()
-  const { cart, clearCart } = useCart()
+  const { cart, clearCart, hydrated } = useCart()
 
   const [confirmed, setConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -48,6 +49,7 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState(null)
   const [whatsappLink, setWhatsappLink] = useState(null)
   const [coupon, setCoupon] = useState("")
+  const [showCoupon, setShowCoupon] = useState(false)
 
   const [customer, setCustomer] = useState({ name: "", phone: "+91", address: "", pincode: "" })
   const [hasMounted, setHasMounted] = useState(false)
@@ -70,11 +72,11 @@ export default function Checkout() {
     const storedUser = localStorage.getItem('user')
     if (storedUser) setUser(JSON.parse(storedUser))
 
-    // Redirect if empty
-    if (cart.length === 0 && !confirmed) {
+    // Redirect if empty - BUT WAIT FOR HYDRATION
+    if (hydrated && cart.length === 0 && !confirmed) {
       router.replace("/cart")
     }
-  }, [cart, confirmed, router])
+  }, [cart, confirmed, router, hydrated])
 
   const handleChange = e => setCustomer({ ...customer, [e.target.name]: e.target.value })
 
@@ -83,7 +85,8 @@ export default function Checkout() {
   const discount = Math.floor(redeemCoins * 0.8)
 
   const subTotalAfterDiscount = baseTotal - discount - referralDiscount
-  const total = paymentMethod === "cod" ? subTotalAfterDiscount + COD_FEE : subTotalAfterDiscount
+  const deliveryFee = baseTotal >= 500 ? 0 : 50
+  const total = (paymentMethod === "cod" ? subTotalAfterDiscount + COD_FEE : subTotalAfterDiscount) + deliveryFee
 
   const isValid =
     cart.length > 0 &&
@@ -92,18 +95,18 @@ export default function Checkout() {
     customer.address.length > 5 &&
     customer.pincode.length >= 6
 
-  const [showConfirmation, setShowConfirmation] = useState(false)
+
 
   /* ACTIONS */
   // 1. Called after Truck Animation Finishes
   const handleTruckAnimationComplete = () => {
     haptic(50)
-    setShowConfirmation(true)
+    confirmOrder()
   }
 
   // 2. Called when User clicks "Confirm Order" in Modal
   const confirmOrder = async () => {
-    setShowConfirmation(false)
+    // setShowConfirmation(false) // Removed
     setLoading(true)
 
     try {
@@ -111,7 +114,12 @@ export default function Checkout() {
         customer,
         items: cart.map(i => ({ variant: i.variant, quantity: i.qty, price: i.price })),
         paymentMethod: paymentMethod === "cod" ? "COD" : "UPI",
-        pricing: { subtotal: baseTotal, codFee: paymentMethod === "cod" ? COD_FEE : 0, total },
+        pricing: {
+          subtotal: baseTotal,
+          codFee: paymentMethod === "cod" ? COD_FEE : 0,
+          shippingFee: deliveryFee,
+          total
+        },
         userId: user ? user.uid : null,
         redeemCoins: redeemCoins,
         referralCode: referralDiscount > 0 ? referralCode : null
@@ -119,12 +127,20 @@ export default function Checkout() {
 
       /* 1. COD FLOW */
       if (paymentMethod === "cod") {
-        const res = await fetch(`${API_BASE}/api/orders/create`, {
+        const res = await fetch(`${API}/api/orders/create`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         })
 
-        const data = await res.json()
+        const text = await res.text()
+        let data
+        try {
+          data = JSON.parse(text)
+        } catch (e) {
+          console.error("JSON PARSE ERROR:", text)
+          throw new Error("Server Error: " + (text.substring(0, 100) || "Unknown Error"))
+        }
+
         if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
 
         handleSuccess(data)
@@ -132,11 +148,19 @@ export default function Checkout() {
         /* 2. ONLINE FLOW (RAZORPAY) */
       } else {
         // A. Init Payment on Backend
-        const orderRes = await fetch(`${API_BASE}/api/orders/create-payment`, {
+        const orderRes = await fetch(`${API}/api/orders/create-payment`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount: total }) // Amount in Rupees
         });
-        const orderData = await orderRes.json();
+
+        const orderText = await orderRes.text();
+        let orderData;
+        try {
+          orderData = JSON.parse(orderText);
+        } catch (e) {
+          throw new Error("Payment Init Failed: " + orderText.substring(0, 50));
+        }
+
         if (!orderData.success) throw new Error("Payment initialization failed");
 
         // B. Open Razorpay
@@ -152,7 +176,7 @@ export default function Checkout() {
           handler: async function (response) {
             // C. Verify & Place Order
             try {
-              const verifyRes = await fetch(`${API_BASE}/api/orders/verify-payment`, {
+              const verifyRes = await fetch(`${API}/api/orders/verify-payment`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   razorpay_order_id: response.razorpay_order_id,
@@ -161,7 +185,15 @@ export default function Checkout() {
                   orderData: payload // Pass full order details to create it after payment
                 })
               });
-              const verifyData = await verifyRes.json();
+
+              const verifyText = await verifyRes.text();
+              let verifyData;
+              try {
+                verifyData = JSON.parse(verifyText);
+              } catch (e) {
+                throw new Error("Verification Failed: " + verifyText.substring(0, 50));
+              }
+
               if (verifyData.success) {
                 handleSuccess(verifyData);
               } else {
@@ -209,6 +241,24 @@ export default function Checkout() {
     // Send Email (Async)
     // ... (Email logic kept same or moved here)
 
+    // GA4 Purchase Event
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'purchase', {
+        transaction_id: data.orderId,
+        value: total,
+        currency: "INR",
+        items: cart.map(item => ({
+          item_id: item.variant,
+          item_name: item.name || item.variant, // Fallback if name missing
+          price: item.price,
+          quantity: item.qty
+        }))
+      });
+    }
+
+    // Trigger Premium Success Feedback
+    import('../lib/feedback').then(({ feedback }) => feedback.trigger('success'))
+
     clearCart()
     setConfirmed(true)
   }
@@ -239,7 +289,6 @@ export default function Checkout() {
                 <div style={styles.iconBox}><NoteIcon /></div>
                 <h1 style={styles.title}>Checkout</h1>
               </div>
-              <span style={styles.badge}>Secured</span>
             </header>
 
             <div style={styles.scrollContent}>
@@ -266,7 +315,7 @@ export default function Checkout() {
 
                 {/* TOTALS */}
                 <div style={styles.receipt}>
-                  <div style={styles.receiptRow}><span>Cart Value (After Savings)</span> <b>₹{baseTotal}</b></div>
+                  <div style={styles.receiptRow}><span>Item Total</span> <b>₹{baseTotal}</b></div>
                   {discount > 0 && (
                     <div style={{ ...styles.receiptRow, color: '#166534', fontWeight: 600 }}>
                       <span>Loyalty Discount ({redeemCoins} coins)</span>
@@ -285,6 +334,18 @@ export default function Checkout() {
                       <span style={{ color: "#D97706" }}>+ COD Handling</span> <b style={{ color: "#D97706" }}>₹{COD_FEE}</b>
                     </motion.div>
                   )}
+                  {/* SHIPPING FEE */}
+                  <div style={styles.receiptRow}>
+                    <span>Delivery Charge</span>
+                    <b style={{ color: deliveryFee === 0 ? '#166534' : 'inherit' }}>
+                      {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
+                    </b>
+                  </div>
+                  {/* SHIPPING EXPLANATION */}
+                  <div style={{ fontSize: 11, color: '#6B7280', marginTop: -6, marginBottom: 8, textAlign: 'right' }}>
+                    {deliveryFee > 0 ? `Shipping ₹${deliveryFee} applied (Free above ₹500)` : 'Free Shipping applied (Order above ₹500)'}
+                  </div>
+
                   <div style={styles.divider} />
                   <div style={styles.totalRow}>
                     <span>Total Payable</span>
@@ -312,57 +373,71 @@ export default function Checkout() {
 
                 <div style={styles.divider} />
 
-                <div style={styles.couponBox}>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>🎟️</span>
-                    <input
-                      type="text"
-                      placeholder="Referral / Coupon Code"
-                      style={styles.couponInput}
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                      disabled={referralDiscount > 0}
-                    />
-                  </div>
-                  {referralDiscount > 0 ? (
+                <div style={{ marginTop: 24 }}>
+                  {!showCoupon ? (
                     <button
-                      style={{ ...styles.applyBtn, background: '#166534' }}
-                      onClick={() => { setReferralCode(""); setReferralDiscount(0); setReferralStatus(null); }}
-                    >
-                      Applied ✓
-                    </button>
-                  ) : (
-                    <button
-                      style={styles.applyBtn}
-                      onClick={async () => {
-                        if (referralCode.length < 3) return;
-                        setReferralStatus({ loading: true, message: "Checking..." });
-
-                        try {
-                          const res = await fetch(`${API_BASE}/api/user/validate-referral`, {
-                            method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              code: referralCode,
-                              uid: user ? user.uid : null,
-                              cartTotal: baseTotal,
-                              phone: customer.phone,
-                              address: customer.address
-                            })
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            setReferralDiscount(data.discount);
-                            setReferralStatus({ success: true, message: `Referral Applied! saved ₹${data.discount}` });
-                          } else {
-                            setReferralStatus({ success: false, message: data.message });
-                          }
-                        } catch (e) {
-                          setReferralStatus({ success: false, message: "Validation error" });
-                        }
+                      onClick={() => setShowCoupon(true)}
+                      style={{
+                        background: 'none', border: 'none', color: '#6B7280',
+                        fontSize: 13, textDecoration: 'underline', cursor: 'pointer', padding: 0
                       }}
                     >
-                      Apply
+                      Have a coupon or referral code?
                     </button>
+                  ) : (
+                    <div style={styles.couponBox}>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 18 }}>🎟️</span>
+                        <input
+                          type="text"
+                          placeholder="Referral / Coupon Code"
+                          style={styles.couponInput}
+                          value={referralCode}
+                          onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                          disabled={referralDiscount > 0}
+                        />
+                      </div>
+                      {referralDiscount > 0 ? (
+                        <button
+                          style={{ ...styles.applyBtn, background: '#166534' }}
+                          onClick={() => { setReferralCode(""); setReferralDiscount(0); setReferralStatus(null); }}
+                        >
+                          Applied ✓
+                        </button>
+                      ) : (
+                        <button
+                          style={styles.applyBtn}
+                          onClick={async () => {
+                            if (referralCode.length < 3) return;
+                            setReferralStatus({ loading: true, message: "Checking..." });
+
+                            try {
+                              const res = await fetch(`${API}/api/user/validate-referral`, {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  code: referralCode,
+                                  uid: user ? user.uid : null,
+                                  cartTotal: baseTotal,
+                                  phone: customer.phone,
+                                  address: customer.address
+                                })
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                setReferralDiscount(data.discount);
+                                setReferralStatus({ success: true, message: `Referral Applied! saved ₹${data.discount}` });
+                              } else {
+                                setReferralStatus({ success: false, message: data.message });
+                              }
+                            } catch (e) {
+                              setReferralStatus({ success: false, message: "Validation error" });
+                            }
+                          }}
+                        >
+                          Apply
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 {referralStatus && (
@@ -385,66 +460,12 @@ export default function Checkout() {
                 onAnimationCommit={handleTruckAnimationComplete}
                 isLoading={loading}
                 isValid={isValid}
-                label={`Pay ₹${total} & Place Order`}
+                label={paymentMethod === "cod" ? `Place Order (Pay ₹${total} on Delivery)` : `Pay ₹${total} & Place Order`}
               />
-              <div style={styles.trustBadge}>🔒 100% Safe & Secure Payment</div>
+              <div style={styles.trustBadge}>🔒 Secure Checkout</div>
             </div>
 
-            {/* 3. CONFIRMATION MODAL OVERLAY */}
-            <AnimatePresence>
-              {showConfirmation && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'fixed', inset: 0, zIndex: 100,
-                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-                  }}
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, y: 10 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 10 }}
-                    style={{
-                      background: '#fff', borderRadius: 24, padding: 32,
-                      width: '100%', maxWidth: 360, textAlign: 'center',
-                      boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
-                    }}
-                  >
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
-                    <h3 style={{ fontSize: 20, fontWeight: '800', marginBottom: 8, color: '#111827' }}>Confirm Order?</h3>
-                    <p style={{ color: '#4B5563', marginBottom: 24, fontSize: 15 }}>
-                      Ready to ship to <strong>{customer.name.split(' ')[0]}</strong>?
-                    </p>
 
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <button
-                        onClick={() => setShowConfirmation(false)}
-                        style={{
-                          flex: 1, padding: 14, borderRadius: 14, border: 'none',
-                          background: '#F3F4F6', color: '#374151', fontWeight: '600',
-                          fontSize: 15, cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={confirmOrder}
-                        style={{
-                          flex: 1, padding: 14, borderRadius: 14, border: 'none',
-                          background: '#166534', color: '#fff', fontWeight: '600',
-                          fontSize: 15, cursor: 'pointer'
-                        }}
-                      >
-                        Yes, Place Order
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
           </motion.div>
         ) : (
@@ -461,9 +482,31 @@ export default function Checkout() {
             <p style={{ color: "#4B5563", margin: "8px 0 24px" }}>
               Order ID: <strong>#{orderId}</strong>
             </p>
+
+            {/* 🌟 COIN REWARD */}
+            <div style={{
+              background: "#FFFAEA", border: "1px dashed #FCD34D",
+              borderRadius: 12, padding: "12px", marginBottom: 24,
+              color: "#B45309", fontWeight: 600, fontSize: 14
+            }}>
+              <span style={{ fontSize: 18, marginRight: 8 }}>🪙</span>
+              You earned <strong>{Math.floor(total * 0.05)} Kasturi Coins</strong>!
+            </div>
+
             <div style={styles.whatsappBox}>
               Check WhatsApp for confirmation & tracking details.
             </div>
+
+            <button
+              onClick={() => router.push('/orders')}
+              style={{
+                marginTop: 24, background: 'none', border: 'none',
+                color: '#4B5563', fontWeight: 600, cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              View My Orders
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -504,7 +547,7 @@ const styles = {
     background: "#F3F4F6",
     fontFamily: "'Inter', sans-serif",
     display: "flex", justifyContent: "center", alignItems: "flex-start",
-    padding: "20px"
+    padding: "16px 12px"
   },
   card: {
     width: "100%", maxWidth: 500,
@@ -512,7 +555,8 @@ const styles = {
     boxShadow: "0 20px 60px -10px rgba(0,0,0,0.1)",
     overflow: "hidden",
     position: "relative",
-    marginTop: 20
+    marginTop: 0, // Reduced top margin for mobile
+    margin: "0 auto" // Center
   },
   header: {
     padding: "24px 24px 0",
@@ -532,12 +576,13 @@ const styles = {
     background: "#fff",
     padding: 20,
     borderRadius: "var(--border-radius-md)",
-    border: "1px dashed var(--color-brand-red)", // Dashed red border for visibility
+    border: "1px dashed var(--color-brand-red)",
     marginTop: 24,
     display: "flex",
     gap: 12,
     alignItems: "center",
-    backgroundColor: "var(--color-bg-cream)" // Slight contrast
+    backgroundColor: "var(--color-bg-cream)",
+    flexWrap: "wrap" // Wrap elements on small screens
   },
   couponInput: {
     flex: 1,
