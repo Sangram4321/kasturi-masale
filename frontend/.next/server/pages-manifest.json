@@ -1,8 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/cart": "pages/cart.js",
-  "/product": "pages/product.js",
-  "/checkout": "pages/checkout.js"
-}
+{"/_app":"pages/_app.js","/_error":"pages/_error.js","/404":"pages/404.html","/_document":"pages/_document.js","/accessibility":"pages/accessibility.html","/account/coins":"pages/account/coins.html","/admin/financials":"pages/admin/financials.html","/admin/coins":"pages/admin/coins.html","/admin":"pages/admin.html","/admin/login":"pages/admin/login.html","/admin/inventory":"pages/admin/inventory.html","/admin/orders/[id]":"pages/admin/orders/[id].html","/admin/orders":"pages/admin/orders.html","/about":"pages/about.html","/admin/orders/[id]/invoice":"pages/admin/orders/[id]/invoice.html","/admin/settings":"pages/admin/settings.html","/api/send-sms":"pages/api/send-sms.js","/admin/support":"pages/admin/support.html","/blog":"pages/blog.html","/checkout":"pages/checkout.html","/cart":"pages/cart.html","/coins":"pages/coins.html","/contact":"pages/contact.html","/":"pages/index.html","/heritage":"pages/heritage.html","/login":"pages/login.html","/order/[id]":"pages/order/[id].html","/order/[id]/invoice":"pages/order/[id]/invoice.html","/privacy":"pages/privacy.html","/orders":"pages/orders.html","/process":"pages/process.html","/product":"pages/product.html","/refund":"pages/refund.html","/shipping":"pages/shipping.html","/profile":"pages/profile.html","/signup":"pages/signup.html","/spices":"pages/spices.html","/terms":"pages/terms.html","/wholesale":"pages/wholesale.html","/why-kasturi":"pages/why-kasturi.html","/blog/[slug]":"pages/blog/[slug].html"}
