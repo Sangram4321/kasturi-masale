@@ -7,7 +7,7 @@ import OrderTruckButton from "../components/OrderTruckButton"
 
 /* ================= CONFIG ================= */
 // API Configuration: Relative paths via Next.js Proxy
-const API = ""; // Using relative paths
+const API = process.env.NEXT_PUBLIC_API_URL || ""; // Using absolute paths from env
 const COD_FEE = 40
 
 const haptic = (pattern = 10) => {
