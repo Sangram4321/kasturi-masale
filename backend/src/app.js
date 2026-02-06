@@ -4,7 +4,6 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 
-const orderRoutes = require("./routes/order.routes");
 const adminAuthRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 
@@ -59,7 +58,6 @@ app.get("/", (req, res) => {
 });
 
 /* ROUTES */
-app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin/wallet", require("./routes/admin.wallet.routes")); // 🪙 Admin Wallet Panel
 app.use("/api/user", userRoutes);

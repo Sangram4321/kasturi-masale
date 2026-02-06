@@ -7,6 +7,9 @@ require("dotenv").config({
 });
 
 const app = require("./app");
+const orderRoutes = require("./routes/order.routes");
+app.use("/api/orders", orderRoutes);
+
 // 🔄 Server Restart Triggered for Admin Fix
 const connectDB = require("./config/db");
 
