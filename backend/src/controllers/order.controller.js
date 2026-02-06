@@ -1708,8 +1708,9 @@ exports.createTestPaymentOrder = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Test payments disabled" });
     }
 
-    // 2. Admin Auth Guard (Strictly through middleware)
-    if (!req.admin || req.admin.role !== "ADMIN") {
+    // 2. Admin Auth Guard (Allow ADMIN and SUPER_ADMIN)
+    const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+    if (!req.admin || !allowedRoles.includes(req.admin.role)) {
       return res.status(403).json({ success: false, message: "Unauthorized test payment request" });
     }
 
