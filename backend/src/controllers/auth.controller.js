@@ -21,6 +21,12 @@ const sendTokenResponse = (admin, statusCode, res, req) => {
         sameSite: "none"
     };
 
+    console.log(`[AUTH] Creating admin_token for ${admin.username}. Options:`, {
+        expires: cookieOptions.expires,
+        secure: cookieOptions.secure,
+        sameSite: cookieOptions.sameSite
+    });
+
     res.cookie("admin_token", token, cookieOptions);
 
     // Log Successful Login

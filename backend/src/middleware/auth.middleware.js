@@ -6,22 +6,37 @@ const protectAdmin = async (req, res, next) => {
         // 1. Get Token from Cookie
         // 1. Get Token from Cookie OR Header
         let token;
+
+        // --- PROD DIAGNOSTICS ---
+        console.log(`[AUTH] Request Path: ${req.path}`);
+        console.log(`[AUTH] Cookies Received:`, req.cookies ? Object.keys(req.cookies) : "NONE");
+        console.log(`[AUTH] Auth Header:`, req.headers.authorization ? "PRESENT" : "MISSING");
+        // ------------------------
+
         if (req.cookies.admin_token) {
             token = req.cookies.admin_token;
+            console.log("[AUTH] Using Cookie Token");
         } else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
             token = req.headers.authorization.split(" ")[1];
+            console.log("[AUTH] Using Bearer Token");
         }
 
         if (!token) {
-            console.log("❌ Auth Failed: No Token Found");
-            console.log("Cookies:", req.cookies);
-            console.log("Auth Header:", req.headers.authorization);
-            console.log("Origin:", req.headers.origin);
-            return res.status(401).json({ success: false, message: "Not authorized loading access to this route" });
+            console.error("[AUTH] FAILED: No token provided via cookie or header");
+            return res.status(401).json({
+                success: false,
+                message: "Session expired or not found. Please login again.",
+                debug: {
+                    cookiesFound: !!req.cookies?.admin_token,
+                    headerFound: !!req.headers.authorization
+                }
+            });
         }
 
         // 2. Verify Token
+        console.log("[AUTH] Verifying JWT Token...");
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret_key_change_me");
+        console.log(`[AUTH] JWT Verified. ID: ${decoded.id}, Role: ${decoded.role}`);
 
         // 3. Check if Admin still exists
         const admin = await Admin.findById(decoded.id).select("-passwordHash -twoFactorSecret");
