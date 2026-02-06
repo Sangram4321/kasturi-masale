@@ -31,6 +31,7 @@ export default function TestPaymentPage() {
             addLog("📡 Calling createTestPaymentOrder...", "info");
             const res = await fetch(`${BACKEND_URL}/api/orders/admin/test-payment/create`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                     // The cookie 'admin_token' should be automatically sent by browser
@@ -89,6 +90,7 @@ export default function TestPaymentPage() {
         try {
             const res = await fetch(`${BACKEND_URL}/api/orders/admin/test-payment/verify`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },

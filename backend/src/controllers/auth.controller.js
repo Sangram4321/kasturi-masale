@@ -17,8 +17,8 @@ const sendTokenResponse = (admin, statusCode, res, req) => {
     const cookieOptions = {
         expires: new Date(Date.now() + 15 * 60 * 1000), // 15 mins
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax" // Lax for localhost dev
+        secure: true, // Required for sameSite: "none"
+        sameSite: "none"
     };
 
     res.cookie("admin_token", token, cookieOptions);
