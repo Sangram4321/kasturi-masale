@@ -1708,21 +1708,22 @@ exports.createTestPaymentOrder = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Test payments disabled" });
     }
 
-    // 2. Admin Auth Guard (Highest Resilience)
+    // 2. Admin Auth Guard (Strict & Diagnostic v3-Alpha)
     const activeAdmin = req.admin || req.user;
     const rawRole = activeAdmin?.role || "";
     const normalizedRole = rawRole.toString().trim().toUpperCase();
     const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
 
     if (!activeAdmin || !allowedRoles.includes(normalizedRole)) {
-      console.warn(`[AUTH] Test Payment Denied: Found ${req.admin ? 'req.admin' : (req.user ? 'req.user' : 'nothing')}, Role: "${rawRole}"`);
+      console.warn(`[AUTH v3-Alpha] Denied: Role="${rawRole}", Source=${req.admin ? 'admin' : (req.user ? 'user' : 'none')}`);
       return res.status(403).json({
         success: false,
-        message: "Unauthorized test payment request",
-        reason: "Access restricted to accounts with ADMIN or SUPER_ADMIN role.",
+        message: "Unauthorized test payment request (v3-Alpha)",
         debug: {
-          detectedRole: rawRole || "null/undefined",
-          source: req.admin ? "req.admin" : (req.user ? "req.user" : "none")
+          detectedRole: rawRole || "MISSING",
+          authSource: req.admin ? "req.admin" : (req.user ? "req.user" : "none"),
+          hasId: !!activeAdmin?._id,
+          username: activeAdmin?.username || "N/A"
         }
       });
     }
