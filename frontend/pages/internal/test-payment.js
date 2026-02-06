@@ -29,11 +29,14 @@ export default function TestPaymentPage() {
         try {
             // 1. Create Test Order on Backend
             addLog("📡 Calling createTestPaymentOrder...", "info");
+            const token = localStorage.getItem("admin_token");
+
             const res = await fetch(`${BACKEND_URL}/api/orders/admin/test-payment/create`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token && { "Authorization": `Bearer ${token}` }),
                     // The cookie 'admin_token' should be automatically sent by browser
                 },
             });
@@ -88,11 +91,13 @@ export default function TestPaymentPage() {
 
     const verifyPayment = async (rpResponse) => {
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch(`${BACKEND_URL}/api/orders/admin/test-payment/verify`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token && { "Authorization": `Bearer ${token}` }),
                 },
                 body: JSON.stringify({
                     razorpay_order_id: rpResponse.razorpay_order_id,
