@@ -10,6 +10,15 @@ const app = require("./app");
 const orderRoutes = require("./routes/order.routes");
 app.use("/api/orders", orderRoutes);
 
+// 🔍 DIAGNOSTIC ENDPOINT
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown (local)",
+    time: new Date().toISOString()
+  });
+});
+
 // 🔄 Server Restart Triggered for Admin Fix
 const connectDB = require("./config/db");
 
