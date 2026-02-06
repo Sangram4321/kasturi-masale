@@ -23,8 +23,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
 
-// Handle preflight requests
-app.options("/*", cors());
 
 /* SECURE HEADERS */
 app.use(helmet({
