@@ -165,9 +165,7 @@ export default function Checkout() {
 
         // B. Open Razorpay
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Key from .env.local
-          // Actually, key_id is public. Safe to be here or env.
-          amount: orderData.order.amount,
+          key: "rzp_live_S5M9xFQnjbs34t",
           currency: "INR",
           name: "Kasturi Masale",
           description: "Authentic Kolhapuri Masale",
