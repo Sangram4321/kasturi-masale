@@ -7,8 +7,6 @@ require("dotenv").config({
 });
 
 const app = require("./app");
-const orderRoutes = require("./routes/order.routes");
-app.use("/api/orders", orderRoutes);
 
 // 🔍 DIAGNOSTIC ENDPOINT
 app.get("/api/health", (req, res) => {

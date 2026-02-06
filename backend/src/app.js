@@ -26,29 +26,13 @@ app.use("/api", limiter);
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: function (origin, callback) {
-    // 🔒 SECURE CORS POLICY
-    const allowedOrigins = [
-      process.env.FRONTEND_URL, // Production
-      "https://kasturimasale.in",
-      "https://www.kasturimasale.in"
-    ];
-
-    // Dev Environments
-    if (process.env.NODE_ENV === 'development') {
-      allowedOrigins.push("http://localhost:3000");
-      allowedOrigins.push("http://localhost:3001");
-    }
-
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.error(`🚫 CORS BLOCKED: ${origin}`);
-      return callback(new Error('CORS Policy Blocked'), false);
-    }
-    return callback(null, true);
-  },
+  origin: [
+    "https://www.kasturimasale.in",
+    "https://kasturimasale.in",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 
@@ -58,10 +42,12 @@ app.get("/", (req, res) => {
 });
 
 /* ROUTES */
+app.use("/api/auth", adminAuthRoutes); // Changed from /api/admin to /api/auth for clarity if needed, but keeping consistent with current
 app.use("/api/admin", adminAuthRoutes);
-app.use("/api/admin/wallet", require("./routes/admin.wallet.routes")); // 🪙 Admin Wallet Panel
+app.use("/api/admin/wallet", require("./routes/admin.wallet.routes"));
 app.use("/api/user", userRoutes);
-app.use("/api/batches", require("./routes/batch.routes")); // 📦 Inventory
+app.use("/api/batches", require("./routes/batch.routes"));
+app.use("/api/orders", require("./routes/order.routes"));
 
 /* GLOBAL ERROR HANDLER */
 app.use((err, req, res, next) => {
