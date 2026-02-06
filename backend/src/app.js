@@ -9,22 +9,7 @@ const userRoutes = require("./routes/user.routes");
 
 const app = express();
 
-/* SECURE HEADERS */
-app.use(helmet());
-
-/* RATE LIMITING */
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: "Too many requests from this IP, please try again after 15 minutes"
-});
-app.use("/api", limiter);
-
 /* MIDDLEWARE */
-app.use(express.json());
-app.use(cookieParser());
 app.use(cors({
   origin: [
     "https://www.kasturimasale.in",
@@ -33,8 +18,20 @@ app.use(cors({
     "http://localhost:3001",
     process.env.FRONTEND_URL
   ].filter(Boolean),
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
+
+// Handle preflight requests
+app.options("*", cors());
+
+/* SECURE HEADERS */
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+/* RATE LIMITING */
 
 /* HEALTH CHECK */
 app.get("/", (req, res) => {
