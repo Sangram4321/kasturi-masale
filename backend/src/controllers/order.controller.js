@@ -1708,10 +1708,21 @@ exports.createTestPaymentOrder = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Test payments disabled" });
     }
 
-    // 2. Admin Auth Guard (Allow ADMIN and SUPER_ADMIN)
+    // 2. Admin Auth Guard (Robust & Diagnostic)
+    const authAdmin = req.admin || req.user;
+    const role = (authAdmin?.role || "").toString().toUpperCase();
     const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
-    if (!req.admin || !allowedRoles.includes(req.admin.role)) {
-      return res.status(403).json({ success: false, message: "Unauthorized test payment request" });
+
+    if (!authAdmin || !allowedRoles.includes(role)) {
+      console.error(`🚫 TEST PAYMENT UNAUTHORIZED: Role detected: "${role}", Auth Object: ${req.admin ? 'req.admin' : (req.user ? 'req.user' : 'NONE')}`);
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized test payment request",
+        debug: {
+          role: role || "MISSING",
+          auth: req.admin ? "admin" : (req.user ? "user" : "none")
+        }
+      });
     }
 
     const adminId = req.admin._id;
