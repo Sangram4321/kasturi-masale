@@ -5,6 +5,9 @@ const WalletTransaction = require("../models/WalletTransaction");
 const User = require("../models/User");
 const { buildOrderPlacedLink, buildStatusWhatsAppLink } = require("./whatsapp.service");
 
+const { refundPayment } = require("./razorpay.service");
+const AuditLog = require("../models/AuditLog");
+
 // Secret from Dashboard
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
 
@@ -25,9 +28,51 @@ exports.handleRazorpayWebhook = async (payload, signature) => {
     console.log(`🪝 WEBHOOK RECEIVED: ${event}`, data.id);
 
     if (event === "payment.captured") {
-        // Handling Payment Capture
-        // Usually we wait for order.paid, but captured is also fine depending on flow.
-        // Razorpay Standard: order.paid is better for Orders API. payment.captured for Payment Links.
+        // --- 🧪 CRASH-SAFE TEST PAYMENT RECONCILIATION ---
+        if (data.notes && data.notes.type === "TEST_PAYMENT") {
+            console.log("🪝 🧪 TEST PAYMENT WEBHOOK CAPTURED:", data.id);
+
+            // 1. Check if already refunded (idempotency check via AuditLog)
+            const alreadyProcessed = await AuditLog.findOne({
+                action: { $in: ["TEST_PAYMENT_SUCCESS_REFUNDED", "TEST_PAYMENT_WEBHOOK_REFUNDED"] },
+                resource: `Payment ${data.id}`
+            });
+
+            if (alreadyProcessed) {
+                console.log("⏭️ Test payment already refunded, skipping.");
+                return;
+            }
+
+            // 2. Trigger Fallback Refund
+            try {
+                const refundResult = await refundPayment(data.id, 1); // ₹1
+
+                await AuditLog.create({
+                    adminId: data.notes.adminId,
+                    action: "TEST_PAYMENT_WEBHOOK_REFUNDED",
+                    resource: `Payment ${data.id}`,
+                    details: {
+                        razorpay_order_id: data.order_id,
+                        refundId: refundResult.id,
+                        reason: "Webhook Fallback"
+                    }
+                });
+                console.log("✅ Webhook Fallback Refund Successful:", refundResult.id);
+            } catch (refundErr) {
+                console.error("❌ Webhook Fallback Refund Failed:", refundErr);
+                await AuditLog.create({
+                    adminId: data.notes.adminId,
+                    action: "CRITICAL_TEST_REFUND_FAIL",
+                    resource: `Payment ${data.id}`,
+                    details: {
+                        razorpay_order_id: data.order_id,
+                        error: refundErr.message,
+                        source: "Webhook Fallback"
+                    }
+                });
+            }
+            return; // Exit after processing test payment
+        }
     }
 
     if (event === "order.paid") {

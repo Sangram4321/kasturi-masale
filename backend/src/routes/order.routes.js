@@ -28,6 +28,12 @@ router.get("/track/:id", controller.trackOrder);
 // Apply Middleware to all routes below
 router.use("/admin", protectAdmin);
 
+// 🧪 ADMIN TEST PAYMENTS (Isolated & Guarded)
+if (process.env.ENABLE_TEST_PAYMENTS === "true") {
+    router.post("/admin/test-payment/create", controller.createTestPaymentOrder);
+    router.post("/admin/test-payment/verify", controller.verifyTestPayment);
+}
+
 // Financials (Before generic stats)
 router.get("/admin/financial-stats", controller.getFinancialStats);
 router.get("/admin/export-gst", controller.exportGSTReport);

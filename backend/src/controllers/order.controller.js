@@ -5,11 +5,18 @@ const {
   buildOrderPlacedLink,
   buildStatusWhatsAppLink
 } = require("../services/whatsapp.service");
-const { createOrder: createRazorpayOrder, verifySignature } = require("../services/razorpay.service");
+const {
+  createOrder: createRazorpayOrder,
+  verifySignature,
+  refundPayment,
+  razorpay
+} = require("../services/razorpay.service");
 const SLA = require("../config/sla");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
+const TestPaymentCounter = require("../models/TestPaymentCounter");
+const AuditLog = require("../models/AuditLog");
 
 /* ================= CREATE ORDER ================= */
 exports.createOrder = async (req, res, next) => {
@@ -1686,5 +1693,143 @@ exports.exportGSTReport = async (req, res) => {
   } catch (error) {
     console.error("EXPORT ERROR:", error);
     return res.status(500).json({ success: false, message: "Export failed" });
+  }
+};
+
+/* ================= ADMIN TEST PAYMENT (PRODUCTION-SAFE) ================= */
+
+/**
+ * Creates a ₹1 Razorpay order for admin testing.
+ * Enforces ENABLE_TEST_PAYMENTS guard and atomic 3/day per admin rate limit.
+ */
+exports.createTestPaymentOrder = async (req, res, next) => {
+  try {
+    // 1. Kill-Switch Guard
+    if (process.env.ENABLE_TEST_PAYMENTS !== "true") {
+      return res.status(404).json({ success: false, message: "Test payments disabled" });
+    }
+
+    // 2. Admin Auth Guard (Strictly through middleware)
+    if (!req.admin || req.admin.role !== "ADMIN") {
+      return res.status(403).json({ success: false, message: "Unauthorized test payment request" });
+    }
+
+    const adminId = req.admin._id;
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+    // 3. Atomic Rate Limiting (Max 3 per day per admin)
+    const counter = await TestPaymentCounter.findOneAndUpdate(
+      { adminId, date: today },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    if (counter.count > 3) {
+      return res.status(429).json({
+        success: false,
+        message: "Daily test payment limit (3) exceeded for this admin"
+      });
+    }
+
+    // 4. Create Razorpay Test Order
+    const amount = 1; // ₹1
+    const currency = "INR";
+    const receipt = `test_payment_${Date.now()}`;
+
+    // Notes for Razorpay Dashboard clarity
+    const notes = {
+      type: "TEST_PAYMENT",
+      adminId: adminId.toString(),
+      adminUsername: req.admin.username,
+      environment: process.env.NODE_ENV || "production"
+    };
+
+    const rzpOrder = await razorpay.orders.create({
+      amount: Math.round(amount * 100),
+      currency,
+      receipt,
+      notes
+    });
+
+    // 5. Log Initiation in AuditLog
+    await AuditLog.create({
+      adminId,
+      action: "TEST_PAYMENT_INIT",
+      resource: `Razorpay Order ${rzpOrder.id}`,
+      details: { amount, receipt, notes },
+      ip: req.ip,
+      userAgent: req.headers["user-agent"]
+    });
+
+    return res.json({ success: true, order: rzpOrder });
+
+  } catch (error) {
+    console.error("CREATE TEST PAYMENT ERROR:", error);
+    next(error);
+  }
+};
+
+/**
+ * Verifies ₹1 test payment and triggers IMMEDIATE refund.
+ * Strictly isolated from production business logic.
+ */
+exports.verifyTestPayment = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    // 1. Verify Signature
+    const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Invalid signature" });
+    }
+
+    // 2. Immediate Refund Execution
+    let refundResult;
+    try {
+      refundResult = await refundPayment(razorpay_payment_id, 1); // ₹1
+
+      // Log Success in AuditLog
+      await AuditLog.create({
+        adminId: req.admin._id,
+        action: "TEST_PAYMENT_SUCCESS_REFUNDED",
+        resource: `Payment ${razorpay_payment_id}`,
+        details: { razorpay_order_id, refundId: refundResult.id },
+        ip: req.ip,
+        userAgent: req.headers["user-agent"]
+      });
+
+      return res.json({
+        success: true,
+        message: "Test payment verified and refund initiated successfully",
+        refundId: refundResult.id
+      });
+
+    } catch (refundErr) {
+      console.error("TEST REFUND FAILED:", refundErr);
+
+      // 3. Hardening: Log CRITICAL Failure for manual intervention
+      await AuditLog.create({
+        adminId: req.admin._id,
+        action: "CRITICAL_TEST_REFUND_FAIL",
+        resource: `Payment ${razorpay_payment_id}`,
+        details: {
+          razorpay_order_id,
+          error: refundErr.message,
+          instruction: "Manual refund required"
+        },
+        ip: req.ip,
+        userAgent: req.headers["user-agent"]
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: "Payment verified but automatic refund failed. Logged for manual cleanup.",
+        paymentId: razorpay_payment_id
+      });
+    }
+
+  } catch (error) {
+    console.error("VERIFY TEST PAYMENT ERROR:", error);
+    next(error);
   }
 };
