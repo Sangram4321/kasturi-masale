@@ -388,7 +388,8 @@ const styles = {
         color: '#1F2937',
         fontFamily: "'Inter', sans-serif",
         position: 'relative',
-        paddingTop: 0
+        paddingTop: 0,
+        overflow: 'hidden' // Prevent horizontal scroll from blobs
     },
     // ...
     heroTitle: { fontSize: 64, fontWeight: 800, lineHeight: 1.1, marginBottom: 24, letterSpacing: '-1px' },

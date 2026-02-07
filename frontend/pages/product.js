@@ -154,22 +154,31 @@ export default function Product() {
   const [showSticky, setShowSticky] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => {
-      // Show after 600px (approx hero height), Hide near bottom (Footer)
-      const scrollY = window.scrollY
-      const bodyHeight = document.body.scrollHeight
-      const windowHeight = window.innerHeight
+    let ticking = false // Throttle flag
 
-      // Logic: Show if scrolled past Hero AND not near footer
-      if (scrollY > 600 && (scrollY + windowHeight < bodyHeight - 400)) {
-        setShowSticky(true)
-      } else {
-        setShowSticky(false)
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Show after 600px (approx hero height), Hide near bottom (Footer)
+          const scrollY = window.scrollY
+          const bodyHeight = document.body.scrollHeight
+          const windowHeight = window.innerHeight
+
+          // Logic: Show if scrolled past Hero AND not near footer
+          if (scrollY > 600 && (scrollY + windowHeight < bodyHeight - 400)) {
+            setShowSticky(true)
+          } else {
+            setShowSticky(false)
+          }
+
+          ticking = false
+        })
+        ticking = true
       }
     }
 
     if (isMobile) {
-      window.addEventListener("scroll", handleScroll)
+      window.addEventListener("scroll", handleScroll, { passive: true })
       return () => window.removeEventListener("scroll", handleScroll)
     }
   }, [isMobile])

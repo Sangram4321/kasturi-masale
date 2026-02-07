@@ -215,19 +215,21 @@ export default function Footer() {
           color: #475569;
           font-family: 'Inter', sans-serif;
           position: relative;
+          margin-bottom: 0; /* Ensure no bottom margin */
+          padding-bottom: 0; /* Ensure no bottom padding */
         }
 
         .footer-safe-area {
             width: 100%;
-            max-width: 1280px; /* STRICT MAX WIDTH */
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 64px 24px 16px; /* Minimal bottom padding */
+            padding: 64px 24px 0; /* No bottom padding */
             box-sizing: border-box;
         }
 
         @media (min-width: 1024px) {
             .footer-safe-area {
-                padding-bottom: 20px; /* Minimal desktop spacing */
+                padding-bottom: 0; /* No bottom padding on desktop */
             }
         }
 
