@@ -57,6 +57,7 @@ const COPY = {
 }
 
 const PRICE_MAP = {
+  "1": 1,
   "200": 120,
   "500": 280,
   "1000": 499,
@@ -64,6 +65,7 @@ const PRICE_MAP = {
 }
 
 const MRP_MAP = {
+  "1": 2,
   "200": 140,
   "500": 330,
   "1000": 569,
@@ -71,6 +73,7 @@ const MRP_MAP = {
 }
 
 const IMAGE_MAP = {
+  "1": "/images/products/kanda-lasun-200.png",
   "200": "/images/products/kanda-lasun-200.png",
   "500": "/images/products/kanda-lasun-500.png",
   "1000": "/images/products/kanda-lasun-1000.png",
@@ -258,6 +261,7 @@ export default function Product() {
               const p = PRICE_MAP[v]
               const per100g = Math.round(p / (parseInt(v) / 100))
               const VARIANT_INFO = {
+                "1": { label: "Admin Test Pack", weight: "1g", tag: "TESTING ONLY" },
                 "200": { label: "Trial Pack", weight: "200g" },
                 "500": { label: "Most Popular", weight: "500g" },
                 "1000": { label: "Best Value", weight: "1kg" },
