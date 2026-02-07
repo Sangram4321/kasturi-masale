@@ -2,8 +2,9 @@
 const nextConfig = {
     reactStrictMode: true,
     async rewrites() {
-        // Default to localhost for dev if BACKEND_URL is not set
-        const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+        // Use NEXT_PUBLIC_BACKEND_URL for client-side and build-time access
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:5000";
+        console.log("🔧 Next.js Rewrites - Backend URL:", backendUrl);
         return [
             {
                 source: "/api/:path*",
