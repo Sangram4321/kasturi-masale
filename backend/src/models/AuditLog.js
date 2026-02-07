@@ -34,10 +34,7 @@ const AuditLogSchema = new mongoose.Schema(
     }
 );
 
-// Compounds index for performance (filtering by admin, action, and date)
-AuditLogSchema.index({ adminId: 1, action: 1, createdAt: -1 });
-
-// Auto-expire logs after 90 days to save space
+// Auto-expire logs after 90 days to save space (optional but good practice)
 AuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 module.exports = mongoose.model("AuditLog", AuditLogSchema);

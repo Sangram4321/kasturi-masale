@@ -1,43 +1,38 @@
 {
   "..\\components\\Footer.js -> ../lib/feedback": {
-    "id": 35238,
+    "id": "..\\components\\Footer.js -> ../lib/feedback",
     "files": []
   },
   "..\\components\\Hero.js -> ../lib/feedback": {
-    "id": 35238,
+    "id": "..\\components\\Hero.js -> ../lib/feedback",
     "files": []
   },
   "..\\components\\ProductShowcase.js -> ../lib/feedback": {
-    "id": 35238,
+    "id": "..\\components\\ProductShowcase.js -> ../lib/feedback",
     "files": []
   },
   "_app.js -> gsap": {
-    "id": 10990,
+    "id": "_app.js -> gsap",
     "files": [
-      "static/chunks/94726e6d-4ff312fcbb0cdc44.js",
-      "static/chunks/990-759ea2c9bfc24cd0.js"
+      "static/chunks/node_modules_gsap_index_js.js"
     ]
   },
   "_app.js -> gsap/ScrollTrigger": {
-    "id": 69805,
+    "id": "_app.js -> gsap/ScrollTrigger",
     "files": [
-      "static/chunks/9805.7f0d6118b7d0751b.js"
+      "static/chunks/node_modules_gsap_ScrollTrigger_js.js"
     ]
   },
   "_app.js -> lenis": {
-    "id": 46126,
+    "id": "_app.js -> lenis",
     "files": [
-      "static/chunks/6126.b69e2d4525ec8d68.js"
+      "static/chunks/node_modules_lenis_dist_lenis_mjs.js"
     ]
   },
-  "checkout.js -> ../lib/feedback": {
-    "id": 35238,
-    "files": []
-  },
   "index.js -> ../components/ProductShowcase": {
-    "id": 74661,
+    "id": "index.js -> ../components/ProductShowcase",
     "files": [
-      "static/chunks/4661.f6cf371eae894384.js"
+      "static/chunks/components_ProductShowcase_js.js"
     ]
   }
 }

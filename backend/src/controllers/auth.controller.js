@@ -17,15 +17,9 @@ const sendTokenResponse = (admin, statusCode, res, req) => {
     const cookieOptions = {
         expires: new Date(Date.now() + 15 * 60 * 1000), // 15 mins
         httpOnly: true,
-        secure: true, // Required for sameSite: "none"
-        sameSite: "none"
+        secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax" // Lax for localhost dev
     };
-
-    console.log(`[AUTH] Creating admin_token for ${admin.username}. Options:`, {
-        expires: cookieOptions.expires,
-        secure: cookieOptions.secure,
-        sameSite: cookieOptions.sameSite
-    });
 
     res.cookie("admin_token", token, cookieOptions);
 

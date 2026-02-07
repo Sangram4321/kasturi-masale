@@ -7,7 +7,7 @@ import OrderTruckButton from "../components/OrderTruckButton"
 
 /* ================= CONFIG ================= */
 // API Configuration: Relative paths via Next.js Proxy
-const API = "https://kasturi-masale-production.up.railway.app";
+const API = ""; // Using relative paths
 const COD_FEE = 40
 
 const haptic = (pattern = 10) => {
@@ -165,7 +165,9 @@ export default function Checkout() {
 
         // B. Open Razorpay
         const options = {
-          key: "rzp_live_S5M9xFQnjbs34t",
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Key from .env.local
+          // Actually, key_id is public. Safe to be here or env.
+          amount: orderData.order.amount,
           currency: "INR",
           name: "Kasturi Masale",
           description: "Authentic Kolhapuri Masale",

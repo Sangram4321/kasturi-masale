@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-const API = "https://kasturi-masale-production.up.railway.app";
+const API = "";
 
 // --- Components ---
 
@@ -236,7 +236,6 @@ export default function AdminLogin() {
 
       const res = await fetch(`${API}/api/admin/login`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });

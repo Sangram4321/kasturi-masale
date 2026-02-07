@@ -176,12 +176,6 @@ export default function App({ Component, pageProps }) {
         `}
       </Script>
 
-      {/* 🔹 RAZORPAY CHECKOUT */}
-      <Script
-        src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="afterInteractive"
-      />
-
       {/* 🔤 GOOGLE FONT – NOTO SANS DEVANAGARI */}
       <Head>
         <link
@@ -190,6 +184,7 @@ export default function App({ Component, pageProps }) {
         />
         <link rel="preload" href="/images/brand/kasturi-logo-red.png" as="image" />
         {/* Locomotive CSS removed from here to prevent duplicate/override issues */}
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
       </Head>
       <TruckProvider>

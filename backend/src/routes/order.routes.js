@@ -6,18 +6,14 @@ const { protectAdmin } = require("../middleware/auth.middleware");
 const router = express.Router();
 
 // WEBHOOKS (Public)
-// WEBHOOKS (Public)
 router.post("/webhook/ithink", ithinkWebhookController.handleWebhook);
-router.get("/webhook/ithink", ithinkWebhookController.handleWebhook); // Verify verify_token (sometimes used)
-
-const paymentWebhookController = require("../controllers/payment.webhook.controller");
-router.post("/webhook/razorpay", paymentWebhookController.handleRazorpayWebhook);
+router.get("/webhook/ithink", ithinkWebhookController.handleWebhook);
 
 /* ================= CUSTOMER ================= */
 router.post("/create", controller.createOrder);
 router.post("/create-payment", controller.createPaymentOrder);
 router.post("/verify-payment", controller.verifyPaymentAndCreateOrder);
-
+router.post("/verify-payment", controller.verifyPaymentAndCreateOrder);
 router.post("/user/:orderId/cancel", controller.cancelOrderByUser);
 router.get("/user/:orderId", controller.getSingleUserOrder);
 
@@ -27,12 +23,6 @@ router.get("/track/:id", controller.trackOrder);
 /* ================= ADMIN (PROTECTED) ================= */
 // Apply Middleware to all routes below
 router.use("/admin", protectAdmin);
-
-// 🧪 ADMIN TEST PAYMENTS (Isolated & Guarded)
-if (process.env.ENABLE_TEST_PAYMENTS === "true") {
-    router.post("/admin/test-payment/create", controller.createTestPaymentOrder);
-    router.post("/admin/test-payment/verify", controller.verifyTestPayment);
-}
 
 // Financials (Before generic stats)
 router.get("/admin/financial-stats", controller.getFinancialStats);

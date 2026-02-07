@@ -9,7 +9,7 @@ const razorpay = new Razorpay({
 const createOrder = async (amount, currency = "INR") => {
     try {
         const options = {
-            amount: Math.round(amount * 100), // Amount in paise
+            amount: amount * 100, // Amount in paise
             currency,
             receipt: `receipt_${Date.now()}`
         };
@@ -32,7 +32,7 @@ const verifySignature = (orderId, paymentId, signature) => {
 const refundPayment = async (paymentId, amount) => {
     try {
         // Amount is optional for full refund
-        const options = amount ? { amount: Math.round(amount * 100) } : {};
+        const options = amount ? { amount: amount * 100 } : {};
         const refund = await razorpay.payments.refund(paymentId, options);
         return refund;
     } catch (error) {
