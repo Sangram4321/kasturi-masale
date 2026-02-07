@@ -3,13 +3,14 @@ const webhookService = require("../services/webhook.service");
 exports.handleRazorpayWebhook = async (req, res) => {
     try {
         const signature = req.headers["x-razorpay-signature"];
-        // Razorpay sends the JSON body
+
+        // req.body is a Buffer due to express.raw() in app.js
         await webhookService.handleRazorpayWebhook(req.body, signature);
+
+        // Return 200 immediately after successful validation/processing
         res.json({ status: "ok" });
     } catch (err) {
         console.error("Razorpay Webhook Error:", err.message);
-        // Return 200 even on error to stop Razorpay from retrying indefinitely if it's a logic error?
-        // Usually 400 is better for signature mismatch.
         res.status(400).json({ error: err.message });
     }
 };

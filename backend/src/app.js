@@ -10,8 +10,15 @@ const userRoutes = require("./routes/user.routes");
 
 const app = express();
 
+// Trust proxy for express-rate-limit on Railway
+app.set("trust proxy", 1);
+
 /* SECURE HEADERS */
 app.use(helmet());
+
+/* RAZORPAY WEBHOOK (Needs Raw Body) */
+const { handleRazorpayWebhook } = require("./controllers/payment.webhook.controller");
+app.post("/api/razorpay/webhook", express.raw({ type: "application/json" }), handleRazorpayWebhook);
 
 /* RATE LIMITING */
 const limiter = rateLimit({

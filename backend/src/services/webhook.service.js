@@ -11,17 +11,19 @@ const AuditLog = require("../models/AuditLog");
 // Secret from Dashboard
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-exports.handleRazorpayWebhook = async (payload, signature) => {
-    // 1. Verify Signature
+exports.handleRazorpayWebhook = async (rawBody, signature) => {
+    // 1. Verify Signature (Using Raw Body Buffer)
     const expectedSignature = crypto
         .createHmac("sha256", WEBHOOK_SECRET)
-        .update(JSON.stringify(payload))
+        .update(rawBody)
         .digest("hex");
 
     if (expectedSignature !== signature) {
         throw new Error("Invalid Webhook Signature");
     }
 
+    // Parse the body after verification
+    const payload = JSON.parse(rawBody.toString());
     const event = payload.event;
     const data = payload.payload.payment.entity;
 
