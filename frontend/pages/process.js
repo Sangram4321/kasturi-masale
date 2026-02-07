@@ -75,29 +75,7 @@ export default function ProcessPage({ lang, setLang }) {
             <motion.div style={{ ...styles.blob, top: '40%', left: -200, background: 'radial-gradient(circle, rgba(237, 137, 54, 0.08) 0%, transparent 70%)', y: useTransform(scrollY, [0, 1000], [0, 100]) }} />
 
 
-            {/* LANGUAGE SWITCHER */}
-            <div className="lang-switcher">
-                {['en', 'hi', 'mr'].map(l => (
-                    <button
-                        key={l}
-                        onClick={() => setLang(l)}
-                        style={{
-                            background: lang === l ? '#C02729' : 'rgba(255,255,255,0.8)',
-                            color: lang === l ? '#fff' : '#333',
-                            border: '1px solid rgba(0,0,0,0.1)',
-                            borderRadius: 99,
-                            padding: '8px 16px',
-                            fontWeight: 700,
-                            fontSize: 12,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        {l.toUpperCase()}
-                    </button>
-                ))}
-            </div>
+
 
             {/* ================= HERO SECTION ================= */}
             <section style={styles.hero} className="hero-section">
@@ -201,73 +179,70 @@ export default function ProcessPage({ lang, setLang }) {
             </section>
 
             <style jsx>{`
-                .lang-switcher { position: fixed; top: 100px; right: 20px; z-index: 50; display: flex; gap: 8px; }
-                
                 @media (max-width: 768px) {
-                    .lang-switcher { top: 70px; right: 10px; transform: scale(0.8); }
-                    .hero-section { padding-top: 100px !important; padding-bottom: 60px !important; }
-                    .hero-title { font-size: 32px !important; letter-spacing: -1px; line-height: 1.1 !important; }
-                    .hero-sub { font-size: 16px !important; margin-bottom: 16px !important; }
-                    .hero-text { font-size: 16px !important; margin-bottom: 24px !important; }
-                    .btn-group { flex-direction: column; width: 100%; gap: 12px; }
-                    
-                    /* Grid Stacking */
-                    .grid-2, .grid-2-reverse { 
-                        grid-template-columns: 1fr !important; 
-                        gap: 32px !important; 
-                        display: flex !important; 
-                        flex-direction: column-reverse !important;
-                        align-items: stretch !important; /* Fix for shrinking cards */
+                    .hero - section {padding - top: 100px !important; padding-bottom: 60px !important; }
+            .hero-title {font - size: 32px !important; letter-spacing: -1px; line-height: 1.1 !important; }
+            .hero-sub {font - size: 16px !important; margin-bottom: 16px !important; }
+            .hero-text {font - size: 16px !important; margin-bottom: 24px !important; }
+            .btn-group {flex - direction: column; width: 100%; gap: 12px; }
+
+            /* Grid Stacking */
+            .grid-2, .grid-2-reverse {
+                grid - template - columns: 1fr !important;
+            gap: 32px !important;
+            display: flex !important;
+            flex-direction: column-reverse !important;
+            align-items: stretch !important; /* Fix for shrinking cards */
                     }
 
-                    .grid-3 { grid-template-columns: 1fr !important; }
-                    .grid-4 { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
-                    
-                    /* Typography Scaling */
-                    .section-title, .section-title-center { 
-                        font-size: 24px !important; 
-                        text-align: center !important; 
-                        line-height: 1.2 !important;
-                    }
-                    .body-text, p { font-size: 16px !important; line-height: 1.5 !important; }
-                    
-                    .promise-grid { flex-direction: column; gap: 24px; padding: 20px 0 !important; }
-                    .text-content { padding: 0 !important; text-align: center; width: 100% !important; }
+            .grid-3 {grid - template - columns: 1fr !important; }
+            .grid-4 {grid - template - columns: 1fr 1fr !important; gap: 12px !important; }
 
-                    /* Fix for Mobile Image Cards - Contain within screen */
-                    .glass-img-card { 
-                        width: 100% !important; /* Ensure full width */
-                        height: auto !important; 
-                        min-height: auto !important; 
-                        padding: 24px !important; 
-                        border-radius: 20px !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
+            /* Typography Scaling */
+            .section-title, .section-title-center {
+                font - size: 24px !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
                     }
-                    /* Ensure images inside don't overflow */
-                    .glass-img-card img {
-                        max-height: 250px; /* Reduced further to ensure fit */
-                        object-fit: contain;
+            .body-text, p {font - size: 16px !important; line-height: 1.5 !important; }
+
+            .promise-grid {flex - direction: column; gap: 24px; padding: 20px 0 !important; }
+            .text-content {padding: 0 !important; text-align: center; width: 100% !important; }
+
+            /* Fix for Mobile Image Cards - Contain within screen */
+            .glass-img-card {
+                width: 100% !important; /* Ensure full width */
+            height: auto !important;
+            min-height: auto !important;
+            padding: 24px !important;
+            border-radius: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+                    }
+            /* Ensure images inside don't overflow */
+            .glass-img-card img {
+                max - height: 250px; /* Reduced further to ensure fit */
+            object-fit: contain;
                     }
 
-                    /* Map Graphic Mobile Scaling */
-                    .map-pin { font-size: 40px !important; }
-                    .map-ring { width: 150px !important; height: 150px !important; }
-                    .map-ring-large { width: 100px !important; height: 100px !important; }
-                    
-                    /* Badges/Icons Scaling */
-                    .shelf-life-badge { width: 120px !important; height: 120px !important; }
-                    .shelf-life-badge span:first-child { fontSize: 28px !important; }
-                    
-                    .cta-title { font-size: 32px !important; }
-                    .cta-card { padding: 40px 20px !important; border-radius: 24px !important; }
-                    
-                    /* Safety Margins */
-                    .container { padding: 0 16px !important; }
+            /* Map Graphic Mobile Scaling */
+            .map-pin {font - size: 40px !important; }
+            .map-ring {width: 150px !important; height: 150px !important; }
+            .map-ring-large {width: 100px !important; height: 100px !important; }
+
+            /* Badges/Icons Scaling */
+            .shelf-life-badge {width: 120px !important; height: 120px !important; }
+            .shelf-life-badge span:first-child {fontSize: 28px !important; }
+
+            .cta-title {font - size: 32px !important; }
+            .cta-card {padding: 40px 20px !important; border-radius: 24px !important; }
+
+            /* Safety Margins */
+            .container {padding: 0 16px !important; }
                 }
             `}</style>
-        </div>
+        </div >
     )
 }
 

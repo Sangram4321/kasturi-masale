@@ -27,6 +27,7 @@ body {
   padding: 0;
   background: #F9F6F1;
   width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
   font-weight: 400;
   /* Standard Body */

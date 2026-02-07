@@ -75,29 +75,7 @@ export default function WhyKasturi({ lang, setLang }) {
             <motion.div style={{ ...styles.blob, top: -100, right: -100, background: 'radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%)', y: yBg, rotate: rotateBg }} />
             <motion.div style={{ ...styles.blob, top: '40%', left: -200, background: 'radial-gradient(circle, rgba(192, 39, 41, 0.08) 0%, transparent 70%)', y: 0 }} />
 
-            {/* LANGUAGE SWITCHER */}
-            <div className="lang-switcher">
-                {['en', 'hi', 'mr'].map(l => (
-                    <button
-                        key={l}
-                        onClick={() => setLang(l)}
-                        style={{
-                            background: lang === l ? '#C02729' : 'rgba(255,255,255,0.8)',
-                            color: lang === l ? '#fff' : '#333',
-                            border: '1px solid rgba(0,0,0,0.1)',
-                            borderRadius: 99,
-                            padding: '8px 16px',
-                            fontWeight: 700,
-                            fontSize: 12,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        {l.toUpperCase()}
-                    </button>
-                ))}
-            </div>
+
 
             {/* ================= HERO SECTION ================= */}
             <section style={styles.hero} className="hero-section">
@@ -202,10 +180,7 @@ export default function WhyKasturi({ lang, setLang }) {
             </section>
 
             <style jsx>{`
-                .lang-switcher { position: fixed; top: 100px; right: 20px; z-index: 50; display: flex; gap: 8px; }
-                
                 @media (max-width: 768px) {
-                    .lang-switcher { top: 70px; right: 10px; transform: scale(0.8); }
                     .hero-section { padding-top: 100px !important; padding-bottom: 60px !important; }
                     .hero-title { font-size: 32px !important; letter-spacing: -1px; line-height: 1.1 !important; }
                     .hero-sub { font-size: 16px !important; margin-bottom: 16px !important; }

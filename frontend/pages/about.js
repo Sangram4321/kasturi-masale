@@ -33,29 +33,7 @@ export default function About({ lang, setLang }) {
             <motion.div style={{ ...styles.blob, top: -200, left: -200, background: 'radial-gradient(circle, rgba(235, 94, 40, 0.15) 0%, transparent 70%)', y: yBg }} />
             <motion.div style={{ ...styles.blob, top: '40%', right: -200, background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%)', y: yBg }} />
 
-            {/* LANGUAGE SWITCHER */}
-            <div style={{ position: 'fixed', top: 100, right: 20, zIndex: 50, display: 'flex', gap: 8 }}>
-                {['en', 'hi', 'mr'].map(l => (
-                    <button
-                        key={l}
-                        onClick={() => setLang(l)}
-                        style={{
-                            background: lang === l ? '#C02729' : 'rgba(255,255,255,0.8)',
-                            color: lang === l ? '#fff' : '#333',
-                            border: '1px solid rgba(0,0,0,0.1)',
-                            borderRadius: 99,
-                            padding: '8px 16px',
-                            fontWeight: 700,
-                            fontSize: 12,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        {l.toUpperCase()}
-                    </button>
-                ))}
-            </div>
+
 
             {/* HERO SECTION */}
             <section style={styles.hero}>
