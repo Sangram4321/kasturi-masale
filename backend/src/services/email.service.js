@@ -1,21 +1,13 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require('resend');
 
-// SMTP Configuration
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    }
-});
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Send Admin Order Notification Email
  */
 const sendAdminOrderNotification = async (order) => {
-    const emailHtml = `
+  const emailHtml = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -90,61 +82,69 @@ const sendAdminOrderNotification = async (order) => {
     </html>
   `;
 
-    const mailOptions = {
-        from: `"Kasturi Masale Orders" <${process.env.SMTP_USER}>`,
-        to: process.env.ADMIN_EMAIL,
-        subject: `🛒 New Order: ${order.orderId} - ₹${order.pricing.total}`,
-        html: emailHtml
-    };
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Kasturi Masale <orders@kasturimasale.in>',
+      to: process.env.ADMIN_EMAIL,
+      subject: `🛒 New Order: ${order.orderId} - ₹${order.pricing.total}`,
+      html: emailHtml
+    });
 
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`✅ EMAIL: Admin notification sent for order ${order.orderId} (MessageID: ${info.messageId})`);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, error.message);
-        throw error;
+    if (error) {
+      throw new Error(error.message || 'Resend API error');
     }
+
+    console.log(`✅ EMAIL: Admin notification sent for order ${order.orderId} (Resend ID: ${data.id})`);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, error.message);
+    throw error;
+  }
 };
 
 /**
  * Send Critical Alert Email
  */
 const sendAlertEmail = async ({ subject, message }) => {
-    const mailOptions = {
-        from: `"Kasturi Alerts" <${process.env.SMTP_USER}>`,
-        to: process.env.ADMIN_EMAIL,
-        subject: `[Kasturi Masale] ${subject}`,
-        text: message,
-        html: `<pre style="font-family: monospace; background: #f5f5f5; padding: 15px; border-left: 4px solid #ff6b6b;">${message}</pre>`
-    };
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Kasturi Alerts <alerts@kasturimasale.in>',
+      to: process.env.ADMIN_EMAIL,
+      subject: `[Kasturi Masale] ${subject}`,
+      html: `<pre style="font-family: monospace; background: #f5f5f5; padding: 15px; border-left: 4px solid #ff6b6b;">${message}</pre>`
+    });
 
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`🚨 ALERT EMAIL: Sent - ${subject}`);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error(`❌ ALERT EMAIL: Failed to send - ${subject}:`, error.message);
-        throw error;
+    if (error) {
+      throw new Error(error.message || 'Resend API error');
     }
+
+    console.log(`🚨 ALERT EMAIL: Sent - ${subject} (Resend ID: ${data.id})`);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error(`❌ ALERT EMAIL: Failed to send - ${subject}:`, error.message);
+    throw error;
+  }
 };
 
 /**
- * Verify SMTP Connection
+ * Verify Resend API Connection
  */
 const verifyConnection = async () => {
-    try {
-        await transporter.verify();
-        console.log("✅ SMTP: Connection verified successfully");
-        return true;
-    } catch (error) {
-        console.error("❌ SMTP: Connection failed:", error.message);
-        return false;
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ RESEND: API key not configured");
+      return false;
     }
+    console.log("✅ RESEND: API key configured");
+    return true;
+  } catch (error) {
+    console.error("❌ RESEND: Configuration check failed:", error.message);
+    return false;
+  }
 };
 
 module.exports = {
-    sendAdminOrderNotification,
-    sendAlertEmail,
-    verifyConnection
+  sendAdminOrderNotification,
+  sendAlertEmail,
+  verifyConnection
 };
