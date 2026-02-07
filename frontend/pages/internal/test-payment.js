@@ -3,6 +3,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { ShieldCheck, AlertCircle, RefreshCw, Zap, CheckCircle2 } from "lucide-react";
 
+
 export default function TestPaymentPage() {
     const [loading, setLoading] = useState(false);
     const [logs, setLogs] = useState([]);
@@ -15,6 +16,18 @@ export default function TestPaymentPage() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // SECURITY: Block access in production
+    if (process.env.NODE_ENV === "production") {
+        return (
+            <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
+                <div className="text-center">
+                    <h1 className="text-6xl font-bold text-neutral-300 mb-4">404</h1>
+                    <p className="text-neutral-600">Page not found</p>
+                </div>
+            </div>
+        );
+    }
 
     const addLog = (message, type = "info") => {
         setLogs((prev) => [{ time: new Date().toLocaleTimeString(), message, type }, ...prev]);
