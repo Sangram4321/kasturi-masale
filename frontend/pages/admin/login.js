@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-const API = "";
+const API = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
 // --- Components ---
 
