@@ -1,8 +1,0 @@
-"use strict";(()=>{var e={};e.id=1286,e.ids=[1286],e.modules={145:e=>{e.exports=require("next/dist/compiled/next-server/pages-api.runtime.prod.js")},6249:(e,t)=>{Object.defineProperty(t,"l",{enumerable:!0,get:function(){return function e(t,n){return n in t?t[n]:"then"in t&&"function"==typeof t.then?t.then(t=>e(t,n)):"function"==typeof t&&"default"===n?t:void 0}}})},3418:(e,t,n)=>{n.r(t),n.d(t,{config:()=>c,default:()=>i,routeModule:()=>d});var s={};n.r(s),n.d(s,{default:()=>o});var r=n(1802),a=n(7153),u=n(6249);async function o(e,t){if("POST"!==e.method)return t.status(405).json({success:!1});let{phone:n,total:s,payment:r}=e.body;if(!n)return t.status(400).json({success:!1});let a=`Kasturi Masale
-
-Order Confirmed ✅
-Amount: ₹${s}
-Payment: ${r}
-
-Authentic Kolhapuri Masale
-Support: 7737379292`;try{let e=await fetch("https://www.fast2sms.com/dev/bulkV2",{method:"POST",headers:{authorization:process.env.FAST2SMS_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({route:"q",language:"english",message:a,numbers:n.replace("+91","")})}),s=await e.json();return t.status(200).json({success:!0,data:s})}catch(e){return console.log("SMS ERROR",e),t.status(500).json({success:!1})}}let i=(0,u.l)(s,"default"),c=(0,u.l)(s,"config"),d=new r.PagesAPIRouteModule({definition:{kind:a.x.PAGES_API,page:"/api/send-sms",pathname:"/api/send-sms",bundlePath:"",filename:""},userland:s})},7153:(e,t)=>{var n;Object.defineProperty(t,"x",{enumerable:!0,get:function(){return n}}),function(e){e.PAGES="PAGES",e.PAGES_API="PAGES_API",e.APP_PAGE="APP_PAGE",e.APP_ROUTE="APP_ROUTE"}(n||(n={}))},1802:(e,t,n)=>{e.exports=n(145)}};var t=require("../../webpack-api-runtime.js");t.C(e);var n=t(t.s=3418);module.exports=n})();
