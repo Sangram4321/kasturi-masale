@@ -6,6 +6,7 @@ const {
   buildStatusWhatsAppLink
 } = require("../services/whatsapp.service");
 const { createOrder: createRazorpayOrder, verifySignature } = require("../services/razorpay.service");
+const { sendAdminOrderNotification } = require("../services/email.service");
 const SLA = require("../config/sla");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
@@ -202,6 +203,15 @@ exports.createOrder = async (req, res, next) => {
       amount: order.pricing.total, // ✅ USE DB VALUE
       payment: paymentMethod
     });
+
+    // 📧 SEND ADMIN EMAIL NOTIFICATION
+    try {
+      await sendAdminOrderNotification(order);
+      console.log(`✅ EMAIL: Admin notification sent for order ${order.orderId}`);
+    } catch (emailError) {
+      console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, emailError.message);
+      // Don't fail the order if email fails - log and continue
+    }
 
     // 🌟 LOYALTY: CREDIT PENDING POINTS FOR COD
     if (userId && paymentMethod === "COD") {
