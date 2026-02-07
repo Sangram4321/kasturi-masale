@@ -34,6 +34,7 @@ router.put("/admin/:orderId/status", controller.updateOrderStatus);
 router.post("/admin/:orderId/ship", controller.createShipment);
 router.post("/admin/:orderId/cancel", controller.cancelOrder);
 router.post("/admin/:orderId/rto", controller.initiateRTO);
+router.post("/admin/:orderId/resend-email", controller.resendOrderEmail); // Manual email resend
 router.post("/admin/orders/refresh-tracking", controller.bulkRefreshTracking); // ⚡ Bulk Refresh
 router.post("/admin/rewards/process", controller.processRewards);
 

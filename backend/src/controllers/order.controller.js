@@ -1672,3 +1672,39 @@ exports.exportGSTReport = async (req, res) => {
     return res.status(500).json({ success: false, message: "Export failed" });
   }
 };
+
+/* ================= ADMIN: RESEND ORDER EMAIL ================= */
+const emailService = require("../services/email.service");
+
+exports.resendOrderEmail = async (req, res) => {
+  try {
+    // Admin authentication already enforced by protectAdmin middleware
+    const { orderId } = req.params;
+
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    // Send admin notification email
+    await emailService.sendAdminOrderNotification(order);
+
+    console.log(`✅ MANUAL RESEND: Admin email sent for order ${orderId} by admin ${req.admin.email}`);
+
+    return res.json({
+      success: true,
+      message: `Admin notification email sent successfully for order ${orderId}`
+    });
+
+  } catch (error) {
+    console.error(`❌ RESEND EMAIL ERROR for order ${req.params.orderId}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: `Failed to send email: ${error.message}`
+    });
+  }
+};
