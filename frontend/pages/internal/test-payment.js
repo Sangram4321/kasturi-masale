@@ -9,7 +9,7 @@ export default function TestPaymentPage() {
     const [mounted, setMounted] = useState(false);
 
     // Constants
-    const BACKEND_URL = "https://kasturi-masale-production.up.railway.app";
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     const LIVE_KEY_ID = "rzp_live_S5M9xFQnjbs34t";
 
     useEffect(() => {
