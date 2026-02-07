@@ -204,14 +204,16 @@ exports.createOrder = async (req, res, next) => {
       payment: paymentMethod
     });
 
-    // 📧 SEND ADMIN EMAIL NOTIFICATION
-    try {
-      await sendAdminOrderNotification(order);
-      console.log(`✅ EMAIL: Admin notification sent for order ${order.orderId}`);
-    } catch (emailError) {
-      console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, emailError.message);
-      // Don't fail the order if email fails - log and continue
-    }
+    // 📧 SEND ADMIN EMAIL NOTIFICATION (NON-BLOCKING)
+    // Use setImmediate to send email in background without blocking API response
+    setImmediate(async () => {
+      try {
+        await sendAdminOrderNotification(order);
+        console.log(`✅ EMAIL: Admin notification sent for order ${order.orderId}`);
+      } catch (emailError) {
+        console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, emailError.message);
+      }
+    });
 
     // 🌟 LOYALTY: CREDIT PENDING POINTS FOR COD
     if (userId && paymentMethod === "COD") {
