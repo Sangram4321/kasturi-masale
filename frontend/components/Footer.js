@@ -221,13 +221,13 @@ export default function Footer() {
             width: 100%;
             max-width: 1280px; /* STRICT MAX WIDTH */
             margin: 0 auto;
-            padding: 64px 24px 32px; /* Reduced bottom padding from 100px to 32px */
+            padding: 64px 24px 16px; /* Minimal bottom padding */
             box-sizing: border-box;
         }
 
         @media (min-width: 1024px) {
             .footer-safe-area {
-                padding-bottom: 40px; /* Reduced from 80px to 40px */
+                padding-bottom: 20px; /* Minimal desktop spacing */
             }
         }
 
