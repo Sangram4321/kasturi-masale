@@ -37,6 +37,9 @@ app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      "https://www.kasturimasale.in",
+      "https://kasturimasale.in",
+      "https://kasturi-masale.vercel.app",
       "http://localhost:3000",
       "http://localhost:3001",
       "http://192.168.1.5:3000",
@@ -45,10 +48,9 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
-      // Create a more readable error specifically for debugging
-      // return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-      // For Dev: Allow it but log it
+      // Log unrecognized origins for debugging
       console.log("⚠️ CORS Warning for Origin:", origin);
+      // For production: Allow it but log (can be tightened later)
       return callback(null, true);
     }
     return callback(null, true);
