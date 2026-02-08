@@ -8,9 +8,85 @@ const {
 const { createOrder: createRazorpayOrder, verifySignature } = require("../services/razorpay.service");
 const { sendAdminOrderNotification } = require("../services/email.service");
 const SLA = require("../config/sla");
+const { formatOrderPayload, createOrder: createIthinkOrder } = require("../services/ithink.service");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
+
+/* ================= HELPER: AUTOMATE ITHINK SHIPMENT ================= */
+const handleAutoShipment = async (order, isManual = false) => {
+  console.log("AUTO_SHIPMENT: function entered for Order", order.orderId);
+
+  const mode = process.env.ITHINK_AUTO_SHIPMENT_MODE || "OFF";
+  console.log("AUTO_SHIPMENT: mode value =", mode);
+
+  // 1. GUARD: Check Mode
+  if (!isManual) {
+    if (mode === "OFF") {
+      console.log(`AUTO_SHIPMENT: OFF. Skipping Order ${order.orderId}`);
+      return;
+    }
+    if (mode === "TEST") {
+      const allowedPhone = process.env.TEST_SHIPMENT_PHONE;
+      const isTestName = order.customer.name.toUpperCase().includes("TEST_SHIP");
+      const isTestPhone = allowedPhone && order.customer.phone === allowedPhone;
+
+      console.log(`AUTO_SHIPMENT: TEST Mode Check - NameMatch: ${isTestName}, PhoneMatch: ${isTestPhone}, AllowedPhone: ${allowedPhone}`);
+
+      if (!isTestName && !isTestPhone) {
+        console.log(`AUTO_SHIPMENT: TEST MODE. Skipping Order ${order.orderId} (No Filter Match)`);
+        return;
+      }
+      console.log(`AUTO_SHIPMENT: TEST MODE. Triggering for Order ${order.orderId}`);
+    }
+  }
+
+  // 2. GUARD: Retry Count
+  if (order.shipping.retryCount >= 3 && !isManual) {
+    console.warn(`AUTO_SHIPMENT: ABORT. Max retries (3) reached for Order ${order.orderId}`);
+    return;
+  }
+
+  try {
+    console.log(`AUTO_SHIPMENT: calling iThink API for ${order.orderId}...`);
+    const payload = formatOrderPayload(order);
+    const response = await createIthinkOrder(payload);
+
+    // Success
+    const awb = response.data?.awb_number || response.awb_number;
+    console.log(`AUTO_SHIPMENT: success with AWB ${awb}`);
+
+    order.shipping.awbNumber = awb;
+    order.shipping.courierName = "iThink Logistics";
+    order.shipping.shipmentStatus = "SCHEDULED";
+    order.shipping.shippedAt = new Date();
+    order.shipping.logs.push({
+      status: "SUCCESS",
+      description: "Auto-Shipment Created",
+      raw_code: JSON.stringify(response)
+    });
+    order.status = "SHIPPED";
+    await order.save();
+    console.log(`✅ [AutoShip] SUCCESS: Order ${order.orderId}, AWB: ${awb}`);
+    return { success: true, awb };
+
+  } catch (error) {
+    console.error(`AUTO_SHIPMENT: failure with error for Order ${order.orderId}`, error.message);
+
+    // Increment Retry for Auto only (Manual calls don't auto-increment lock, or do they? Let's increment to track attempts)
+    order.shipping.retryCount += 1;
+
+    order.shipping.shipmentStatus = "FAILED";
+    order.shipping.logs.push({
+      status: "FAILED",
+      description: error.message,
+      raw_code: JSON.stringify(error.response?.data || error)
+    });
+    await order.save();
+
+    if (isManual) throw error; // Re-throw for Admin UI
+  }
+};
 
 /* ================= CREATE ORDER ================= */
 exports.createOrder = async (req, res, next) => {
@@ -214,6 +290,14 @@ exports.createOrder = async (req, res, next) => {
         console.error(`❌ EMAIL: Failed to send admin notification for order ${order.orderId}:`, emailError.message);
       }
     });
+
+    // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
+    // We await this to ensure logs are captured and logic actually runs before response closes connection if container sleeps
+    try {
+      await handleAutoShipment(order);
+    } catch (shipErr) {
+      console.error("AutoShip Error Wrapper:", shipErr);
+    }
 
     // 🌟 LOYALTY: CREDIT PENDING POINTS FOR COD
     if (userId && paymentMethod === "COD") {
@@ -426,6 +510,14 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     const whatsappLink = buildOrderPlacedLink({
       phone: customer.phone, orderId, amount: finalTotal, payment: "UPI / Online"
     });
+
+    // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
+    // We re-fetch or use 'newOrder'
+    try {
+      await handleAutoShipment(newOrder);
+    } catch (shipErr) {
+      console.error("AutoShip Online Wrapper:", shipErr);
+    }
 
     // 🎉 AUTOMATIC SHIPMENT CREATION (Optional - User requested "Shipyaari integration")
     // Trigger generic shipment creation if needed, or leave for Admin Panel manual trigger.
@@ -648,8 +740,9 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 /* ================= ADMIN: CREATE SHIPMENT (MANUAL) ================= */
-const iThinkService = require("../services/ithink.service");
-const { createOrder: createIthinkOrder } = iThinkService;
+// iThinkService imported at top
+// const { createOrder: createIthinkOrder } = iThinkService; // Removed local destructure
+
 
 /* ================= ADMIN: CREATE SHIPMENT (MANUAL & ITHINK) ================= */
 exports.createShipment = async (req, res) => {
@@ -677,56 +770,17 @@ exports.createShipment = async (req, res) => {
     // 🚚 iThink Logistics Automation
     if (autoShip || courierName === "iThink Logistics") {
       try {
-        // Construct Payload for iThink
-        // Construct Payload for iThink
-        // NOTE: 'order', 'order_date', 'total_amount' must be INSIDE the shipment object in the 'shipments' array.
-        const orderPayload = {
-          shipments: [{
-            // Order Details
-            order: order.orderId,
-            order_date: order.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
-            total_amount: order.pricing.total,
-            payment_method: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-            logistics: "Surface", // Mandatory field based on error "Invalid Request Format logistics"
+        // USE HELPER with isManual=true
+        const result = await handleAutoShipment(order, true);
 
-            // Customer Details
-            name: order.customer.name,
-            add: order.customer.address,
-            pin: order.customer.pincode,
-            city: order.customer.city || "",
-            state: order.customer.state || "",
-            country: "India",
-            phone: order.customer.phone,
+        // If helper succeeds, it updates the order. We just define shipmentDetails for the response merge below?
+        // Actually helper saves the order. We should reload or just return success.
 
-            // Payment & COD
-            payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-            cod_amount: order.paymentMethod === "COD" ? order.pricing.total : 0,
-
-            // Products (Fixed Keys)
-            products: order.items.map(item => ({
-              product_name: item.name || "Masala Pack",
-              product_qty: item.quantity, // Checking if it is product_quantity or product_qty. Usually product_quantity.
-              // Wait, search said "product_quantity". Let's use that.
-              product_quantity: item.quantity,
-              product_price: item.price
-            }))
-          }],
-          // Pickup Address ID (Required V3) - At Data Level
-          pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID,
-        };
-
-        const ithinkResponse = await createIthinkOrder(orderPayload);
-
-        // Extract AWB from response (Adjust based on actual response structure)
-        // Assuming response has data.awb_number or similar
-        const awb = ithinkResponse.data?.awb_number || ithinkResponse.awb_number || "PENDING";
-
-        shipmentDetails = {
-          ...shipmentDetails,
-          courierName: "iThink Logistics",
-          awb: awb,
-          shipmentStatus: "SCHEDULED" // Or whatever status signifies success
-        };
+        return res.json({
+          success: true,
+          message: "Shipment created successfully via iThink",
+          shipping: order.shipping
+        });
 
       } catch (err) {
         console.error("iThink Auto-Ship Error:", err);

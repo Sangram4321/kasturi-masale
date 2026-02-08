@@ -60,7 +60,8 @@ const OrderSchema = new mongoose.Schema(
           raw_code: String,
           location: String
         }
-      ]
+      ],
+      retryCount: { type: Number, default: 0 }
     },
     status: {
       type: String,
