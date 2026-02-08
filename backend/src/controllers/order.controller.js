@@ -1776,11 +1776,21 @@ exports.resendOrderEmail = async (req, res) => {
 };
 
 /* ================= UTILS: FETCH ITHINK ADDRESSES ================= */
+/* ================= UTILS: FETCH ITHINK ADDRESSES ================= */
 exports.fetchPickupAddresses = async (req, res) => {
   try {
-    const { getPickupAddresses } = require("../services/ithink.service");
-    const data = await getPickupAddresses();
-    res.status(200).json({ success: true, data });
+    const ithinkService = require("../services/ithink.service");
+
+    console.log("DEBUG: Calling ithinkService.getPickupAddresses()...");
+    const responseData = await ithinkService.getPickupAddresses();
+
+    console.log("DEBUG: ithinkService response type:", typeof responseData);
+    console.log("DEBUG: ithinkService response value:", JSON.stringify(responseData));
+
+    res.status(200).json({
+      success: true,
+      data: responseData
+    });
   } catch (error) {
     console.error("Fetch Pickup Addresses Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
