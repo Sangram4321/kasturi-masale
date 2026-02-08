@@ -18,7 +18,7 @@ router.post("/user/:orderId/cancel", controller.cancelOrderByUser);
 router.get("/user/:orderId", controller.getSingleUserOrder);
 
 // 📦 iThink Utilities (TEMPORARILY PUBLIC FOR DEBUGGING)
-router.get("/admin/ithink/pickup-addresses", controller.fetchPickupAddresses);
+router.get("/ithink/public-pickup-addresses", controller.fetchPickupAddresses);
 
 // TRACKING (Public)
 router.get("/track/:id", controller.trackOrder);
