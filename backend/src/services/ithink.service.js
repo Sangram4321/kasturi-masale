@@ -138,13 +138,21 @@ exports.getPickupAddresses = async () => {
  * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
  */
 exports.formatOrderPayload = (order) => {
+    // Helper: Format Date as DD-MM-YYYY for iThink V3
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
     // 1. Determine Payment Mode (COD / Prepaid)
     const paymentMode = order.paymentMethod === "COD" ? "COD" : "Prepaid";
 
-    // 2. Format Date (YYYY-MM-DD or DD-MM-YYYY depending on API)
-    // iThink V3 usually accepts YYYY-MM-DD HH:mm:ss or similar.
-    let orderDate = new Date().toISOString().split('T')[0]; // Default to today
-    if (order.createdAt) orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+    // 2. Format Date
+    let orderDate = formatDate(new Date()); // Default to today
+    if (order.createdAt) orderDate = formatDate(order.createdAt);
 
     // 3. Construct Payload (Flat Object for 'shipments' array)
     return {
@@ -152,7 +160,7 @@ exports.formatOrderPayload = (order) => {
         waybill: "", // Leave empty for auto-generation
         order: order.orderId,
         sub_order: "",
-        order_date: orderDate,
+        order_date: orderDate, // Fixed Format
         total_amount: order.pricing.total,
         name: order.customer.name,
         company_name: "",
@@ -163,7 +171,10 @@ exports.formatOrderPayload = (order) => {
         city: order.customer.city || "",
         state: order.customer.state || "",
         country: "India",
-        phone: order.customer.phone,
+
+        // Fixed Phone: Strict 10-digit numeric
+        phone: String(order.customer.phone).replace(/\D/g, "").slice(-10),
+
         email: order.customer.email || "",
 
         products: order.items.map(item => ({
