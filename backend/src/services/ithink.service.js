@@ -112,9 +112,6 @@ exports.trackShipment = async (awbNumber) => {
 /**
  * Fetch and Log Pickup Addresses (For Configuration Debugging)
  */
-/**
- * Fetch and Log Pickup Addresses (For Configuration Debugging)
- */
 exports.getPickupAddresses = async () => {
     try {
         console.log("📍 iThink: Fetching Pickup Addresses...");
@@ -184,6 +181,7 @@ exports.formatOrderPayload = (order) => {
 
         email: order.customer.email || "",
 
+        // CLEAN PRODUCTS ARRAY
         products: order.items.map(item => ({
             product_name: item.nameHtml || item.name || "Spice Pack",
             product_sku: item.productId || "SKU-DEFAULT",
@@ -204,6 +202,7 @@ exports.formatOrderPayload = (order) => {
         cod_amount: paymentMode === "COD" ? order.pricing.total : 0,
         payment_mode: paymentMode,
 
+        // ADDRESS IDs (At Root Level)
         return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // Return to same as pickup usually
         pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // MANDATORY
     };
