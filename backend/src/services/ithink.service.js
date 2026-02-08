@@ -110,6 +110,29 @@ exports.trackShipment = async (awbNumber) => {
 };
 
 /**
+ * Fetch and Log Pickup Addresses (For Configuration Debugging)
+ */
+exports.getPickupAddresses = async () => {
+    try {
+        console.log("📍 iThink: Fetching Pickup Addresses...");
+        const payload = {
+            data: {
+                access_token: process.env.ITHINK_ACCESS_TOKEN,
+                secret_key: process.env.ITHINK_SECRET_KEY,
+            }
+        };
+
+        // Correct Endpoint for V3: /api_v3/pincode/get_pickup_address.json
+        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/pincode/get_pickup_address.json", payload);
+
+        console.log("📍 iThink Pickup Addresses RESPONSE:", JSON.stringify(response.data, null, 2));
+        return response.data;
+    } catch (error) {
+        console.error("❌ iThink Pickup Address Fetch Failed:", error.response?.data || error.message);
+    }
+};
+
+/**
  * Format Order Data for iThink Logistics Payload
  * @param {Object} order - The Order Mongoose Document
  * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
