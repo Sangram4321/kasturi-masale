@@ -4,24 +4,38 @@ const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /**
  * Create a shipment in iThink Logistics
- * @param {Object} orderData - The order data to send
+ * @param {Object} orderData - The order data to send (Flat object from formatOrderPayload)
  * @returns {Promise<Object>} - The API response
  */
 exports.createOrder = async (orderData) => {
     try {
+        // 1. Validate Mandatory Config
+        if (!process.env.ITHINK_PICKUP_ADDRESS_ID) {
+            throw new Error("Missing Mandatory Env Var: ITHINK_PICKUP_ADDRESS_ID");
+        }
+
+        // 2. Construct V3 Payload
+        // V3 expects: data: { shipments: [...], access_token, secret_key }
         const payload = {
             data: {
-                ...orderData,
+                shipments: [orderData],
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
             }
         };
 
+        // 3. Log Final Payload for Debugging
+        console.log("iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
+
         const response = await axios.post(BASE_URL, payload);
+
+        // 4. Log Response
+        console.log("iThink API RESPONSE:", JSON.stringify(response.data, null, 2));
 
         if (response.data && response.data.status === "success") {
             return response.data;
         } else {
+            // iThink might return status: error with remarks
             throw new Error(JSON.stringify(response.data));
         }
     } catch (error) {
@@ -98,7 +112,7 @@ exports.trackShipment = async (awbNumber) => {
 /**
  * Format Order Data for iThink Logistics Payload
  * @param {Object} order - The Order Mongoose Document
- * @returns {Object} - Formatted payload for iThink
+ * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
  */
 exports.formatOrderPayload = (order) => {
     // 1. Determine Payment Mode (COD / Prepaid)
@@ -109,58 +123,47 @@ exports.formatOrderPayload = (order) => {
     let orderDate = new Date().toISOString().split('T')[0]; // Default to today
     if (order.createdAt) orderDate = new Date(order.createdAt).toISOString().split('T')[0];
 
-    // 3. Construct Payload
+    // 3. Construct Payload (Flat Object for 'shipments' array)
     return {
-        data: {
-            shipment_type: "Forward", // or "Reverse"
-            order_type: paymentMode,
+        // API V3 Spec Mappings
+        waybill: "", // Leave empty for auto-generation
+        order: order.orderId,
+        sub_order: "",
+        order_date: orderDate,
+        total_amount: order.pricing.total,
+        name: order.customer.name,
+        company_name: "",
+        add: order.customer.address,
+        add2: "",
+        add3: "",
+        pin: order.customer.pincode,
+        city: order.customer.city || "",
+        state: order.customer.state || "",
+        country: "India",
+        phone: order.customer.phone,
+        email: order.customer.email || "",
 
-            // Pickup / Warehouse Details (Required)
-            warehouse_name: process.env.ITHINK_WAREHOUSE_NAME || "Kasturi Masale", // Must match exactly with registered name in iThink panel
+        products: order.items.map(item => ({
+            product_name: item.nameHtml || item.name || "Spice Pack",
+            product_sku: item.productId || "SKU-DEFAULT",
+            product_quantity: item.quantity,
+            product_price: item.price,
+            product_tax_rate: 0,
+            product_hsn_code: "",
+            product_discount: 0
+        })),
 
-            // Customer Details
-            name: order.customer.name,
-            company_name: "",
-            email: order.customer.email || "",
-            mobile: order.customer.phone,
-            address: order.customer.address,
-            address_2: "",
-            pincode: order.customer.pincode,
-            city: order.customer.city || "",
-            state: order.customer.state || "",
-            country: "India",
+        // Dimensions & Weight (Per Shipment)
+        // Assuming standard box for spices: 0.5kg
+        shipment_length: 10,
+        shipment_width: 10,
+        shipment_height: 10,
+        shipment_weight: 0.5,
 
-            // Order Details
-            order_id: order.orderId,
-            order_date: orderDate,
+        cod_amount: paymentMode === "COD" ? order.pricing.total : 0,
+        payment_mode: paymentMode,
 
-            total_amount: order.pricing.total, // Incorrect field? V3 uses 'cod_amount' for COD and 'order_amount' generally?
-            // Checking V3 docs structure: Typically follows standard logistics payload
-            cod_amount: paymentMode === "COD" ? order.pricing.total : 0,
-            order_amount: order.pricing.total,
-
-            quantity: order.items.reduce((acc, item) => acc + item.quantity, 0),
-
-            // Product Details (Array)
-            products: order.items.map(item => ({
-                product_name: item.nameHtml || item.name || "Spice Pack",
-                product_sku: item.productId || "SKU-DEFAULT",
-                quantity: item.quantity,
-                product_price: item.price,
-                product_tax_rate: 0,
-                product_hsn_code: ""
-            })),
-
-            // Dimensions & Weight (Per Shipment)
-            // Assuming standard box for spices: 0.5kg
-            total_weight: 0.5,
-            length: 10,
-            breadth: 10,
-            height: 10,
-
-            // Other settings
-            is_return: 0,
-            return_address_id: "",
-        }
+        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // Return to same as pickup usually
+        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // MANDATORY
     };
 };
