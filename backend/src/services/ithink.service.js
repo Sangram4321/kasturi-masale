@@ -112,6 +112,9 @@ exports.trackShipment = async (awbNumber) => {
 /**
  * Fetch and Log Pickup Addresses (For Configuration Debugging)
  */
+/**
+ * Fetch and Log Pickup Addresses (For Configuration Debugging)
+ */
 exports.getPickupAddresses = async () => {
     try {
         console.log("📍 iThink: Fetching Pickup Addresses...");
@@ -122,13 +125,17 @@ exports.getPickupAddresses = async () => {
             }
         };
 
-        // Correct Endpoint for V3: /api_v3/pincode/get_pickup_address.json
-        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/pincode/get_pickup_address.json", payload);
+        // Correct Endpoint for V3: https://manage.ithinklogistics.com/api_v3/pickup-address/list.json
+        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/pickup-address/list.json", payload);
 
-        console.log("📍 iThink Pickup Addresses RESPONSE:", JSON.stringify(response.data, null, 2));
-        return response.data;
+        console.log("RAW iThink response:", response.data);
+        console.log("TYPE:", typeof response.data);
+
+        // Return the actual list or full object
+        return response.data?.data || response.data;
     } catch (error) {
         console.error("❌ iThink Pickup Address Fetch Failed:", error.response?.data || error.message);
+        return { error: error.message };
     }
 };
 
