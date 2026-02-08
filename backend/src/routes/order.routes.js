@@ -36,6 +36,9 @@ router.post("/admin/:orderId/cancel", controller.cancelOrder);
 router.post("/admin/:orderId/rto", controller.initiateRTO);
 router.post("/admin/:orderId/resend-email", controller.resendOrderEmail); // Manual email resend
 router.post("/admin/orders/refresh-tracking", controller.bulkRefreshTracking); // ⚡ Bulk Refresh
+// 📦 iThink Utilities
+router.get("/admin/ithink/pickup-addresses", controller.fetchPickupAddresses);
+
 router.post("/admin/rewards/process", controller.processRewards);
 
 module.exports = router;

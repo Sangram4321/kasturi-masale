@@ -1774,3 +1774,15 @@ exports.resendOrderEmail = async (req, res) => {
     });
   }
 };
+
+/* ================= UTILS: FETCH ITHINK ADDRESSES ================= */
+exports.fetchPickupAddresses = async (req, res) => {
+  try {
+    const { getPickupAddresses } = require("../services/ithink.service");
+    const data = await getPickupAddresses();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Fetch Pickup Addresses Error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
