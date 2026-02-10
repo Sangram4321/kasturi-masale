@@ -9,12 +9,7 @@ const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
  */
 exports.createOrder = async (orderData) => {
     try {
-        // 1. Validate Mandatory Config
-        if (!process.env.ITHINK_PICKUP_ADDRESS_ID) {
-            throw new Error("Missing Mandatory Env Var: ITHINK_PICKUP_ADDRESS_ID");
-        }
-
-        // 2. Construct V3 Payload
+        // 1. Construct V3 Payload
         // V3 expects: data: { shipments: [...], access_token, secret_key }
         const payload = {
             data: {
@@ -23,6 +18,12 @@ exports.createOrder = async (orderData) => {
                 secret_key: process.env.ITHINK_SECRET_KEY,
             }
         };
+
+        // 2. HARD Validation
+        const isValid = Array.isArray(payload.data.shipments)
+            && payload.data.shipments[0].pickup_address_id;
+
+        if (!isValid) throw new Error("INVALID PAYLOAD STRUCTURE: Missing pickup_address_id in shipment");
 
         // 3. Log Final Payload for Debugging
         console.log("iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
@@ -142,46 +143,33 @@ exports.getPickupAddresses = async () => {
  * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
  */
 exports.formatOrderPayload = (order) => {
-    // Helper: Format Date as DD-MM-YYYY for iThink V3
-    const formatDate = (date) => {
-        const d = new Date(date);
+    // Helper: Format Date as DD-MM-YYYY
+    const formattedDate = (() => {
+        const d = order.createdAt ? new Date(order.createdAt) : new Date();
         const day = String(d.getDate()).padStart(2, "0");
         const month = String(d.getMonth() + 1).padStart(2, "0");
         const year = d.getFullYear();
         return `${day}-${month}-${year}`;
-    };
+    })();
 
-    // 1. Determine Payment Mode (COD / Prepaid)
-    const paymentMode = order.paymentMethod === "COD" ? "COD" : "Prepaid";
+    // Helper: Sanitize Phone
+    const sanitizedPhone = String(order.customer.phone).replace(/\D/g, "").slice(-10);
 
-    // 2. Format Date
-    let orderDate = formatDate(new Date()); // Default to today
-    if (order.createdAt) orderDate = formatDate(order.createdAt);
-
-    // 3. Construct Payload (Flat Object for 'shipments' array)
     return {
-        // API V3 Spec Mappings
-        waybill: "", // Leave empty for auto-generation
+        waybill: "",
         order: order.orderId,
         sub_order: "",
-        order_date: orderDate, // Fixed Format
+        order_date: formattedDate,
         total_amount: order.pricing.total,
         name: order.customer.name,
-        company_name: "",
         add: order.customer.address,
-        add2: "",
-        add3: "",
         pin: order.customer.pincode,
         city: order.customer.city || "",
         state: order.customer.state || "",
         country: "India",
-
-        // Fixed Phone: Strict 10-digit numeric
-        phone: String(order.customer.phone).replace(/\D/g, "").slice(-10),
-
+        phone: sanitizedPhone,
         email: order.customer.email || "",
 
-        // CLEAN PRODUCTS ARRAY
         products: order.items.map(item => ({
             product_name: item.nameHtml || item.name || "Spice Pack",
             product_sku: item.productId || "SKU-DEFAULT",
@@ -192,18 +180,15 @@ exports.formatOrderPayload = (order) => {
             product_discount: 0
         })),
 
-        // Dimensions & Weight (Per Shipment)
-        // Assuming standard box for spices: 0.5kg
         shipment_length: 10,
         shipment_width: 10,
         shipment_height: 10,
         shipment_weight: 0.5,
 
-        cod_amount: paymentMode === "COD" ? order.pricing.total : 0,
-        payment_mode: paymentMode,
+        cod_amount: order.paymentMethod === "COD" ? order.pricing.total : 0,
+        payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
-        // ADDRESS IDs (At Root Level)
-        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // Return to same as pickup usually
-        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID, // MANDATORY
+        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID,
+        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID
     };
 };
