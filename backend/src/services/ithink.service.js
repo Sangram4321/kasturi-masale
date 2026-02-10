@@ -7,30 +7,33 @@ const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
  * @param {Object} orderData - The order data to send (Flat object from formatOrderPayload)
  * @returns {Promise<Object>} - The API response
  */
-exports.createOrder = async (orderData) => {
+exports.createOrder = async (order) => {
     try {
-        // 1. Construct V3 Payload
+        // 1. Prepare Single Shipment Object
+        // Using strict literal construction to avoid polluted objects
+        const shipmentData = exports.formatOrderPayload(order);
+
+        // 2. Construct V3 Payload
         // V3 expects: data: { shipments: [...], access_token, secret_key }
         const payload = {
             data: {
-                shipments: [orderData],
+                shipments: [shipmentData],
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
             }
         };
 
-        // 2. HARD Validation
-        const isValid = Array.isArray(payload.data.shipments)
-            && payload.data.shipments[0].pickup_address_id;
+        // 3. Validation
+        if (!process.env.ITHINK_PICKUP_ADDRESS_ID) {
+            throw new Error("Missing Env Var: ITHINK_PICKUP_ADDRESS_ID");
+        }
 
-        if (!isValid) throw new Error("INVALID PAYLOAD STRUCTURE: Missing pickup_address_id in shipment");
-
-        // 3. Log Final Payload for Debugging
+        // 4. Log Final Payload for Debugging
         console.log("iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
         const response = await axios.post(BASE_URL, payload);
 
-        // 4. Log Response
+        // 5. Log Response
         console.log("iThink API RESPONSE:", JSON.stringify(response.data, null, 2));
 
         if (response.data && response.data.status === "success") {
@@ -155,6 +158,7 @@ exports.formatOrderPayload = (order) => {
     // Helper: Sanitize Phone
     const sanitizedPhone = String(order.customer.phone).replace(/\D/g, "").slice(-10);
 
+    // Strict Literal Return
     return {
         waybill: "",
         order: order.orderId,
@@ -184,10 +188,8 @@ exports.formatOrderPayload = (order) => {
         shipment_width: 10,
         shipment_height: 10,
         shipment_weight: 0.5,
-
         cod_amount: order.paymentMethod === "COD" ? order.pricing.total : 0,
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-
         return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID,
         pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID
     };
