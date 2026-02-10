@@ -4,11 +4,14 @@ const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /**
  * Create a shipment in iThink Logistics
- * @param {Object} orderData - The order data to send (Flat object from formatOrderPayload)
+ * @param {Object} order - The order data to send (Flat object from formatOrderPayload)
  * @returns {Promise<Object>} - The API response
  */
 exports.createOrder = async (order) => {
     try {
+        // 0. DEBUG LOG - Crucial for identifying data issues
+        console.log("DEBUG ORDER OBJECT:", JSON.stringify(order, null, 2));
+
         // 1. Prepare Single Shipment Object
         // Using strict literal construction to avoid polluted objects
         const shipmentData = exports.formatOrderPayload(order);
@@ -64,10 +67,6 @@ exports.cancelShipment = async (awbNumber) => {
         };
 
         const response = await axios.post("https://manage.ithinklogistics.com/api_v3/order/cancel.json", payload);
-
-        // iThink V3 returns { status: "success", ... } or { status: "error", ... }
-        // Even if status is success, we should check if the specific AWB was cancelled?
-        // Usually if it fails it returns status: error.
 
         if (response.data && response.data.status === "success") {
             return response.data;
@@ -155,41 +154,65 @@ exports.formatOrderPayload = (order) => {
         return `${day}-${month}-${year}`;
     })();
 
-    // Helper: Sanitize Phone
-    const sanitizedPhone = String(order.customer.phone).replace(/\D/g, "").slice(-10);
+    // SAFE EXTRACTION HELPERS with Fallbacks
+    const getField = (keys, defaultVal = "") => {
+        for (const key of keys) {
+            // key can be "customer.phone" or just "phone"
+            const parts = key.split('.');
+            let val = order;
+            for (const part of parts) {
+                val = val?.[part];
+            }
+            if (val) return val;
+        }
+        return defaultVal;
+    };
+
+    const phoneRaw = getField(['customer.phone', 'shippingAddress.phone', 'phone', 'user.phone', 'customer.mobile']);
+    const sanitizedPhone = String(phoneRaw || "").replace(/\D/g, "").slice(-10);
+
+    const name = getField(['customer.name', 'shippingAddress.name', 'name', 'user.name'], "Guest Customer");
+    const address = getField(['customer.address', 'shippingAddress.address', 'address'], "Address Missing");
+    const pin = getField(['customer.pincode', 'shippingAddress.pincode', 'pincode'], "416001"); // Default Kolhapur Pin
+    const city = getField(['customer.city', 'shippingAddress.city', 'city'], "Kolhapur");
+    const state = getField(['customer.state', 'shippingAddress.state', 'state'], "Maharashtra");
+    const email = getField(['customer.email', 'shippingAddress.email', 'email', 'user.email'], "");
 
     // Strict Literal Return
     return {
         waybill: "",
-        order: order.orderId,
+        order: order.orderId || `ORD-${Date.now()}`,
         sub_order: "",
         order_date: formattedDate,
-        total_amount: order.pricing.total,
-        name: order.customer.name,
-        add: order.customer.address,
-        pin: order.customer.pincode,
-        city: order.customer.city || "Kolhapur",
-        state: order.customer.state || "Maharashtra",
+        total_amount: order.pricing?.total || 0,
+        name: name,
+        add: address,
+        pin: pin,
+        city: city,
+        state: state,
         country: "India",
         phone: sanitizedPhone,
-        email: order.customer.email || "",
+        email: email,
 
-        products: order.items.map(item => ({
+        products: (order.items || []).map(item => ({
             product_name: item.nameHtml || item.name || "Spice Pack",
             product_sku: item.productId || "SKU-DEFAULT",
-            product_quantity: item.quantity,
-            product_price: item.price,
+            product_quantity: item.quantity || 1,
+            product_price: item.price || 0,
             product_tax_rate: 0,
             product_hsn_code: "",
             product_discount: 0
         })),
 
+        // Default Dimensions
         shipment_length: 10,
         shipment_width: 10,
         shipment_height: 10,
         shipment_weight: 0.5,
-        cod_amount: order.paymentMethod === "COD" ? order.pricing.total : 0,
+
+        cod_amount: order.paymentMethod === "COD" ? (order.pricing?.total || 0) : 0,
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
+
         return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID,
         pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID
     };
