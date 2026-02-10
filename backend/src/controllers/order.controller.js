@@ -48,25 +48,35 @@ const handleAutoShipment = async (order, isManual = false) => {
   }
 
   try {
+    // 3. RE-FETCH ORDER TO ENSURE CLEAN DATA
+    const freshOrder = await Order.findById(order._id);
+    console.log("CLEAN ORDER:", JSON.stringify(freshOrder, null, 2));
+
     console.log(`AUTO_SHIPMENT: calling iThink API for ${order.orderId}...`);
-    const payload = formatOrderPayload(order);
-    const response = await createIthinkOrder(payload);
+    // Note: createIthinkOrder now handles formatting internally to ensure robust fallbacks
+    const response = await createIthinkOrder(freshOrder);
 
     // Success
     const awb = response.data?.awb_number || response.awb_number;
     console.log(`AUTO_SHIPMENT: success with AWB ${awb}`);
 
-    order.shipping.awbNumber = awb;
-    order.shipping.courierName = "iThink Logistics";
-    order.shipping.shipmentStatus = "SCHEDULED";
-    order.shipping.shippedAt = new Date();
-    order.shipping.logs.push({
+    // Update Original Order Object (or freshOrder, but we need to save)
+    // We use freshOrder for data, but we can update 'order' or 'freshOrder' and save.
+    // Better to update freshOrder and save it to avoid any stale data overwrites.
+    freshOrder.shipping.awbNumber = awb;
+    freshOrder.shipping.courierName = "iThink Logistics";
+    freshOrder.shipping.shipmentStatus = "SCHEDULED";
+    freshOrder.shipping.shippedAt = new Date();
+    freshOrder.shipping.retryCount = order.shipping.retryCount; // Preserve retry count from arg if needed, but freshOrder has it from DB.
+
+    freshOrder.shipping.logs.push({
       status: "SUCCESS",
       description: "Auto-Shipment Created",
       raw_code: JSON.stringify(response)
     });
-    order.status = "SHIPPED";
-    await order.save();
+    freshOrder.status = "SHIPPED";
+    await freshOrder.save();
+
     console.log(`✅ [AutoShip] SUCCESS: Order ${order.orderId}, AWB: ${awb}`);
     return { success: true, awb };
 
