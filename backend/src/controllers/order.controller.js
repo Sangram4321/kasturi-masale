@@ -203,13 +203,30 @@ exports.createOrder = async (req, res, next) => {
     const shippingFee = pricing.subtotal >= 500 ? 0 : 50;
     const finalTotal = pricing.subtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
 
+    // ⚖️ WEIGHT LOOKUP (New Architecture)
+    const Product = require("../models/Product");
+    // Fetch all needed variants in one go
+    const variantKeys = items.map(i => i.variant);
+    const products = await Product.find({ variant: { $in: variantKeys } });
+
+    // Map to simple object for O(1) lookup
+    const weightMap = {};
+    products.forEach(p => { weightMap[p.variant] = p.weight; });
+
+    // Enrich items with weight
+    const enrichedItems = items.map(item => ({
+      ...item,
+      // Default to 0.5kg if variant not found (Safety)
+      weight: weightMap[item.variant] || 0.5
+    }));
+
     while (!order && attempts < 3) {
       try {
         const orderId = generateOrderId();
         order = await Order.create({
           orderId,
           customer,
-          items,
+          items: enrichedItems, // Use enriched items with weight
           // 📌 STORE RESOLVED OBJECTID IF AVAILABLE (as string for now due to Schema)
           userId: user ? user._id.toString() : (userId || null),
           pricing: {
@@ -217,7 +234,6 @@ exports.createOrder = async (req, res, next) => {
             codFee: pricing.codFee || 0,
             shippingFee: shippingFee,
             discount: discountAmount,
-            coinsRedeemed: coinsRedeemed,
             coinsRedeemed: coinsRedeemed,
             total: finalTotal // ✅ CORRECT: Use calculated final total
           },
@@ -452,10 +468,22 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     const finalTotal = pricing.subtotal + shippingFee - discountAmount; // COD fee usually 0 for online
     const orderId = generateOrderId();
 
+    // ⚖️ WEIGHT LOOKUP (Online Flow)
+    const Product = require("../models/Product");
+    const variantKeys = items.map(i => i.variant);
+    const products = await Product.find({ variant: { $in: variantKeys } });
+    const weightMap = {};
+    products.forEach(p => { weightMap[p.variant] = p.weight; });
+
+    const enrichedItems = items.map(item => ({
+      ...item,
+      weight: weightMap[item.variant] || 0.5
+    }));
+
     const newOrder = await Order.create({
       orderId,
       customer,
-      items,
+      items: enrichedItems,
       userId: userObjectId ? userObjectId.toString() : (userId || null),
       pricing: {
         subtotal: pricing.subtotal,

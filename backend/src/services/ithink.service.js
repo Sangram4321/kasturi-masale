@@ -128,18 +128,28 @@ exports.formatOrderPayload = (order) => {
         orderDate.getMonth() + 1
     ).padStart(2, "0")}-${orderDate.getFullYear()}`;
 
-    const products =
-        (order.items || []).map((i) => ({
+    // ⚖️ WEIGHT CALCULATION
+    let totalWeight = 0;
+    const products = (order.items || []).map((i) => {
+        // Fallback for old orders: 0.5kg
+        const itemWeight = Number(i.weight) || 0.5;
+        const qty = Number(i.quantity) || 1;
+        totalWeight += itemWeight * qty;
+
+        return {
             product_name: i.name || "Spice Pack",
             product_sku: i.productId || i._id || "SKU",
-            product_quantity: String(i.quantity || 1),
+            product_quantity: String(qty),
             product_price: String(i.price || 0),
             product_tax_rate: "0",
             product_hsn_code: "",
             product_discount: "0",
-        })) || [];
+        };
+    });
 
     if (products.length === 0) {
+        // Default for custom/empty
+        totalWeight = 0.5;
         products.push({
             product_name: "Custom Order",
             product_sku: "CUSTOM",
@@ -151,6 +161,10 @@ exports.formatOrderPayload = (order) => {
         });
     }
 
+    // Add Packaging Weight (0.08kg) and ensure Min 0.1kg
+    // Round to 2 decimals
+    const finalWeight = Math.max((totalWeight + 0.08), 0.1).toFixed(2);
+
     return {
         waybill: "",
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
@@ -160,7 +174,7 @@ exports.formatOrderPayload = (order) => {
 
         name: get(["customer.name"], "Customer"),
         company_name: "",
-        add: get(["customer.address"], "Address Missing"),
+        add_address: get(["customer.address"], "Address Missing"),
         add2: "",
         add3: "",
         pin: get(["customer.pincode"], "416001"),
@@ -174,8 +188,8 @@ exports.formatOrderPayload = (order) => {
 
         products,
 
-        /* ⚠️ IMPORTANT — ONLY weight allowed */
-        shipment_weight: "0.5",
+        /* ⚖️ DYNAMIC WEIGHT */
+        shipment_weight: String(finalWeight),
 
         cod_amount:
             order.paymentMethod === "COD"

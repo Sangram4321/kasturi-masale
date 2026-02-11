@@ -24,7 +24,8 @@ const OrderSchema = new mongoose.Schema(
         name: String,
         // 🏭 BATCH TRACKING
         batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
-        costAtTimeOfOrder: { type: Number, default: 0 } // Snapshot of Batch.costPerUnit
+        costAtTimeOfOrder: { type: Number, default: 0 }, // Snapshot of Batch.costPerUnit
+        weight: { type: Number, default: 0.5 } // ⚖️ Snapshot of Product.weight (kg)
       }
     ],
     pricing: {
