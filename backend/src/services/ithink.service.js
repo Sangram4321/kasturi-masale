@@ -1,40 +1,33 @@
 const axios = require("axios");
 
 const BASE_URL =
-    "https://manage.ithinklogistics.com/api/order/add";
-
+    "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /* =====================================================
    CREATE SHIPMENT
 ===================================================== */
 exports.createOrder = async (order) => {
     try {
-        /* ---------- 1. Clean Order ---------- */
         const raw = order.toObject ? order.toObject() : order;
 
         const cleanOrder = {
             customer: raw.customer,
             pricing: raw.pricing,
-            shipping: raw.shipping,
             items: raw.items,
-            status: raw.status,
             paymentMethod: raw.paymentMethod,
             orderId: raw.orderId,
             createdAt: raw.createdAt,
             _id: raw._id,
         };
 
-        JSON.stringify(cleanOrder); // validation
+        JSON.stringify(cleanOrder);
         console.log("✅ ORDER JSON VALID");
 
-        /* ---------- 2. Shipment Object ---------- */
         const shipmentData = exports.formatOrderPayload(cleanOrder);
 
-        /* ---------- 3. ENV Validation ---------- */
         const pickupId = Number(process.env.ITHINK_PICKUP_ADDRESS_ID);
-        if (!pickupId) throw new Error("Invalid or missing ITHINK_PICKUP_ADDRESS_ID");
+        if (!pickupId) throw new Error("Invalid ITHINK_PICKUP_ADDRESS_ID");
 
-        /* ---------- 4. FINAL PAYLOAD (CORRECT STRUCTURE) ---------- */
         const payload = {
             data: {
                 pickup_address_id: pickupId,
@@ -45,17 +38,13 @@ exports.createOrder = async (order) => {
             },
         };
 
-
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        /* ---------- 5. API CALL ---------- */
         const response = await axios.post(BASE_URL, payload);
 
         console.log("📦 iThink API RESPONSE:", JSON.stringify(response.data, null, 2));
 
-        if (response.data?.status === "success") {
-            return response.data;
-        }
+        if (response.data?.status === "success") return response.data;
 
         throw new Error(JSON.stringify(response.data));
     } catch (error) {
@@ -117,31 +106,6 @@ exports.trackShipment = async (awbNumber) => {
 };
 
 /* =====================================================
-   GET PICKUP ADDRESSES (DEBUG TOOL)
-===================================================== */
-exports.getPickupAddresses = async () => {
-    try {
-        const payload = {
-            data: {
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            },
-        };
-
-        const response = await axios.post(
-            "https://manage.ithinklogistics.com/api_v3/pickup-address/list.json",
-            payload
-        );
-
-        console.log("📍 PICKUP LIST:", response.data);
-        return response.data?.data || response.data;
-    } catch (error) {
-        console.error("❌ Pickup Fetch Error:", error.response?.data || error.message);
-        throw error;
-    }
-};
-
-/* =====================================================
    FORMAT ORDER → SHIPMENT PAYLOAD
 ===================================================== */
 exports.formatOrderPayload = (order) => {
@@ -155,9 +119,7 @@ exports.formatOrderPayload = (order) => {
         return fallback;
     };
 
-    const phone = String(
-        get(["customer.phone", "shippingAddress.phone", "phone"], "")
-    )
+    const phone = String(get(["customer.phone", "phone"], ""))
         .replace(/\D/g, "")
         .slice(-10);
 
@@ -196,25 +158,23 @@ exports.formatOrderPayload = (order) => {
         order_date: formattedDate,
         total_amount: String(order.pricing?.total || 0),
 
-        name: get(["customer.name", "name"], "Customer"),
+        name: get(["customer.name"], "Customer"),
         company_name: "",
-        add: get(["customer.address", "address"], "Address Missing"),
+        add: get(["customer.address"], "Address Missing"),
         add2: "",
         add3: "",
-        pin: get(["customer.pincode", "pincode"], "416001"),
-        city: get(["customer.city", "city"], "Kolhapur"),
-        state: get(["customer.state", "state"], "Maharashtra"),
+        pin: get(["customer.pincode"], "416001"),
+        city: get(["customer.city"], "Kolhapur"),
+        state: get(["customer.state"], "Maharashtra"),
         country: "India",
         phone,
         alt_phone: "",
-        email: get(["customer.email", "email"], ""),
+        email: get(["customer.email"], ""),
         is_billing_same_as_shipping: "yes",
 
         products,
 
-        shipment_length: "10",
-        shipment_width: "10",
-        shipment_height: "10",
+        /* ⚠️ IMPORTANT — ONLY weight allowed */
         shipment_weight: "0.5",
 
         cod_amount:
@@ -223,10 +183,5 @@ exports.formatOrderPayload = (order) => {
                 : "0",
 
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-
-        logistics: {
-            courier: ""
-        }
-
     };
 };
