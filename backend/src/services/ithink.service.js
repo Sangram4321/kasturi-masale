@@ -34,15 +34,15 @@ exports.createOrder = async (order) => {
 
         /* ---------- 4. FINAL PAYLOAD (CORRECT STRUCTURE) ---------- */
         const payload = {
-            pickup_address_id: pickupId,
-            return_address_id: pickupId,
-
             data: {
+                pickup_address_id: pickupId,
+                return_address_id: pickupId,
                 shipments: [shipmentData],
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
             },
         };
+
 
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
