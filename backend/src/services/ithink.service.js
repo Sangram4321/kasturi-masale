@@ -174,7 +174,7 @@ exports.formatOrderPayload = (order) => {
 
         name: get(["customer.name"], "Customer"),
         company_name: "",
-        add_address: get(["customer.address"], "Address Missing"),
+        add: get(["customer.address"], "Address Missing"),
         add2: "",
         add3: "",
         pin: get(["customer.pincode"], "416001"),
