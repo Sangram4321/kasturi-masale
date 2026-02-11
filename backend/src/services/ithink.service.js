@@ -145,75 +145,104 @@ exports.getPickupAddresses = async () => {
  * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
  */
 exports.formatOrderPayload = (order) => {
-    // Helper: Format Date as DD-MM-YYYY
-    const formattedDate = (() => {
-        const d = order.createdAt ? new Date(order.createdAt) : new Date();
-        const day = String(d.getDate()).padStart(2, "0");
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const year = d.getFullYear();
-        return `${day}-${month}-${year}`;
-    })();
-
-    // SAFE EXTRACTION HELPERS with Fallbacks
-    const getField = (keys, defaultVal = "") => {
-        for (const key of keys) {
-            // key can be "customer.phone" or just "phone"
-            const parts = key.split('.');
+    // ---------------------------------------------------------
+    // 1. Helper for Clean Extraction
+    // ---------------------------------------------------------
+    const get = (paths, fallback = "") => {
+        for (const path of paths) {
+            const keys = path.split('.');
             let val = order;
-            for (const part of parts) {
-                val = val?.[part];
+            for (const key of keys) {
+                val = val?.[key];
             }
-            if (val) return val;
+            if (val !== undefined && val !== null && val !== "") return val;
         }
-        return defaultVal;
+        return fallback;
     };
 
-    const phoneRaw = getField(['customer.phone', 'shippingAddress.phone', 'phone', 'user.phone', 'customer.mobile']);
-    const sanitizedPhone = String(phoneRaw || "").replace(/\D/g, "").slice(-10);
+    // ---------------------------------------------------------
+    // 2. Extract & Sanitize Customer Data
+    // ---------------------------------------------------------
+    const rawPhone = get(['customer.phone', 'shippingAddress.phone', 'phone', 'user.phone'], "");
+    const phone = String(rawPhone).replace(/\D/g, "").slice(-10); // Last 10 digits only
 
-    const name = getField(['customer.name', 'shippingAddress.name', 'name', 'user.name'], "Guest Customer");
-    const address = getField(['customer.address', 'shippingAddress.address', 'address'], "Address Missing");
-    const pin = getField(['customer.pincode', 'shippingAddress.pincode', 'pincode'], "416001"); // Default Kolhapur Pin
-    const city = getField(['customer.city', 'shippingAddress.city', 'city'], "Kolhapur");
-    const state = getField(['customer.state', 'shippingAddress.state', 'state'], "Maharashtra");
-    const email = getField(['customer.email', 'shippingAddress.email', 'email', 'user.email'], "");
+    const name = get(['customer.name', 'shippingAddress.name', 'name'], "Valued Customer");
+    const address = get(['customer.address', 'shippingAddress.address', 'address'], "Address Not Provided");
+    const pincode = get(['customer.pincode', 'shippingAddress.pincode', 'pincode'], "416001"); // Default Kolhapur
+    const city = get(['customer.city', 'shippingAddress.city', 'city'], "Kolhapur");
+    const state = get(['customer.state', 'shippingAddress.state', 'state'], "Maharashtra");
+    const email = get(['customer.email', 'email', 'user.email'], "");
 
-    // Strict Literal Return
+    // Date formatting DD-MM-YYYY
+    const orderDate = new Date(order.createdAt || Date.now());
+    const formattedDate = `${String(orderDate.getDate()).padStart(2, '0')}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${orderDate.getFullYear()}`;
+
+    // ---------------------------------------------------------
+    // 3. Construct Products Array (Strict V3 Keys)
+    // ---------------------------------------------------------
+    const products = (order.items || []).map(item => ({
+        product_name: item.name || item.nameHtml || "Spice Pack",
+        product_sku: item.productId || item._id || "SKU-DEFAULT",
+        product_quantity: String(item.quantity || 1), // V3 often expects strings for numbers in some fields, but numbers usually ok. Keeping as per previous but safe. Actually API usually takes numbers. Let's send numbers to be safe, but robust.
+        product_price: String(item.price || 0),
+        product_tax_rate: "0",
+        product_hsn_code: "",
+        product_discount: "0"
+    }));
+
+    // Guarantee at least one product if empty
+    if (products.length === 0) {
+        products.push({
+            product_name: "Custom Order",
+            product_sku: "CUSTOM",
+            product_quantity: "1",
+            product_price: String(order.pricing?.total || 100),
+            product_tax_rate: "0",
+            product_hsn_code: "",
+            product_discount: "0"
+        });
+    }
+
+    // ---------------------------------------------------------
+    // 4. Return Strict V3 Shipment Object
+    // ---------------------------------------------------------
     return {
-        waybill: "",
-        order: order.orderId || `ORD-${Date.now()}`,
+        // Order Details
+
+        waybill: "", // Leave empty for creation
+        order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
         order_date: formattedDate,
-        total_amount: order.pricing?.total || 0,
+        total_amount: String(order.pricing?.total || 0),
         name: name,
+        company_name: "",
         add: address,
-        pin: pin,
+        add2: "",
+        add3: "",
+        pin: pincode,
         city: city,
         state: state,
         country: "India",
-        phone: sanitizedPhone,
+        phone: phone,
+        alt_phone: "",
         email: email,
+        is_billing_same_as_shipping: "yes",
 
-        products: (order.items || []).map(item => ({
-            product_name: item.nameHtml || item.name || "Spice Pack",
-            product_sku: item.productId || "SKU-DEFAULT",
-            product_quantity: item.quantity || 1,
-            product_price: item.price || 0,
-            product_tax_rate: 0,
-            product_hsn_code: "",
-            product_discount: 0
-        })),
+        // Product Details
+        products: products,
 
-        // Default Dimensions
-        shipment_length: 10,
-        shipment_width: 10,
-        shipment_height: 10,
-        shipment_weight: 0.5,
+        // Shipment Details
+        shipment_length: "10",
+        shipment_width: "10",
+        shipment_height: "10",
+        shipment_weight: "0.5", // kg
 
-        cod_amount: order.paymentMethod === "COD" ? (order.pricing?.total || 0) : 0,
+        // Payment Details
+        cod_amount: order.paymentMethod === "COD" ? String(order.pricing?.total || 0) : "0",
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
-        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID,
-        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID
+        // Warehouse / Pickup
+        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID || "",
+        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID || ""
     };
 };
