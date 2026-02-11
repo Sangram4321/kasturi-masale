@@ -128,11 +128,10 @@ exports.formatOrderPayload = (order) => {
         orderDate.getMonth() + 1
     ).padStart(2, "0")}-${orderDate.getFullYear()}`;
 
-    // ⚖️ WEIGHT CALCULATION
+    /* ⚖️ WEIGHT CALCULATION */
     let totalWeight = 0;
     const products = (order.items || []).map((i) => {
-        // Fallback for old orders: 0.5kg
-        const itemWeight = Number(i.weight) || 0.5;
+        const itemWeight = Number(i.weight) || 0.5; // fallback
         const qty = Number(i.quantity) || 1;
         totalWeight += itemWeight * qty;
 
@@ -148,7 +147,6 @@ exports.formatOrderPayload = (order) => {
     });
 
     if (products.length === 0) {
-        // Default for custom/empty
         totalWeight = 0.5;
         products.push({
             product_name: "Custom Order",
@@ -161,9 +159,8 @@ exports.formatOrderPayload = (order) => {
         });
     }
 
-    // Add Packaging Weight (0.08kg) and ensure Min 0.1kg
-    // Round to 2 decimals
-    const finalWeight = Math.max((totalWeight + 0.08), 0.1).toFixed(2);
+    /* Add packaging weight + ensure minimum */
+    const finalWeight = Math.max(totalWeight + 0.08, 0.1).toFixed(2);
 
     return {
         waybill: "",
@@ -186,9 +183,18 @@ exports.formatOrderPayload = (order) => {
         email: get(["customer.email"], ""),
         is_billing_same_as_shipping: "yes",
 
+        /* ⭐ BILLING FIELDS — critical for iThink V3 */
+        billing_name: get(["customer.name"], "Customer"),
+        billing_address: get(["customer.address"], "Address Missing"),
+        billing_address2: "",
+        billing_city: get(["customer.city"], "Kolhapur"),
+        billing_pincode: get(["customer.pincode"], "416001"),
+        billing_state: get(["customer.state"], "Maharashtra"),
+        billing_country: "India",
+        billing_phone: phone,
+
         products,
 
-        /* ⚖️ DYNAMIC WEIGHT */
         shipment_weight: String(finalWeight),
 
         cod_amount:
