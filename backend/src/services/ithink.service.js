@@ -1,276 +1,198 @@
-const axios = require('axios');
+const axios = require("axios");
 
-const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
+const BASE = "https://manage.ithinklogistics.com/api_v3";
 
-/**
- * Create a shipment in iThink Logistics
- * @param {Object} order - The order data to send (Flat object from formatOrderPayload)
- * @returns {Promise<Object>} - The API response
- */
-exports.createOrder = async (order) => {
-    try {
-        // ---------------------------------------------------------
-        // 1. Validation & sanitization (Step 1 & 2)
-        // ---------------------------------------------------------
-        let cleanOrder;
-        try {
-            const raw = order.toObject ? order.toObject() : order;
+/* -------------------------------------------------------
+   Helpers
+------------------------------------------------------- */
 
-            // Strict Object Builder - No dynamic merging
-            cleanOrder = {
-                customer: raw.customer,
-                pricing: raw.pricing,
-                shipping: raw.shipping,
-                items: raw.items,
-                status: raw.status,
-                paymentMethod: raw.paymentMethod,
-                orderId: raw.orderId,
-                createdAt: raw.createdAt,
-                // Include other necessary top-level fields if needed
-                _id: raw._id
-            };
-
-            // Validation Step: Check for Circular Refs or Invalid JSON
-            JSON.stringify(cleanOrder);
-            console.log("✅ ORDER JSON VALID");
-        } catch (err) {
-            console.error("❌ INVALID ORDER JSON:", err);
-            throw new Error("Order object processing failed: " + err.message);
-        }
-
-        console.log("DEBUG CLEAN ORDER:", JSON.stringify(cleanOrder, null, 2));
-
-        // 2. Prepare Single Shipment Object
-        // Using strict literal construction to avoid polluted objects
-        const shipmentData = exports.formatOrderPayload(cleanOrder);
-
-        // 2. Construct V3 Payload
-        // V3 expects: data: { shipments: [...], access_token, secret_key }
-        const payload = {
-            data: {
-                shipments: [shipmentData],
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            }
-        };
-
-        // 3. Validation
-        if (!process.env.ITHINK_PICKUP_ADDRESS_ID) {
-            throw new Error("Missing Env Var: ITHINK_PICKUP_ADDRESS_ID");
-        }
-
-        // 4. Log Final Payload for Debugging
-        console.log("iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
-
-        const response = await axios.post(BASE_URL, payload);
-
-        // 5. Log Response
-        console.log("iThink API RESPONSE:", JSON.stringify(response.data, null, 2));
-
-        if (response.data && response.data.status === "success") {
-            return response.data;
-        } else {
-            // iThink might return status: error with remarks
-            throw new Error(JSON.stringify(response.data));
-        }
-    } catch (error) {
-        console.error("iThink Logistics Create Order Error:", error.response?.data || error.message);
-        throw error;
+function requireEnv(name) {
+    if (!process.env[name]) {
+        throw new Error(`Missing environment variable: ${name}`);
     }
-};
+    return process.env[name];
+}
 
-/**
- * Cancel a shipment in iThink Logistics
- * @param {String} awbNumber - The AWB Number to cancel
- * @returns {Promise<Object>} - The API response
- */
-exports.cancelShipment = async (awbNumber) => {
-    try {
-        const payload = {
-            data: {
-                awb_numbers: [awbNumber],
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            }
-        };
+function cleanPhone(phone) {
+    return String(phone || "")
+        .replace(/\D/g, "")
+        .slice(-10);
+}
 
-        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/order/cancel.json", payload);
+function formatDate(date) {
+    const d = new Date(date || Date.now());
+    return `${String(d.getDate()).padStart(2, "0")}-${String(
+        d.getMonth() + 1
+    ).padStart(2, "0")}-${d.getFullYear()}`;
+}
 
-        if (response.data && response.data.status === "success") {
-            return response.data;
-        } else {
-            // If iThink says error, we THROW so controller aborts
-            throw new Error(JSON.stringify(response.data));
-        }
-    } catch (error) {
-        console.error("iThink Logistics Cancel Error:", error.response?.data || error.message);
-        throw error;
-    }
-};
+/* -------------------------------------------------------
+   Payload Builder (STRICT & CLEAN)
+------------------------------------------------------- */
 
-/**
- * Track a shipment in iThink Logistics
- * @param {String} awbNumber - The AWB Number to track
- * @returns {Promise<Object>} - The standardized tracking data
- */
-exports.trackShipment = async (awbNumber) => {
-    try {
-        const payload = {
-            data: {
-                awb_number_list: awbNumber, // Comma separated string or single AWB
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            }
-        };
+function buildShipment(order) {
+    const phone = cleanPhone(order?.customer?.phone);
 
-        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/order/track.json", payload);
+    if (!phone) throw new Error("Invalid customer phone");
 
-        if (response.data && response.data.status === "success" && response.data.data[awbNumber]) {
-            // Standardize Response
-            return response.data.data[awbNumber];
-        } else {
-            // Fallback or Error
-            console.warn(`Tracking Info Not Found for AWB: ${awbNumber}`);
-            return null;
-        }
-    } catch (error) {
-        console.error("iThink Logistics Track Error:", error.response?.data || error.message);
-        // Don't throw, just return null so UI handles "Info Unavailable" gracefully
-        return null;
-    }
-};
+    const products =
+        order.items?.map((i) => ({
+            product_name: i.name || "Spice Pack",
+            product_sku: i.productId || "SKU",
+            product_quantity: String(i.quantity || 1),
+            product_price: String(i.price || 0),
+            product_tax_rate: "0",
+            product_hsn_code: "",
+            product_discount: "0",
+        })) || [];
 
-/**
- * Fetch and Log Pickup Addresses (For Configuration Debugging)
- */
-exports.getPickupAddresses = async () => {
-    try {
-        console.log("📍 iThink: Fetching Pickup Addresses...");
-        const payload = {
-            data: {
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            }
-        };
-
-        // Correct Endpoint for V3: https://manage.ithinklogistics.com/api_v3/pickup-address/list.json
-        const response = await axios.post("https://manage.ithinklogistics.com/api_v3/pickup-address/list.json", payload);
-
-        console.log("RAW iThink response:", response.data);
-        console.log("TYPE:", typeof response.data);
-
-        // Return the actual list or full object
-        return response.data?.data || response.data;
-    } catch (error) {
-        console.error("❌ iThink Pickup Address Fetch Failed:", error.response?.data || error.message);
-        return { error: error.message };
-    }
-};
-
-/**
- * Format Order Data for iThink Logistics Payload
- * @param {Object} order - The Order Mongoose Document
- * @returns {Object} - Formatted payload for iThink (Single Shipment Object)
- */
-exports.formatOrderPayload = (order) => {
-    // ---------------------------------------------------------
-    // 1. Helper for Clean Extraction
-    // ---------------------------------------------------------
-    const get = (paths, fallback = "") => {
-        for (const path of paths) {
-            const keys = path.split('.');
-            let val = order;
-            for (const key of keys) {
-                val = val?.[key];
-            }
-            if (val !== undefined && val !== null && val !== "") return val;
-        }
-        return fallback;
-    };
-
-    // ---------------------------------------------------------
-    // 2. Extract & Sanitize Customer Data
-    // ---------------------------------------------------------
-    const rawPhone = get(['customer.phone', 'shippingAddress.phone', 'phone', 'user.phone'], "");
-    const phone = String(rawPhone).replace(/\D/g, "").slice(-10); // Last 10 digits only
-
-    const name = get(['customer.name', 'shippingAddress.name', 'name'], "Valued Customer");
-    const address = get(['customer.address', 'shippingAddress.address', 'address'], "Address Not Provided");
-    const pincode = get(['customer.pincode', 'shippingAddress.pincode', 'pincode'], "416001"); // Default Kolhapur
-    const city = get(['customer.city', 'shippingAddress.city', 'city'], "Kolhapur");
-    const state = get(['customer.state', 'shippingAddress.state', 'state'], "Maharashtra");
-    const email = get(['customer.email', 'email', 'user.email'], "");
-
-    // Date formatting DD-MM-YYYY
-    const orderDate = new Date(order.createdAt || Date.now());
-    const formattedDate = `${String(orderDate.getDate()).padStart(2, '0')}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${orderDate.getFullYear()}`;
-
-    // ---------------------------------------------------------
-    // 3. Construct Products Array (Strict V3 Keys)
-    // ---------------------------------------------------------
-    const products = (order.items || []).map(item => ({
-        product_name: item.name || item.nameHtml || "Spice Pack",
-        product_sku: item.productId || item._id || "SKU-DEFAULT",
-        product_quantity: String(item.quantity || 1), // V3 often expects strings for numbers in some fields, but numbers usually ok. Keeping as per previous but safe. Actually API usually takes numbers. Let's send numbers to be safe, but robust.
-        product_price: String(item.price || 0),
-        product_tax_rate: "0",
-        product_hsn_code: "",
-        product_discount: "0"
-    }));
-
-    // Guarantee at least one product if empty
     if (products.length === 0) {
         products.push({
             product_name: "Custom Order",
             product_sku: "CUSTOM",
             product_quantity: "1",
-            product_price: String(order.pricing?.total || 100),
+            product_price: String(order.pricing?.total || 0),
             product_tax_rate: "0",
             product_hsn_code: "",
-            product_discount: "0"
+            product_discount: "0",
         });
     }
 
-    // ---------------------------------------------------------
-    // 4. Return Strict V3 Shipment Object
-    // ---------------------------------------------------------
-    return {
-        // Order Details
+    const pickupId = requireEnv("ITHINK_PICKUP_ADDRESS_ID");
 
-        waybill: "", // Leave empty for creation
-        order: String(order.orderId || order._id || `ORD-${Date.now()}`),
+    return {
+        waybill: "",
+        order: String(order.orderId),
         sub_order: "",
-        order_date: formattedDate,
+        order_date: formatDate(order.createdAt),
         total_amount: String(order.pricing?.total || 0),
-        name: name,
+
+        name: order.customer?.name || "Customer",
         company_name: "",
-        add: address,
+        add: order.customer?.address || "Address Missing",
         add2: "",
         add3: "",
-        pin: pincode,
-        city: city,
-        state: state,
+        pin: String(order.customer?.pincode || "416001"),
+        city: order.customer?.city || "Kolhapur",
+        state: order.customer?.state || "Maharashtra",
         country: "India",
-        phone: phone,
+        phone,
         alt_phone: "",
-        email: email,
+        email: order.customer?.email || "",
         is_billing_same_as_shipping: "yes",
 
-        // Product Details
-        products: products,
+        products,
 
-        // Shipment Details
         shipment_length: "10",
         shipment_width: "10",
         shipment_height: "10",
-        shipment_weight: "0.5", // kg
+        shipment_weight: "0.5",
 
-        // Payment Details
-        cod_amount: order.paymentMethod === "COD" ? String(order.pricing?.total || 0) : "0",
+        cod_amount:
+            order.paymentMethod === "COD"
+                ? String(order.pricing?.total || 0)
+                : "0",
+
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
-        // Warehouse / Pickup
-        pickup_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID || "",
-        return_address_id: process.env.ITHINK_PICKUP_ADDRESS_ID || ""
+        pickup_address_id: pickupId,
+        return_address_id: pickupId,
     };
+}
+
+/* -------------------------------------------------------
+   Create Shipment
+------------------------------------------------------- */
+
+exports.createOrder = async (order) => {
+    try {
+        const payload = {
+            data: {
+                shipments: [buildShipment(order)],
+                access_token: requireEnv("ITHINK_ACCESS_TOKEN"),
+                secret_key: requireEnv("ITHINK_SECRET_KEY"),
+            },
+        };
+
+        console.log("📦 iThink Payload:", JSON.stringify(payload, null, 2));
+
+        const res = await axios.post(`${BASE}/order/add.json`, payload);
+
+        console.log("📦 iThink Response:", JSON.stringify(res.data, null, 2));
+
+        if (res.data?.status !== "success") {
+            throw new Error(JSON.stringify(res.data));
+        }
+
+        return res.data;
+    } catch (err) {
+        console.error("❌ iThink Create Error:", err.response?.data || err.message);
+        throw err;
+    }
+};
+
+/* -------------------------------------------------------
+   Cancel Shipment
+------------------------------------------------------- */
+
+exports.cancelShipment = async (awb) => {
+    try {
+        const res = await axios.post(`${BASE}/order/cancel.json`, {
+            data: {
+                awb_numbers: [awb],
+                access_token: requireEnv("ITHINK_ACCESS_TOKEN"),
+                secret_key: requireEnv("ITHINK_SECRET_KEY"),
+            },
+        });
+
+        if (res.data?.status !== "success") {
+            throw new Error(JSON.stringify(res.data));
+        }
+
+        return res.data;
+    } catch (err) {
+        console.error("❌ Cancel Error:", err.response?.data || err.message);
+        throw err;
+    }
+};
+
+/* -------------------------------------------------------
+   Track Shipment
+------------------------------------------------------- */
+
+exports.trackShipment = async (awb) => {
+    try {
+        const res = await axios.post(`${BASE}/order/track.json`, {
+            data: {
+                awb_number_list: awb,
+                access_token: requireEnv("ITHINK_ACCESS_TOKEN"),
+                secret_key: requireEnv("ITHINK_SECRET_KEY"),
+            },
+        });
+
+        return res.data?.data?.[awb] || null;
+    } catch (err) {
+        console.error("❌ Track Error:", err.response?.data || err.message);
+        return null;
+    }
+};
+
+/* -------------------------------------------------------
+   Pickup Address List
+------------------------------------------------------- */
+
+exports.getPickupAddresses = async () => {
+    try {
+        const res = await axios.post(`${BASE}/pickup-address/list.json`, {
+            data: {
+                access_token: requireEnv("ITHINK_ACCESS_TOKEN"),
+                secret_key: requireEnv("ITHINK_SECRET_KEY"),
+            },
+        });
+
+        return res.data?.data || res.data;
+    } catch (err) {
+        console.error("❌ Pickup Fetch Error:", err.response?.data || err.message);
+        throw err;
+    }
 };
