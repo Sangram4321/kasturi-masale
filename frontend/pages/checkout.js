@@ -263,11 +263,15 @@ export default function Checkout() {
     setConfirmed(true)
   }
 
-  // Auto-redirects
+  // Auto-redirects (Home only)
   useEffect(() => {
-    if (confirmed && whatsappLink) setTimeout(() => window.open(whatsappLink, "_blank"), 600)
-    if (confirmed) setTimeout(() => router.push("/"), 4000)
-  }, [confirmed, whatsappLink, router])
+    // WhatsApp auto-open removed to prevent loops. User must click button.
+    if (confirmed) setTimeout(() => router.push("/"), 10000) // Give them time to click
+  }, [confirmed, router])
+
+  const openWhatsApp = () => {
+    if (whatsappLink) window.open(whatsappLink, "_blank")
+  }
 
   if (!hasMounted) return null
 
@@ -494,7 +498,20 @@ export default function Checkout() {
             </div>
 
             <div style={styles.whatsappBox}>
-              Check WhatsApp for confirmation & tracking details.
+              <p style={{ margin: "0 0 10px 0" }}>
+                Receive confirmation & tracking updates:
+              </p>
+              <button
+                onClick={openWhatsApp}
+                style={{
+                  background: "#166534", color: "#fff", border: "none",
+                  padding: "10px 20px", borderRadius: 8, fontWeight: "700",
+                  cursor: "pointer", fontSize: 14, display: "flex", margin: "0 auto",
+                  alignItems: "center", gap: 8
+                }}
+              >
+                <span>💬</span> Send to WhatsApp
+              </button>
             </div>
 
             <button
