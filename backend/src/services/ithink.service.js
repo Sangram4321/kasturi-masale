@@ -1,6 +1,8 @@
 const axios = require("axios");
 
-const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
+const BASE_URL =
+    "https://manage.ithinklogistics.com/api/order/add";
+
 
 /* =====================================================
    CREATE SHIPMENT
@@ -220,6 +222,11 @@ exports.formatOrderPayload = (order) => {
                 ? String(order.pricing?.total || 0)
                 : "0",
 
-        payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid"
+        payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
+
+        logistics: {
+            courier: ""
+        }
+
     };
 };
