@@ -9,12 +9,40 @@ const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
  */
 exports.createOrder = async (order) => {
     try {
-        // 0. DEBUG LOG - Crucial for identifying data issues
-        console.log("DEBUG ORDER OBJECT:", JSON.stringify(order, null, 2));
+        // ---------------------------------------------------------
+        // 1. Validation & sanitization (Step 1 & 2)
+        // ---------------------------------------------------------
+        let cleanOrder;
+        try {
+            const raw = order.toObject ? order.toObject() : order;
 
-        // 1. Prepare Single Shipment Object
+            // Strict Object Builder - No dynamic merging
+            cleanOrder = {
+                customer: raw.customer,
+                pricing: raw.pricing,
+                shipping: raw.shipping,
+                items: raw.items,
+                status: raw.status,
+                paymentMethod: raw.paymentMethod,
+                orderId: raw.orderId,
+                createdAt: raw.createdAt,
+                // Include other necessary top-level fields if needed
+                _id: raw._id
+            };
+
+            // Validation Step: Check for Circular Refs or Invalid JSON
+            JSON.stringify(cleanOrder);
+            console.log("✅ ORDER JSON VALID");
+        } catch (err) {
+            console.error("❌ INVALID ORDER JSON:", err);
+            throw new Error("Order object processing failed: " + err.message);
+        }
+
+        console.log("DEBUG CLEAN ORDER:", JSON.stringify(cleanOrder, null, 2));
+
+        // 2. Prepare Single Shipment Object
         // Using strict literal construction to avoid polluted objects
-        const shipmentData = exports.formatOrderPayload(order);
+        const shipmentData = exports.formatOrderPayload(cleanOrder);
 
         // 2. Construct V3 Payload
         // V3 expects: data: { shipments: [...], access_token, secret_key }
