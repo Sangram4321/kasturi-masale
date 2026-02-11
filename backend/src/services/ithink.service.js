@@ -7,10 +7,9 @@ const BASE = "https://manage.ithinklogistics.com/api_v3";
 ------------------------------------------------------- */
 
 function requireEnv(name) {
-    if (!process.env[name]) {
-        throw new Error(`Missing environment variable: ${name}`);
-    }
-    return process.env[name];
+    const val = process.env[name];
+    if (!val) throw new Error(`Missing environment variable: ${name}`);
+    return val;
 }
 
 function cleanPhone(phone) {
@@ -27,12 +26,11 @@ function formatDate(date) {
 }
 
 /* -------------------------------------------------------
-   Payload Builder (STRICT & CLEAN)
+   Payload Builder (STRICT iThink FORMAT)
 ------------------------------------------------------- */
 
 function buildShipment(order) {
     const phone = cleanPhone(order?.customer?.phone);
-
     if (!phone) throw new Error("Invalid customer phone");
 
     const products =
@@ -57,8 +55,6 @@ function buildShipment(order) {
             product_discount: "0",
         });
     }
-
-    const pickupId = requireEnv("ITHINK_PICKUP_ADDRESS_ID");
 
     return {
         waybill: "",
@@ -94,19 +90,20 @@ function buildShipment(order) {
                 : "0",
 
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
-
-        pickup_address_id: pickupId,
-        return_address_id: pickupId,
     };
 }
 
 /* -------------------------------------------------------
-   Create Shipment
+   Create Shipment (CORRECT STRUCTURE)
 ------------------------------------------------------- */
 
 exports.createOrder = async (order) => {
     try {
+        const pickupId = Number(requireEnv("ITHINK_PICKUP_ADDRESS_ID"));
+
         const payload = {
+            pickup_address_id: pickupId,        // 🔴 REQUIRED at ROOT (main fix)
+            return_address_id: pickupId,
             data: {
                 shipments: [buildShipment(order)],
                 access_token: requireEnv("ITHINK_ACCESS_TOKEN"),
@@ -126,7 +123,10 @@ exports.createOrder = async (order) => {
 
         return res.data;
     } catch (err) {
-        console.error("❌ iThink Create Error:", err.response?.data || err.message);
+        console.error(
+            "❌ iThink Create Error:",
+            err.response?.data || err.message
+        );
         throw err;
     }
 };
