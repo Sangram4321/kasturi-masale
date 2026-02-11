@@ -1,3 +1,9 @@
+console.log("ENV CHECK:", {
+  token: process.env.ITHINK_ACCESS_TOKEN,
+  secret: process.env.ITHINK_SECRET_KEY,
+  pickup: process.env.ITHINK_PICKUP_ADDRESS_ID,
+});
+
 require("dotenv").config();
 
 const app = require("./app");
