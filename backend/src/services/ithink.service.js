@@ -4,7 +4,7 @@ const BASE_URL =
     "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /* =====================================================
-   CREATE SHIPMENT (FIXED + STABLE)
+   CREATE SHIPMENT (FINAL STABLE)
 ===================================================== */
 exports.createOrder = async (order) => {
     try {
@@ -46,13 +46,11 @@ exports.createOrder = async (order) => {
 
         console.log("📦 iThink RAW RESPONSE:", JSON.stringify(response.data, null, 2));
 
-        // ✅ SUCCESS
         if (response.data?.status === "success") {
             console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
             return response.data;
         }
 
-        // ❌ STRUCTURED ERROR FROM API
         console.error("❌ iThink API ERROR RESPONSE:", response.data);
         return null;
     } catch (error) {
@@ -120,7 +118,7 @@ exports.trackShipment = async (awbNumber) => {
 };
 
 /* =====================================================
-   FORMAT ORDER → SHIPMENT PAYLOAD
+   FORMAT ORDER → SHIPMENT PAYLOAD (FINAL FIXED)
 ===================================================== */
 exports.formatOrderPayload = (order) => {
     const get = (paths, fallback = "") => {
@@ -142,41 +140,50 @@ exports.formatOrderPayload = (order) => {
         orderDate.getMonth() + 1
     ).padStart(2, "0")}-${orderDate.getFullYear()}`;
 
-    /* ⚖️ WEIGHT CALCULATION */
+    /* ⚖️ PRODUCTS + TOTAL CALCULATION (STRICT V3 SAFE) */
     let totalWeight = 0;
 
     const products = (order.items || []).map((i) => {
-        const itemWeight = Number(i.weight) || 0.5;
         const qty = Number(i.quantity) || 1;
+        const price = Number(i.price) || 0;
+        const weight = Number(i.weight) || 0.5;
 
-        totalWeight += itemWeight * qty;
+        totalWeight += weight * qty;
 
         return {
             product_name: i.name || "Spice Pack",
-            product_sku: i.productId || i._id || "SKU",
-            product_quantity: String(qty),
-            product_price: String(i.price || 0),
-            product_tax_rate: "0",
-            product_hsn_code: "",
-            product_discount: "0",
+            product_sku: String(i.productId || i._id || "SKU"),
+            product_quantity: qty,     // NUMBER
+            product_price: price,      // NUMBER
+            product_tax_rate: 0,       // NUMBER
+            product_hsn_code: "0910",  // NEVER EMPTY
+            product_discount: 0,       // NUMBER
         };
     });
 
     if (products.length === 0) {
         totalWeight = 0.5;
 
+        const fallbackPrice = Number(order.pricing?.total || 0);
+
         products.push({
             product_name: "Custom Order",
             product_sku: "CUSTOM",
-            product_quantity: "1",
-            product_price: String(order.pricing?.total || 0),
-            product_tax_rate: "0",
-            product_hsn_code: "",
-            product_discount: "0",
+            product_quantity: 1,
+            product_price: fallbackPrice,
+            product_tax_rate: 0,
+            product_hsn_code: "0910",
+            product_discount: 0,
         });
     }
 
-    /* Add packaging weight + ensure minimum */
+    /* 🧮 COMPUTED TOTAL (CRITICAL FOR V3) */
+    const computedTotal = products.reduce(
+        (sum, p) => sum + p.product_price * p.product_quantity,
+        0
+    );
+
+    /* Add packaging weight + minimum */
     const finalWeight = Math.max(totalWeight + 0.08, 0.1).toFixed(2);
 
     return {
@@ -184,7 +191,7 @@ exports.formatOrderPayload = (order) => {
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
         order_date: formattedDate,
-        total_amount: String(order.pricing?.total || 0),
+        total_amount: String(computedTotal),
 
         name: get(["customer.name"], "Customer"),
         add: get(["customer.address"], "Address Missing"),
@@ -194,7 +201,6 @@ exports.formatOrderPayload = (order) => {
         state: get(["customer.state"], "Maharashtra"),
         country: "India",
         phone,
-
         email: get(["customer.email"], "test@test.com"),
 
         billing_name: get(["customer.name"], "Customer"),
@@ -210,11 +216,8 @@ exports.formatOrderPayload = (order) => {
         shipment_weight: String(finalWeight),
 
         cod_amount:
-            order.paymentMethod === "COD"
-                ? String(order.pricing?.total || 0)
-                : "0",
+            order.paymentMethod === "COD" ? String(computedTotal) : "0",
 
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
     };
-
 };
