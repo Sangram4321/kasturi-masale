@@ -17,7 +17,7 @@ exports.createOrder = async (order) => {
                 pickup_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
-                shipment_service_type: "surface",
+                s_type: "surface",
             },
         };
 
@@ -138,7 +138,9 @@ exports.formatOrderPayload = (order) => {
 
         /* ✅ CORRECT */
         total_amount: String(productTotal),
-        shipment_service_type: "surface",
+
+        // s_type at root data level is key, but keeping here doesn't hurt, or removing?
+        // Let's remove shipment_service_type as it was wrong.
 
         name: order.customer?.name || "Customer",
         add: order.customer?.address || "Address Missing",
@@ -148,6 +150,7 @@ exports.formatOrderPayload = (order) => {
         state: order.customer?.state || "Maharashtra",
         country: "India",
         phone,
+        alt_phone: phone, // Duplicate phone to satisfy requirement
 
         email: order.customer?.email || "support@kasturimasale.in",
 
