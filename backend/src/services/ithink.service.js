@@ -187,23 +187,18 @@ exports.formatOrderPayload = (order) => {
         total_amount: String(order.pricing?.total || 0),
 
         name: get(["customer.name"], "Customer"),
-        company_name: "",
         add: get(["customer.address"], "Address Missing"),
         add2: "",
-        add3: "",
         pin: get(["customer.pincode"], "416001"),
         city: get(["customer.city"], "Kolhapur"),
         state: get(["customer.state"], "Maharashtra"),
         country: "India",
         phone,
-        alt_phone: "",
-        email: get(["customer.email"], ""),
-        is_billing_same_as_shipping: "yes",
 
-        /* ⭐ BILLING FIELDS */
+        email: get(["customer.email"], "test@test.com"),
+
         billing_name: get(["customer.name"], "Customer"),
         billing_address: get(["customer.address"], "Address Missing"),
-        billing_address2: "",
         billing_city: get(["customer.city"], "Kolhapur"),
         billing_pincode: get(["customer.pincode"], "416001"),
         billing_state: get(["customer.state"], "Maharashtra"),
@@ -221,4 +216,5 @@ exports.formatOrderPayload = (order) => {
 
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
     };
+
 };
