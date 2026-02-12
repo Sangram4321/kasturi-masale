@@ -1,214 +1,132 @@
 const axios = require("axios");
 
-const BASE_URL =
-    "https://manage.ithinklogistics.com/api_v3/order/add.json";
+const BASE_URL = "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /* =====================================================
-   CREATE SHIPMENT (FINAL STABLE)
+   CREATE SHIPMENT — MINIMAL V3 SAFE
 ===================================================== */
 exports.createOrder = async (order) => {
     try {
         const raw = order.toObject ? order.toObject() : order;
 
-        const cleanOrder = {
-            customer: raw.customer,
-            pricing: raw.pricing,
-            items: raw.items,
-            paymentMethod: raw.paymentMethod,
-            orderId: raw.orderId,
-            createdAt: raw.createdAt,
-            _id: raw._id,
-        };
-
-        console.log("✅ ORDER JSON VALID");
-
-        const shipmentData = exports.formatOrderPayload(cleanOrder);
+        const shipment = exports.formatOrderPayload(raw);
 
         const pickupId = Number(process.env.ITHINK_PICKUP_ADDRESS_ID);
         if (!pickupId) throw new Error("Invalid ITHINK_PICKUP_ADDRESS_ID");
 
         const payload = {
-            data: {
-                pickup_address_id: pickupId,
-                return_address_id: pickupId,
-                shipments: [shipmentData],
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            },
+            pickup_address_id: pickupId,
+            return_address_id: pickupId,
+            shipments: [shipment],
+            access_token: process.env.ITHINK_ACCESS_TOKEN,
+            secret_key: process.env.ITHINK_SECRET_KEY,
         };
-
 
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        const response = await axios.post(BASE_URL, payload, {
+        const res = await axios.post(BASE_URL, payload, {
             headers: { "Content-Type": "application/json" },
             timeout: 20000,
         });
 
-        console.log("📦 iThink RAW RESPONSE:", JSON.stringify(response.data, null, 2));
+        console.log("📦 iThink RAW RESPONSE:", JSON.stringify(res.data, null, 2));
 
-        if (response.data?.status === "success") {
-            console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
-            return response.data;
+        if (res.data?.status === "success") {
+            console.log("✅ SHIPMENT CREATED");
+            return res.data;
         }
 
-        console.error("❌ iThink API ERROR RESPONSE:", response.data);
+        console.error("❌ iThink API ERROR:", res.data);
         return null;
-    } catch (error) {
-        console.error("❌ iThink CREATE EXCEPTION:");
-        console.error("status:", error.response?.status);
-        console.error("data:", error.response?.data);
-        console.error("message:", error.message);
-        return null;
-    }
-};
-
-/* =====================================================
-   CANCEL SHIPMENT
-===================================================== */
-exports.cancelShipment = async (awbNumber) => {
-    try {
-        const payload = {
-            data: {
-                awb_numbers: [awbNumber],
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            },
-        };
-
-        const response = await axios.post(
-            "https://manage.ithinklogistics.com/api_v3/order/cancel.json",
-            payload,
-            { headers: { "Content-Type": "application/json" } }
-        );
-
-        if (response.data?.status === "success") return response.data;
-
-        console.error("❌ iThink Cancel API Error:", response.data);
-        return null;
-    } catch (error) {
-        console.error("❌ iThink Cancel Exception:", error.response?.data || error.message);
+    } catch (err) {
+        console.error("❌ iThink EXCEPTION:");
+        console.error("status:", err.response?.status);
+        console.error("data:", err.response?.data);
+        console.error("message:", err.message);
         return null;
     }
 };
 
 /* =====================================================
-   TRACK SHIPMENT
-===================================================== */
-exports.trackShipment = async (awbNumber) => {
-    try {
-        const payload = {
-            data: {
-                awb_number_list: awbNumber,
-                access_token: process.env.ITHINK_ACCESS_TOKEN,
-                secret_key: process.env.ITHINK_SECRET_KEY,
-            },
-        };
-
-        const response = await axios.post(
-            "https://manage.ithinklogistics.com/api_v3/order/track.json",
-            payload,
-            { headers: { "Content-Type": "application/json" } }
-        );
-
-        return response.data?.data?.[awbNumber] || null;
-    } catch (error) {
-        console.error("❌ iThink Track Error:", error.response?.data || error.message);
-        return null;
-    }
-};
-
-/* =====================================================
-   FORMAT ORDER → SHIPMENT PAYLOAD (FINAL FIXED)
+   FORMAT ORDER → STRICT MINIMAL PAYLOAD
 ===================================================== */
 exports.formatOrderPayload = (order) => {
-    const get = (paths, fallback = "") => {
-        for (const path of paths) {
-            const keys = path.split(".");
-            let val = order;
-            for (const key of keys) val = val?.[key];
-            if (val !== undefined && val !== null && val !== "") return val;
-        }
-        return fallback;
-    };
-
-    const phone = String(get(["customer.phone", "phone"], ""))
+    const phone = String(order.customer?.phone || "")
         .replace(/\D/g, "")
         .slice(-10);
 
-    const orderDate = new Date(order.createdAt || Date.now());
-    const formattedDate = `${String(orderDate.getDate()).padStart(2, "0")}-${String(
-        orderDate.getMonth() + 1
-    ).padStart(2, "0")}-${orderDate.getFullYear()}`;
+    const created = new Date(order.createdAt || Date.now());
+    const orderDate = `${String(created.getDate()).padStart(2, "0")}-${String(
+        created.getMonth() + 1
+    ).padStart(2, "0")}-${created.getFullYear()}`;
 
-    /* ⚖️ PRODUCTS + TOTAL CALCULATION (STRICT V3 SAFE) */
+    /* ===== PRODUCTS ===== */
     let totalWeight = 0;
 
-    const products = (order.items || []).map((i) => {
-        const qty = Number(i.quantity) || 1;
-        const price = Number(i.price) || 0;
-        const weight = Number(i.weight) || 0.5;
+    const products =
+        order.items?.map((i) => {
+            const qty = Number(i.quantity) || 1;
+            const price = Number(i.price) || 0;
+            const weight = Number(i.weight) || 0.5;
 
-        totalWeight += weight * qty;
+            totalWeight += qty * weight;
 
-        return {
-            product_name: i.name || "Spice Pack",
-            product_sku: String(i.productId || i._id || "SKU"),
-            product_quantity: qty,     // NUMBER
-            product_price: price,      // NUMBER
-            product_tax_rate: 0,       // NUMBER
-            product_hsn_code: "0910",  // NEVER EMPTY
-            product_discount: 0,       // NUMBER
-        };
-    });
+            return {
+                product_name: i.name || "Spice Pack",
+                product_sku: String(i.productId || i._id || "SKU"),
+                product_quantity: qty,
+                product_price: price,
+                product_tax_rate: 0,
+                product_hsn_code: "0910",
+                product_discount: 0,
+            };
+        }) || [];
 
     if (products.length === 0) {
+        const price = Number(order.pricing?.total || 0);
         totalWeight = 0.5;
-
-        const fallbackPrice = Number(order.pricing?.total || 0);
 
         products.push({
             product_name: "Custom Order",
             product_sku: "CUSTOM",
             product_quantity: 1,
-            product_price: fallbackPrice,
+            product_price: price,
             product_tax_rate: 0,
             product_hsn_code: "0910",
             product_discount: 0,
         });
     }
 
-    /* 🧮 COMPUTED TOTAL (CRITICAL FOR V3) */
-    const computedTotal = products.reduce(
+    /* ===== TOTAL STRICT ===== */
+    const total = products.reduce(
         (sum, p) => sum + p.product_price * p.product_quantity,
         0
     );
 
-    /* Add packaging weight + minimum */
     const finalWeight = Math.max(totalWeight + 0.08, 0.1).toFixed(2);
 
     return {
         waybill: "",
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
-        order_date: formattedDate,
-        total_amount: String(computedTotal),
+        order_date: orderDate,
+        total_amount: String(total),
 
-        name: get(["customer.name"], "Customer"),
-        add: get(["customer.address"], "Address Missing"),
+        name: order.customer?.name || "Customer",
+        add: order.customer?.address || "Address Missing",
         add2: "",
-        pin: get(["customer.pincode"], "416001"),
-        city: get(["customer.city"], "Kolhapur"),
-        state: get(["customer.state"], "Maharashtra"),
+        pin: order.customer?.pincode || "416001",
+        city: order.customer?.city || "Kolhapur",
+        state: order.customer?.state || "Maharashtra",
         country: "India",
         phone,
-        email: get(["customer.email"], "test@test.com"),
+        email: order.customer?.email || "test@test.com",
 
-        billing_name: get(["customer.name"], "Customer"),
-        billing_address: get(["customer.address"], "Address Missing"),
-        billing_city: get(["customer.city"], "Kolhapur"),
-        billing_pincode: get(["customer.pincode"], "416001"),
-        billing_state: get(["customer.state"], "Maharashtra"),
+        billing_name: order.customer?.name || "Customer",
+        billing_address: order.customer?.address || "Address Missing",
+        billing_city: order.customer?.city || "Kolhapur",
+        billing_pincode: order.customer?.pincode || "416001",
+        billing_state: order.customer?.state || "Maharashtra",
         billing_country: "India",
         billing_phone: phone,
 
@@ -216,9 +134,7 @@ exports.formatOrderPayload = (order) => {
 
         shipment_weight: String(finalWeight),
 
-        cod_amount:
-            order.paymentMethod === "COD" ? String(computedTotal) : "0",
-
+        cod_amount: order.paymentMethod === "COD" ? String(total) : "0",
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
     };
 };
