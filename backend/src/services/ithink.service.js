@@ -17,6 +17,7 @@ exports.createOrder = async (order) => {
                 pickup_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
+                shipment_service_type: "surface",
             },
         };
 
