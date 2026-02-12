@@ -41,8 +41,6 @@ exports.createOrder = async (order) => {
     } catch (err) {
         console.error("❌ iThink CREATE EXCEPTION:");
         console.error(err.response?.data || err.message);
-
-        /* IMPORTANT: throw so controller knows failure */
         throw err;
     }
 };
@@ -99,35 +97,21 @@ exports.formatOrderPayload = (order) => {
         });
     }
 
-    /* =====================================================
-       🔥 CRITICAL BUSINESS LOGIC (COURIER RULE)
-       total_amount = PRODUCT VALUE ONLY
-       cod_amount   = FINAL PAYABLE (incl COD fee)
-    ===================================================== */
-
-    // product value (sum of items)
+    /* ===== AMOUNTS ===== */
     const productTotal = products.reduce(
         (sum, p) => sum + Number(p.product_price) * Number(p.product_quantity),
         0
     );
 
-    // final payable from order pricing
     const finalPayable = Number(order.pricing?.total || productTotal);
 
     /* ===== BOX DIMENSIONS ===== */
-    let length = 20,
-        width = 7,
-        height = 30,
-        weight = totalWeight;
+    let length = 20, width = 7, height = 30, weight = totalWeight;
 
     if (totalWeight <= 0.2) {
-        length = 13;
-        width = 5;
-        height = 21;
+        length = 13; width = 5; height = 21;
     } else if (totalWeight <= 0.5) {
-        length = 16;
-        width = 6;
-        height = 23;
+        length = 16; width = 6; height = 23;
     }
 
     return {
@@ -136,12 +120,9 @@ exports.formatOrderPayload = (order) => {
         sub_order: "",
         order_date: orderDate,
 
-        /* ✅ CORRECT */
         total_amount: String(productTotal),
 
-        // s_type at root data level is key, but keeping here doesn't hurt, or removing?
-        // Let's remove shipment_service_type as it was wrong.
-
+        /* ===== SHIPPING ADDRESS ===== */
         name: order.customer?.name || "Customer",
         add: order.customer?.address || "Address Missing",
         add2: "",
@@ -150,10 +131,10 @@ exports.formatOrderPayload = (order) => {
         state: order.customer?.state || "Maharashtra",
         country: "India",
         phone,
-        alt_phone: phone, // Duplicate phone to satisfy requirement
-
+        alt_phone: phone,
         email: order.customer?.email || "support@kasturimasale.in",
 
+        /* ===== BILLING ADDRESS ===== */
         billing_name: order.customer?.name || "Customer",
         billing_add: order.customer?.address || "Address Missing",
         billing_add2: "",
@@ -163,6 +144,9 @@ exports.formatOrderPayload = (order) => {
         billing_country: "India",
         billing_phone: phone,
 
+        /* 🔥 REQUIRED FIELD — THIS FIXES YOUR ERROR */
+        billing_same_as_shipping: "yes",
+
         products,
 
         shipment_length: String(length),
@@ -170,7 +154,6 @@ exports.formatOrderPayload = (order) => {
         shipment_height: String(height),
         weight: String(weight),
 
-        /* ✅ CORRECT */
         cod_amount: order.paymentMethod === "COD" ? String(finalPayable) : "0",
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
