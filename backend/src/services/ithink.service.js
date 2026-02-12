@@ -156,7 +156,7 @@ exports.formatOrderPayload = (order) => {
         shipment_length: String(length),
         shipment_width: String(width),
         shipment_height: String(height),
-        weight: String(weight * 1000), // grams (as per sample)
+        weight: String(weight),
 
         shipping_charges: "0",
         giftwrap_charges: "0",
