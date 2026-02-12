@@ -82,8 +82,9 @@ exports.formatOrderPayload = (order) => {
             };
         }) || [];
 
+    /* ===== SAFETY FALLBACK ===== */
     if (products.length === 0) {
-        const price = Number(order.pricing?.total || 0);
+        const price = Number(order.pricing?.subtotal || 0);
         totalWeight = 0.5;
 
         products.push({
@@ -97,8 +98,20 @@ exports.formatOrderPayload = (order) => {
         });
     }
 
-    /* ===== IMPORTANT: USE FINAL ORDER TOTAL (NOT PRODUCTS SUM) ===== */
-    const total = Number(order.pricing?.total || 0);
+    /* =====================================================
+       🔥 CRITICAL BUSINESS LOGIC (COURIER RULE)
+       total_amount = PRODUCT VALUE ONLY
+       cod_amount   = FINAL PAYABLE (incl COD fee)
+    ===================================================== */
+
+    // product value (sum of items)
+    const productTotal = products.reduce(
+        (sum, p) => sum + Number(p.product_price) * Number(p.product_quantity),
+        0
+    );
+
+    // final payable from order pricing
+    const finalPayable = Number(order.pricing?.total || productTotal);
 
     /* ===== BOX DIMENSIONS ===== */
     let length = 20,
@@ -122,8 +135,8 @@ exports.formatOrderPayload = (order) => {
         sub_order: "",
         order_date: orderDate,
 
-        /* ===== FIXED ===== */
-        total_amount: String(total),
+        /* ✅ CORRECT */
+        total_amount: String(productTotal),
 
         name: order.customer?.name || "Customer",
         add: order.customer?.address || "Address Missing",
@@ -134,7 +147,6 @@ exports.formatOrderPayload = (order) => {
         country: "India",
         phone,
 
-        /* ===== REAL EMAIL (NO DUMMY) ===== */
         email: order.customer?.email || "support@kasturimasale.in",
 
         billing_name: order.customer?.name || "Customer",
@@ -153,7 +165,8 @@ exports.formatOrderPayload = (order) => {
         shipment_height: String(height),
         weight: String(weight),
 
-        cod_amount: order.paymentMethod === "COD" ? String(total) : "0",
+        /* ✅ CORRECT */
+        cod_amount: order.paymentMethod === "COD" ? String(finalPayable) : "0",
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
         return_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
