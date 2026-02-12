@@ -4,7 +4,7 @@ const BASE_URL =
     "https://manage.ithinklogistics.com/api_v3/order/add.json";
 
 /* =====================================================
-   CREATE SHIPMENT
+   CREATE SHIPMENT (FIXED + STABLE)
 ===================================================== */
 exports.createOrder = async (order) => {
     try {
@@ -20,7 +20,6 @@ exports.createOrder = async (order) => {
             _id: raw._id,
         };
 
-        JSON.stringify(cleanOrder);
         console.log("✅ ORDER JSON VALID");
 
         const shipmentData = exports.formatOrderPayload(cleanOrder);
@@ -40,16 +39,28 @@ exports.createOrder = async (order) => {
 
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        const response = await axios.post(BASE_URL, payload);
+        const response = await axios.post(BASE_URL, payload, {
+            headers: { "Content-Type": "application/json" },
+            timeout: 20000,
+        });
 
-        console.log("📦 iThink API RESPONSE:", JSON.stringify(response.data, null, 2));
+        console.log("📦 iThink RAW RESPONSE:", JSON.stringify(response.data, null, 2));
 
-        if (response.data?.status === "success") return response.data;
+        // ✅ SUCCESS
+        if (response.data?.status === "success") {
+            console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
+            return response.data;
+        }
 
-        throw new Error(JSON.stringify(response.data));
+        // ❌ STRUCTURED ERROR FROM API
+        console.error("❌ iThink API ERROR RESPONSE:", response.data);
+        return null;
     } catch (error) {
-        console.error("❌ iThink Create Error:", error.response?.data || error.message);
-        throw error;
+        console.error("❌ iThink CREATE EXCEPTION:");
+        console.error("status:", error.response?.status);
+        console.error("data:", error.response?.data);
+        console.error("message:", error.message);
+        return null;
     }
 };
 
@@ -68,15 +79,17 @@ exports.cancelShipment = async (awbNumber) => {
 
         const response = await axios.post(
             "https://manage.ithinklogistics.com/api_v3/order/cancel.json",
-            payload
+            payload,
+            { headers: { "Content-Type": "application/json" } }
         );
 
         if (response.data?.status === "success") return response.data;
 
-        throw new Error(JSON.stringify(response.data));
+        console.error("❌ iThink Cancel API Error:", response.data);
+        return null;
     } catch (error) {
-        console.error("❌ iThink Cancel Error:", error.response?.data || error.message);
-        throw error;
+        console.error("❌ iThink Cancel Exception:", error.response?.data || error.message);
+        return null;
     }
 };
 
@@ -95,7 +108,8 @@ exports.trackShipment = async (awbNumber) => {
 
         const response = await axios.post(
             "https://manage.ithinklogistics.com/api_v3/order/track.json",
-            payload
+            payload,
+            { headers: { "Content-Type": "application/json" } }
         );
 
         return response.data?.data?.[awbNumber] || null;
@@ -130,9 +144,11 @@ exports.formatOrderPayload = (order) => {
 
     /* ⚖️ WEIGHT CALCULATION */
     let totalWeight = 0;
+
     const products = (order.items || []).map((i) => {
-        const itemWeight = Number(i.weight) || 0.5; // fallback
+        const itemWeight = Number(i.weight) || 0.5;
         const qty = Number(i.quantity) || 1;
+
         totalWeight += itemWeight * qty;
 
         return {
@@ -148,6 +164,7 @@ exports.formatOrderPayload = (order) => {
 
     if (products.length === 0) {
         totalWeight = 0.5;
+
         products.push({
             product_name: "Custom Order",
             product_sku: "CUSTOM",
@@ -183,7 +200,7 @@ exports.formatOrderPayload = (order) => {
         email: get(["customer.email"], ""),
         is_billing_same_as_shipping: "yes",
 
-        /* ⭐ BILLING FIELDS — critical for iThink V3 */
+        /* ⭐ BILLING FIELDS */
         billing_name: get(["customer.name"], "Customer"),
         billing_address: get(["customer.address"], "Address Missing"),
         billing_address2: "",
