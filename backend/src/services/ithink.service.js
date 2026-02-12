@@ -1,9 +1,9 @@
 const axios = require("axios");
 
-const BASE_URL = process.env.ITHINK_BASE_URL; // staging या live
+const BASE_URL = process.env.ITHINK_BASE_URL;
 
 /* =====================================================
-   CREATE SHIPMENT — DOCS PERFECT
+   CREATE SHIPMENT — PRODUCTION SAFE
 ===================================================== */
 exports.createOrder = async (order) => {
     try {
@@ -29,22 +29,26 @@ exports.createOrder = async (order) => {
 
         console.log("📦 iThink RAW RESPONSE:", JSON.stringify(res.data, null, 2));
 
-        if (res.data?.status === "success") {
-            console.log("✅ SHIPMENT CREATED");
-            return res.data;
+        /* ===== STRICT SUCCESS CHECK ===== */
+        if (res.data?.status !== "success") {
+            throw new Error("iThink API FAILED → " + JSON.stringify(res.data));
         }
 
-        console.error("❌ iThink API ERROR:", res.data);
-        return null;
+        console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
+        return res.data;
+
     } catch (err) {
-        console.error("❌ iThink EXCEPTION:");
+        console.error("❌ iThink CREATE EXCEPTION:");
         console.error(err.response?.data || err.message);
-        return null;
+
+        /* IMPORTANT: throw so controller knows failure */
+        throw err;
     }
 };
 
+
 /* =====================================================
-   FORMAT ORDER → DOCS EXACT PAYLOAD
+   FORMAT ORDER → DOCS PERFECT PAYLOAD
 ===================================================== */
 exports.formatOrderPayload = (order) => {
     const phone = String(order.customer?.phone || "")
@@ -93,13 +97,10 @@ exports.formatOrderPayload = (order) => {
         });
     }
 
-    /* ===== TOTAL ===== */
-    const total = products.reduce(
-        (sum, p) => sum + Number(p.product_price) * Number(p.product_quantity),
-        0
-    );
+    /* ===== IMPORTANT: USE FINAL ORDER TOTAL (NOT PRODUCTS SUM) ===== */
+    const total = Number(order.pricing?.total || 0);
 
-    /* ===== BOX DIMENSIONS SELECTION ===== */
+    /* ===== BOX DIMENSIONS ===== */
     let length = 20,
         width = 7,
         height = 30,
@@ -120,6 +121,8 @@ exports.formatOrderPayload = (order) => {
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
         order_date: orderDate,
+
+        /* ===== FIXED ===== */
         total_amount: String(total),
 
         name: order.customer?.name || "Customer",
@@ -130,7 +133,9 @@ exports.formatOrderPayload = (order) => {
         state: order.customer?.state || "Maharashtra",
         country: "India",
         phone,
-        email: order.customer?.email || "test@test.com",
+
+        /* ===== REAL EMAIL (NO DUMMY) ===== */
+        email: order.customer?.email || "support@kasturimasale.in",
 
         billing_name: order.customer?.name || "Customer",
         billing_add: order.customer?.address || "Address Missing",
