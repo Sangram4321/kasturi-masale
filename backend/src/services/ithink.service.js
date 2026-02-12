@@ -137,6 +137,7 @@ exports.formatOrderPayload = (order) => {
 
         /* ✅ CORRECT */
         total_amount: String(productTotal),
+        shipment_service_type: "surface",
 
         name: order.customer?.name || "Customer",
         add: order.customer?.address || "Address Missing",
