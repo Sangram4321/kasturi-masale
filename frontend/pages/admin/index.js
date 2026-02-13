@@ -46,19 +46,29 @@ export default function AdminDashboard() {
 
   /* ================= AUTH CHECK ================= */
   useEffect(() => {
-    const auth = localStorage.getItem("admin_auth");
-    if (!auth) {
+    const token = localStorage.getItem("admin_token");
+
+    if (!token) {
+      localStorage.clear();
       router.replace("/admin/login");
       return;
     }
+
     fetchStats();
   }, []);
+
 
   /* ================= FETCH ================= */
   const fetchStats = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("admin_token");
+      if (!token) {
+        localStorage.clear();
+        router.replace("/admin/login");
+        return;
+      }
+
 
       const [orderRes, invRes] = await Promise.all([
         fetch(`${API}/api/orders/admin/stats?range=30d`, {
