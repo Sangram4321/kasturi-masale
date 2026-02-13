@@ -326,7 +326,7 @@ exports.createOrder = async (req, res, next) => {
     // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
     // We await this to ensure logs are captured and logic actually runs before response closes connection if container sleeps
     try {
-      await handleAutoShipment(order);
+
     } catch (shipErr) {
       console.error("AutoShip Error Wrapper:", shipErr);
     }
@@ -558,7 +558,7 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
     // We re-fetch or use 'newOrder'
     try {
-      await handleAutoShipment(newOrder);
+
     } catch (shipErr) {
       console.error("AutoShip Online Wrapper:", shipErr);
     }
