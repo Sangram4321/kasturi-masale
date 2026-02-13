@@ -231,9 +231,7 @@ exports.createOrder = async (req, res, next) => {
       });
     }
 
-    // Recalculate Total
-    const shippingFee = pricing.subtotal >= 500 ? 0 : 50;
-    const finalTotal = pricing.subtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
+    // Recalculate Total - DELETED (Moved to Server-Side Calculation below)
 
     // ⚖️ WEIGHT LOOKUP (New Architecture)
     const Product = require("../models/Product");
@@ -516,8 +514,6 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
       }
     }
 
-    const shippingFee = pricing.subtotal >= 500 ? 0 : 50;
-    const finalTotal = pricing.subtotal + shippingFee - discountAmount; // COD fee usually 0 for online
     const orderId = generateOrderId();
 
     // ⚖️ WEIGHT LOOKUP (Online Flow)
