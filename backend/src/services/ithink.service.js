@@ -151,7 +151,7 @@ exports.formatOrderPayload = (order) => {
         /* ===== SHIPPING ===== */
         name: order.customer?.name || "Customer",
         company_name: "",
-        add: order.customer?.address || "Address Missing",
+        add: ((order.customer?.address || "Address Missing") + " " + (order.customer?.city || "") + " " + (order.customer?.pincode || "")).trim().substring(0, 150),
         add2: "",
         add3: "",
         pin: String(order.customer?.pincode || "416001"),
@@ -168,7 +168,7 @@ exports.formatOrderPayload = (order) => {
         /* ===== BILLING ===== */
         billing_name: order.customer?.name || "Customer",
         billing_company_name: "",
-        billing_add: order.customer?.address || "Address Missing",
+        billing_add: ((order.customer?.address || "Address Missing") + " " + (order.customer?.city || "") + " " + (order.customer?.pincode || "")).trim().substring(0, 150),
         billing_add2: "",
         billing_add3: "",
         billing_pin: String(order.customer?.pincode || "416001"),
