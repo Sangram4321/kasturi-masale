@@ -198,7 +198,8 @@ exports.createOrder = async (req, res, next) => {
         createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
       });
 
-      if (todayOrders >= 3) {
+      // 🛡️ CRITICAL FIX: Increased limit for testing/launch
+      if (todayOrders >= 100) {
         return res.status(429).json({
           success: false,
           message: "COD limit reached. Try tomorrow."
