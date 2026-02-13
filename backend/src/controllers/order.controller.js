@@ -198,13 +198,15 @@ exports.createOrder = async (req, res, next) => {
         createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
       });
 
-      // 🛡️ CRITICAL FIX: Increased limit for testing/launch
+      // 🛡️ REMOVED: COD Limit Check (User Request)
+      /*
       if (todayOrders >= 100) {
         return res.status(429).json({
           success: false,
           message: "COD limit reached. Try tomorrow."
         });
       }
+      */
     }
 
     if (!Array.isArray(items) || items.length === 0) {
