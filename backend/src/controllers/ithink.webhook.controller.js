@@ -57,46 +57,58 @@ exports.handleWebhook = async (req, res) => {
         let allowedTransition = false;
 
         // Status Map
+        // Status Map (Refined for User Request)
+        // 0: Booked, 1: Manifested (Not Picked), 2: Picked up, 3: In Transit, 4: In Transit, 5: Out for Delivery, 7: Delivered, 8: Cancelled
         const statusMap = {
-            "0": "PENDING_SHIPMENT", // Booked (Log only)
-            "1": "PENDING_SHIPMENT", // Not Picked
-            "2": "SHIPPED", // Picked
-            "3": "SHIPPED", // In Transit Origin
-            "9": "SHIPPED", // Reached Origin
-            "10": "ON_THE_WAY", // Air Cargo
-            "15": "ON_THE_WAY", // Reached Dest
-            "4": "ON_THE_WAY", // In Transit
+            "0": "AWB_CREATED",      // Booked
+            "1": "AWB_CREATED",      // Manifested
+            "2": "SHIPPED",          // Picked Up (Physical Handover)
+            "3": "ON_THE_WAY",       // In Transit (Origin)
+            "9": "ON_THE_WAY",       // Reached Hub
+            "10": "ON_THE_WAY",      // In Transit
+            "15": "ON_THE_WAY",      // Reached Dest
+            "4": "ON_THE_WAY",       // In Transit
             "5": "OUT_FOR_DELIVERY", // Out for Delivery
-            "7": "DELIVERED", // Delivered
-            "8": "CANCELLED", // Cancelled
-            "UD": "RTO_INITIATED", // Undelivered
-            "RT": "RTO_INITIATED", // RTO
+            "7": "DELIVERED",        // Delivered
+            "8": "CANCELLED",        // Cancelled
+            "UD": "RTO_INITIATED",   // Undelivered
+            "RT": "RTO_INITIATED",   // RTO
             "DL": "DELIVERED",
         };
 
-        // Check for "RTO" strings if code is generic
-        if (statusCode.startsWith("RTO") || statusDesc.includes("RTO")) {
-            internalStatus = "RTO_INITIATED";
-        } else if (statusDesc.includes("Delivered") && statusDesc.includes("RTO")) {
-            internalStatus = "RTO_DELIVERED";
+        // Check for specific keywords if code fallback needed
+        if (statusCode.startsWith("RTO") || statusDesc.includes("RTO") || statusDesc.includes("Returned")) {
+            if (statusDesc.includes("Delivered")) {
+                internalStatus = "RTO_DELIVERED";
+            } else {
+                internalStatus = "RTO_INITIATED";
+            }
+        } else if (statusDesc.includes("Cancelled")) {
+            internalStatus = "CANCELLED";
         } else {
             internalStatus = statusMap[statusCode];
         }
 
         // 3. IDEMPOTENCY & STATE MACHINE
+        // Find by AWB
         const order = await Order.findOne({ "shipping.awbNumber": awb });
+        // ... (Error handling if not found - reuse existing)
 
         if (!order) {
             // Debugging: Log what was actually searched
             const count = await Order.countDocuments({ "shipping.awbNumber": awb });
-            throw new Error(`Order not found for AWB: '${awb}' (Type: ${typeof awb}, Count in DB: ${count})`);
+            // We can't throw here if we want to return 200 to webhook to stop retries, but for now throw to log error
+            console.error(`WEBHOOK_ERROR: Order not found for AWB: ${awb}`);
+            return res.status(200).json({ status: "skipped", message: "Order not found" });
         }
+
         const currentStatus = order.status;
 
-        // Define Hierarchy for simple Backward Check (Higher index = later stage)
+        // Define Hierarchy
         const statusHierarchy = [
             "PENDING_SHIPMENT",
             "PACKED",
+            "AWB_CREATED",
             "SHIPPED",
             "ON_THE_WAY",
             "OUT_FOR_DELIVERY",

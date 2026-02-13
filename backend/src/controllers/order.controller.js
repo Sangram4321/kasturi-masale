@@ -117,19 +117,20 @@ const handleAutoShipment = async (order, isManual = false) => {
 
     freshOrder.shipping.awbNumber = awb;
     freshOrder.shipping.courierName = "iThink Logistics";
-    freshOrder.shipping.shipmentStatus = "SCHEDULED";
-    freshOrder.shipping.shippedAt = new Date();
+    freshOrder.shipping.shipmentStatus = "AWB_CREATED"; // internal sub-status
+    freshOrder.shipping.shippedAt = null; // Wait for pickup scan
 
     freshOrder.shipping.logs.push({
-      status: "SUCCESS",
-      description: "Auto-Shipment Created",
+      status: "AWB_CREATED",
+      description: "AWB Generated (Waiting for Pickup)",
       raw_code: JSON.stringify(response)
     });
 
-    freshOrder.status = "SHIPPED";
+    // 🛡️ CRITICAL FIX: Do NOT mark SHIPPED yet. Wait for Pickup.
+    freshOrder.status = "AWB_CREATED";
     await freshOrder.save();
 
-    console.log(`✅ AUTO SUCCESS: Order ${order.orderId}, AWB: ${awb}`);
+    console.log(`✅ AUTO SUCCESS: Order ${order.orderId}, AWB: ${awb} (Status: AWB_CREATED)`);
     return { success: true, awb };
 
   } catch (error) {
