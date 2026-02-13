@@ -18,6 +18,11 @@ const WalletTransaction = require("../models/WalletTransaction");
 const handleAutoShipment = async (order, isManual = false) => {
   console.log("AUTO_SHIPMENT: function entered for Order", order.orderId);
 
+  // 🛡️ GUARD: Ensure Shipping Object Exists
+  order.shipping = order.shipping || { retryCount: 0, logs: [] };
+  order.shipping.retryCount = order.shipping.retryCount || 0;
+  order.shipping.logs = order.shipping.logs || [];
+
   const mode = process.env.ITHINK_AUTO_SHIPMENT_MODE || "OFF";
   console.log("AUTO_SHIPMENT: mode value =", mode);
 
@@ -326,7 +331,7 @@ exports.createOrder = async (req, res, next) => {
     // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
     // We await this to ensure logs are captured and logic actually runs before response closes connection if container sleeps
     try {
-
+      await handleAutoShipment(order);
     } catch (shipErr) {
       console.error("AutoShip Error Wrapper:", shipErr);
     }
@@ -556,12 +561,12 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     });
 
     // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
-    // We re-fetch or use 'newOrder'
     try {
-
+      await handleAutoShipment(newOrder);
     } catch (shipErr) {
       console.error("AutoShip Online Wrapper:", shipErr);
     }
+
 
     // 🎉 AUTOMATIC SHIPMENT CREATION (Optional - User requested "Shipyaari integration")
     // Trigger generic shipment creation if needed, or leave for Admin Panel manual trigger.
