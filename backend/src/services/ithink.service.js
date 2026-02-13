@@ -121,7 +121,15 @@ exports.formatOrderPayload = (order) => {
         0
     );
 
+    const codFee = Number(order.pricing?.codFee || 0);
+    const discount = (Number(order.pricing?.discount) || 0) + (Number(order.pricing?.coinsRedeemed) || 0);
     const finalPayable = Number(order.pricing?.total || productTotal);
+
+    // Derived Shipping Logic so everything sums up correctly for iThink
+    // Formula: Final = Products + Shipping + COD - Discount
+    // Therefore: Shipping = Final - Products - COD + Discount
+    let shippingCost = finalPayable - productTotal - codFee + discount;
+    if (shippingCost < 0) shippingCost = 0; // Safety guard
 
     /* ===== BOX SIZE ===== */
     let length = 20, width = 7, height = 30, weight = totalWeight;
@@ -138,7 +146,7 @@ exports.formatOrderPayload = (order) => {
         sub_order: "",
         order_date: orderDate,
 
-        total_amount: String(productTotal), // ✅ FIXED: Must be Product Total (Sum of items), NOT Bill Total
+        total_amount: String(finalPayable), // ✅ FIXED: Total Payable (Full Invoice Value)
 
         /* ===== SHIPPING ===== */
         name: order.customer?.name || "Customer",
@@ -179,12 +187,12 @@ exports.formatOrderPayload = (order) => {
         weight: String(weight),
 
 
-        shipping_charges: "0",
+        shipping_charges: String(shippingCost),
         giftwrap_charges: "0",
         transaction_charges: "0",
-        total_discount: "0",
+        total_discount: String(discount),
         first_attemp_discount: "0",
-        cod_charges: String(order.pricing?.codFee || 0), // ✅ FIXED: Pass COD Fee separately
+        cod_charges: String(codFee), // ✅ FIXED: Pass COD Fee separately
         advance_amount: "0",
 
         cod_amount: order.paymentMethod === "COD" ? String(finalPayable) : "0", // ✅ FIXED: Total Collectible Amount
