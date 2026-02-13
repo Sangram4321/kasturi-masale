@@ -146,7 +146,7 @@ exports.formatOrderPayload = (order) => {
         sub_order: "",
         order_date: orderDate,
 
-        total_amount: String(finalPayable), // ✅ FIXED: Total Payable (Full Invoice Value)
+        total_amount: String(productTotal), // ✅ FIXED: User Specification - Product Total Only
 
         /* ===== SHIPPING ===== */
         name: order.customer?.name || "Customer",
