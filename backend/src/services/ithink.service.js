@@ -1,9 +1,6 @@
 const axios = require("axios");
 
 const BASE_URL = process.env.ITHINK_BASE_URL;
-const TRACK_URL =
-    process.env.ITHINK_TRACK_URL ||
-    "https://api.ithinklogistics.com/api_v3/order/track.json";
 
 /* =====================================================
    CREATE SHIPMENT — V3 CONTRACT SAFE
@@ -20,33 +17,18 @@ exports.createOrder = async (order) => {
                 pickup_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
                 access_token: process.env.ITHINK_ACCESS_TOKEN,
                 secret_key: process.env.ITHINK_SECRET_KEY,
-                logistics: "", // optional (auto assign)
+                logistics: "",        // optional (auto assign)
                 s_type: "surface",
-                order_type: "forward",
+                order_type: "forward"
             },
         };
 
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        const res = await axios.post(
-            BASE_URL,
-            {
-                shipments: [shipment],
-                pickup_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
-                logistics: "",
-                s_type: "surface",
-                order_type: "forward",
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "access-token": process.env.ITHINK_ACCESS_TOKEN,
-                    "secret-key": process.env.ITHINK_SECRET_KEY,
-                },
-                timeout: 20000,
-            }
-        );
-
+        const res = await axios.post(BASE_URL, payload, {
+            headers: { "Content-Type": "application/json" },
+            timeout: 20000,
+        });
 
         console.log("📦 iThink RAW RESPONSE:", JSON.stringify(res.data, null, 2));
 
@@ -56,12 +38,14 @@ exports.createOrder = async (order) => {
 
         console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
         return res.data;
+
     } catch (err) {
         console.error("❌ iThink CREATE EXCEPTION:");
         console.error(err.response?.data || err.message);
         throw err;
     }
 };
+
 
 /* =====================================================
    FORMAT ORDER → STRICT POSTMAN STRUCTURE
@@ -121,19 +105,12 @@ exports.formatOrderPayload = (order) => {
     const finalPayable = Number(order.pricing?.total || productTotal);
 
     /* ===== BOX SIZE ===== */
-    let length = 20,
-        width = 7,
-        height = 30,
-        weight = totalWeight;
+    let length = 20, width = 7, height = 30, weight = totalWeight;
 
     if (totalWeight <= 0.2) {
-        length = 13;
-        width = 5;
-        height = 21;
+        length = 13; width = 5; height = 21;
     } else if (totalWeight <= 0.5) {
-        length = 16;
-        width = 6;
-        height = 23;
+        length = 16; width = 6; height = 23;
     }
 
     return {
@@ -181,6 +158,7 @@ exports.formatOrderPayload = (order) => {
         shipment_height: String(height),
         weight: String(weight),
 
+
         shipping_charges: "0",
         giftwrap_charges: "0",
         transaction_charges: "0",
@@ -198,35 +176,4 @@ exports.formatOrderPayload = (order) => {
 
         return_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
     };
-};
-
-/* =====================================================
-   TRACK SHIPMENT — V3 (ENV SAFE)
-===================================================== */
-exports.trackShipment = async (awb) => {
-    try {
-        const res = await axios.post(
-            TRACK_URL,
-            {
-                data: {
-                    awb_number_list: awb,
-                    access_token: process.env.ITHINK_ACCESS_TOKEN,
-                    secret_key: process.env.ITHINK_SECRET_KEY,
-                },
-            },
-            {
-                headers: { "Content-Type": "application/json" },
-                timeout: 20000,
-            }
-        );
-
-        if (res.data?.status !== "success") {
-            throw new Error("Tracking failed → " + JSON.stringify(res.data));
-        }
-
-        return res.data?.data?.[0] || null;
-    } catch (err) {
-        console.error("❌ TRACK API ERROR:", err.response?.data || err.message);
-        return null;
-    }
 };
