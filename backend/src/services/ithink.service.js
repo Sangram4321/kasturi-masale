@@ -36,7 +36,13 @@ exports.createOrder = async (order) => {
             throw new Error("iThink API FAILED → " + JSON.stringify(res.data));
         }
 
-        console.log("✅ SHIPMENT CREATED SUCCESSFULLY");
+        // 🛡️ CRITICAL FIX: Strict AWB Check
+        const awb = res.data?.data?.awb_number || res.data?.awb_number;
+        if (!awb) {
+            throw new Error("iThink Success but NO AWB returned! " + JSON.stringify(res.data));
+        }
+
+        console.log("✅ SHIPMENT CREATED SUCCESSFULLY. AWB:", awb);
         return res.data;
 
     } catch (err) {
@@ -118,7 +124,8 @@ exports.formatOrderPayload = (order) => {
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
         order_date: orderDate,
-        total_amount: String(finalPayable), // ✅ CORRECTED: Use Final Total so Courier Collects Full Amount
+
+        total_amount: String(productTotal), // ✅ FIXED: Must be Product Total (Sum of items), NOT Bill Total
 
         /* ===== SHIPPING ===== */
         name: order.customer?.name || "Customer",
@@ -164,10 +171,10 @@ exports.formatOrderPayload = (order) => {
         transaction_charges: "0",
         total_discount: "0",
         first_attemp_discount: "0",
-        cod_charges: "0",
+        cod_charges: String(order.pricing?.codFee || 0), // ✅ FIXED: Pass COD Fee separately
         advance_amount: "0",
 
-        cod_amount: order.paymentMethod === "COD" ? String(finalPayable) : "0",
+        cod_amount: order.paymentMethod === "COD" ? String(finalPayable) : "0", // ✅ FIXED: Total Collectible Amount
         payment_mode: order.paymentMethod === "COD" ? "COD" : "Prepaid",
 
         reseller_name: "",
