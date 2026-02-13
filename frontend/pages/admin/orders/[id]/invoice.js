@@ -143,7 +143,8 @@ export default function Invoice() {
                                 <tr key={i}>
                                     <td>{i + 1}</td>
                                     <td className="text-left">
-                                        <strong>{getProductTitle(item.variant)}</strong>
+                                        <strong>{item.name || getProductTitle(item.variant)}</strong> <br />
+                                        <span style={{ fontSize: '11px', color: '#666' }}>{item.variant}</span>
                                     </td>
                                     <td>0910</td>
                                     <td>{item.quantity}</td>

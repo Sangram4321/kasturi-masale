@@ -313,12 +313,15 @@ exports.createOrder = async (req, res, next) => {
     const weightMap = {};
     products.forEach(p => { weightMap[p.variant] = p.weight; });
 
-    // Enrich items with weight
-    const enrichedItems = items.map(item => ({
-      ...item,
-      // Default to 0.5kg if variant not found (Safety)
-      weight: weightMap[item.variant] || 0.5
-    }));
+    // Enrich items with weight AND Name (Fix 1)
+    const enrichedItems = items.map(item => {
+      const product = products.find(p => p.variant === item.variant);
+      return {
+        ...item,
+        name: product?.name || item.name || "Kasturi Spice", // Save Name
+        weight: product?.weight || 0.5
+      };
+    });
 
     // 🛡️ CRITICAL FIX 2: Server-Side Pricing Calculation (SAFE MODE)
     let calcSubtotal = 0;
@@ -643,10 +646,14 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     const weightMap = {};
     products.forEach(p => { weightMap[p.variant] = p.weight; });
 
-    const enrichedItems = items.map(item => ({
-      ...item,
-      weight: weightMap[item.variant] || 0.5
-    }));
+    const enrichedItems = items.map(item => {
+      const product = products.find(p => p.variant === item.variant);
+      return {
+        ...item,
+        name: product?.name || item.name || "Kasturi Spice", // Save Name
+        weight: product?.weight || 0.5
+      };
+    });
 
     // 🛡️ CRITICAL FIX 2 (Online): Server-Side Pricing (SAFE MODE)
     let calcSubtotal = 0;
