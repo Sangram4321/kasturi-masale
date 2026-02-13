@@ -14,89 +14,95 @@ const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
 
 /* ================= HELPER: AUTOMATE ITHINK SHIPMENT ================= */
+/* ================= HELPER: AUTOMATE ITHINK SHIPMENT ================= */
 const handleAutoShipment = async (order, isManual = false) => {
   console.log("AUTO_SHIPMENT: function entered for Order", order.orderId);
 
   const mode = process.env.ITHINK_AUTO_SHIPMENT_MODE || "OFF";
   console.log("AUTO_SHIPMENT: mode value =", mode);
 
-  // 1. GUARD: Check Mode
-  if (!isManual) {
-    if (mode === "OFF") {
-      console.log(`AUTO_SHIPMENT: OFF. Skipping Order ${order.orderId}`);
-      return;
-    }
-    if (mode === "TEST") {
-      const allowedPhone = process.env.TEST_SHIPMENT_PHONE;
-      const isTestName = order.customer.name.toUpperCase().includes("TEST_SHIP");
-      const isTestPhone = allowedPhone && order.customer.phone === allowedPhone;
-
-      console.log(`AUTO_SHIPMENT: TEST Mode Check - NameMatch: ${isTestName}, PhoneMatch: ${isTestPhone}, AllowedPhone: ${allowedPhone}`);
-
-      if (!isTestName && !isTestPhone) {
-        console.log(`AUTO_SHIPMENT: TEST MODE. Skipping Order ${order.orderId} (No Filter Match)`);
-        return;
-      }
-      console.log(`AUTO_SHIPMENT: TEST MODE. Triggering for Order ${order.orderId}`);
-    }
+  /* ================= MODE: OFF ================= */
+  if (mode === "OFF") {
+    console.log(`AUTO_SHIPMENT: OFF. Skipping Order ${order.orderId}`);
+    return;
   }
 
-  // 2. GUARD: Retry Count
+  /* ================= GUARD: Retry Count ================= */
   if (order.shipping.retryCount >= 3 && !isManual) {
     console.warn(`AUTO_SHIPMENT: ABORT. Max retries (3) reached for Order ${order.orderId}`);
     return;
   }
 
   try {
-    // 3. RE-FETCH ORDER TO ENSURE CLEAN DATA
+    // Always re-fetch clean DB copy
     const freshOrder = await Order.findById(order._id);
     console.log("CLEAN ORDER:", JSON.stringify(freshOrder, null, 2));
 
-    console.log(`AUTO_SHIPMENT: calling iThink API for ${order.orderId}...`);
-    // Note: createIthinkOrder now handles formatting internally to ensure robust fallbacks
+    /* =====================================================
+       MODE: STORE  → Create order in iThink WITHOUT AWB
+    ===================================================== */
+    if (mode === "STORE" && !isManual) {
+      console.log(`📦 STORE MODE: sending order to iThink (NO AWB)`);
+
+      const response = await createIthinkOrder(freshOrder);
+
+      freshOrder.shipping.shipmentStatus = "STORED";
+      freshOrder.shipping.logs.push({
+        status: "STORED",
+        description: "Order stored in iThink for manual courier selection",
+        raw_code: JSON.stringify(response)
+      });
+
+      await freshOrder.save();
+
+      console.log(`✅ STORE SUCCESS: Order visible in iThink dashboard`);
+      return { stored: true };
+    }
+
+    /* =====================================================
+       MODE: AUTO  → Direct AWB creation
+    ===================================================== */
+    console.log(`🚚 AUTO MODE: creating AWB via iThink`);
+
     const response = await createIthinkOrder(freshOrder);
 
-    // Success
     const awb = response.data?.awb_number || response.awb_number;
     console.log(`AUTO_SHIPMENT: success with AWB ${awb}`);
 
-    // Update Original Order Object (or freshOrder, but we need to save)
-    // We use freshOrder for data, but we can update 'order' or 'freshOrder' and save.
-    // Better to update freshOrder and save it to avoid any stale data overwrites.
     freshOrder.shipping.awbNumber = awb;
     freshOrder.shipping.courierName = "iThink Logistics";
     freshOrder.shipping.shipmentStatus = "SCHEDULED";
     freshOrder.shipping.shippedAt = new Date();
-    freshOrder.shipping.retryCount = order.shipping.retryCount; // Preserve retry count from arg if needed, but freshOrder has it from DB.
 
     freshOrder.shipping.logs.push({
       status: "SUCCESS",
       description: "Auto-Shipment Created",
       raw_code: JSON.stringify(response)
     });
+
     freshOrder.status = "SHIPPED";
     await freshOrder.save();
 
-    console.log(`✅ [AutoShip] SUCCESS: Order ${order.orderId}, AWB: ${awb}`);
+    console.log(`✅ AUTO SUCCESS: Order ${order.orderId}, AWB: ${awb}`);
     return { success: true, awb };
 
   } catch (error) {
     console.error(`AUTO_SHIPMENT: failure with error for Order ${order.orderId}`, error.message);
 
-    // Increment Retry for Auto only (Manual calls don't auto-increment lock, or do they? Let's increment to track attempts)
     order.shipping.retryCount += 1;
-
     order.shipping.shipmentStatus = "FAILED";
     order.shipping.logs.push({
       status: "FAILED",
       description: error.message,
       raw_code: JSON.stringify(error.response?.data || error)
     });
+
     await order.save();
 
-    if (isManual) throw error; // Re-throw for Admin UI
+    if (isManual) throw error;
   }
 };
+
 
 /* ================= CREATE ORDER ================= */
 exports.createOrder = async (req, res, next) => {
