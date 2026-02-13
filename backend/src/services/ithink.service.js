@@ -36,14 +36,27 @@ exports.createOrder = async (order) => {
             throw new Error("iThink API FAILED → " + JSON.stringify(res.data));
         }
 
-        // 🛡️ CRITICAL FIX: Strict AWB Check
-        const awb = res.data?.data?.awb_number || res.data?.awb_number;
+        // 🛡️ CRITICAL FIX: Handle Nested "1" Key in iThink Response
+        // Structure: { data: { "1": { waybill: "...", logistic_name: "..." } } }
+        const shipmentData = res.data?.data?.["1"] || res.data?.data;
+        const awb = shipmentData?.waybill || shipmentData?.awb_number;
+        const courier = shipmentData?.logistic_name;
+        const tracking = shipmentData?.tracking_url;
+
         if (!awb) {
             throw new Error("iThink Success but NO AWB returned! " + JSON.stringify(res.data));
         }
 
         console.log("✅ SHIPMENT CREATED SUCCESSFULLY. AWB:", awb);
-        return res.data;
+
+        // Normalize response for controller
+        return {
+            status: "success",
+            awb_number: awb,
+            logistic_name: courier,
+            tracking_url: tracking,
+            original_response: res.data
+        };
 
     } catch (err) {
         console.error("❌ iThink CREATE EXCEPTION:");

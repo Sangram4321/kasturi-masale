@@ -112,11 +112,15 @@ const handleAutoShipment = async (order, isManual = false) => {
 
     const response = await createIthinkOrder(freshOrder);
 
-    const awb = response.data?.awb_number || response.awb_number;
+    const awb = response.awb_number;
+    const courier = response.logistic_name || "iThink Logistics";
+    const tracking = response.tracking_url;
+
     console.log(`AUTO_SHIPMENT: success with AWB ${awb}`);
 
     freshOrder.shipping.awbNumber = awb;
-    freshOrder.shipping.courierName = "iThink Logistics";
+    freshOrder.shipping.courierName = courier;
+    freshOrder.shipping.trackingUrl = tracking; // New field
     freshOrder.shipping.shipmentStatus = "AWB_CREATED"; // internal sub-status
     freshOrder.shipping.shippedAt = null; // Wait for pickup scan
 
