@@ -118,7 +118,7 @@ exports.formatOrderPayload = (order) => {
         order: String(order.orderId || order._id || `ORD-${Date.now()}`),
         sub_order: "",
         order_date: orderDate,
-        total_amount: String(productTotal),
+        total_amount: String(finalPayable), // ✅ CORRECTED: Use Final Total so Courier Collects Full Amount
 
         /* ===== SHIPPING ===== */
         name: order.customer?.name || "Customer",
