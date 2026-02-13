@@ -13,6 +13,41 @@ const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const WalletTransaction = require("../models/WalletTransaction");
 
+/* ================= HELPERS ================= */
+
+function normalizeIndianPhone(phone) {
+  if (!phone) return null;
+  phone = String(phone).replace(/\D/g, ""); // Ensure string and strip non-digits
+  if (phone.startsWith("0")) {
+    phone = phone.slice(1);
+  }
+  if (phone.length !== 10) return null;
+  return "+91" + phone;
+}
+
+function calculateProfit(order) {
+  const productCost = order.items.reduce(
+    (sum, i) => sum + (i.costAtTimeOfOrder || 0) * i.quantity,
+    0
+  );
+
+  const shippingCost = order.financials.shippingCost || 0;
+  // Use simple fallback for packaging/platform if not set
+  const packagingCost = order.financials.packagingCost || 0;
+  const platformFee = order.financials.platformFee || 0;
+
+  const totalCost = productCost + shippingCost + packagingCost + platformFee;
+  const netProfit = order.financials.taxableValue - totalCost;
+
+  return {
+    totalProductCost: productCost,
+    netProfit,
+    profitMargin: totalCost
+      ? (netProfit / order.financials.taxableValue) * 100
+      : 0
+  };
+}
+
 /* ================= HELPER: AUTOMATE ITHINK SHIPMENT ================= */
 /* ================= HELPER: AUTOMATE ITHINK SHIPMENT ================= */
 const handleAutoShipment = async (order, isManual = false) => {
@@ -130,6 +165,40 @@ exports.createOrder = async (req, res, next) => {
         success: false,
         message: "Customer details missing"
       });
+    }
+
+    // 🛡️ CRITICAL FIX 1: Normalize Phone
+    customer.phone = normalizeIndianPhone(customer.phone);
+    if (!customer.phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid phone number"
+      });
+    }
+
+    // 🛡️ CRITICAL FIX 3: COD FRAUD PROTECTION
+    if (paymentMethod === "COD") {
+      // A. Block fake/test numbers
+      const blocked = ["9999999999", "8888888888"];
+      if (blocked.includes(customer.phone.slice(-10))) {
+        return res.status(400).json({
+          success: false,
+          message: "Order not allowed"
+        });
+      }
+
+      // B. Daily COD limit per phone (3 per day)
+      const todayOrders = await Order.countDocuments({
+        "customer.phone": customer.phone,
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      });
+
+      if (todayOrders >= 3) {
+        return res.status(429).json({
+          success: false,
+          message: "COD limit reached. Try tomorrow."
+        });
+      }
     }
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -285,6 +354,14 @@ exports.createOrder = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: "Total calculation error (Result was NaN/Infinity)"
+      });
+    }
+
+    // 🛡️ CRITICAL FIX 3C: Force prepaid for high-value orders
+    if (finalTotal > 1500 && paymentMethod === "COD") {
+      return res.status(400).json({
+        success: false,
+        message: "Prepaid required for high-value orders (> ₹1500)"
       });
     }
 
@@ -512,6 +589,15 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
 
     // Let's implement a streamlined version here for Online Orders
     const { customer, items, pricing, userId, redeemCoins } = orderData;
+
+    // 🛡️ CRITICAL FIX 1: Normalize Phone (Online)
+    // Note: Razorpay might give a phone, but we trust our frontend/user input primarily for the order record
+    if (customer?.phone) {
+      customer.phone = normalizeIndianPhone(customer.phone);
+      if (!customer.phone) {
+        return res.status(400).json({ success: false, message: "Invalid phone number" });
+      }
+    }
 
     // ... (Validate Inputs similar to createOrder) ... 
 
@@ -821,8 +907,13 @@ exports.updateOrderStatus = async (req, res) => {
       }
 
       // Calculate Financials (Async is fine, but await ensures DB consistency before response)
+      // Calculate Financials
+      // REPLACED OLD LOGIC WITH NEW HELPER
       try {
-        await calculateOrderProfit(orderId);
+        const profitMetrics = calculateProfit(order);
+        order.financials.netProfit = profitMetrics.netProfit;
+        order.financials.profitMargin = profitMetrics.profitMargin;
+        // order.save() is called at logic end
       } catch (err) {
         console.error("❌ Profit Calc Failed:", err);
       }
