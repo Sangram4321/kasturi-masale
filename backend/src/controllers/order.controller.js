@@ -233,8 +233,8 @@ exports.createOrder = async (req, res, next) => {
           orderId,
           customer,
           items: enrichedItems, // Use enriched items with weight
-          // 📌 STORE RESOLVED OBJECTID IF AVAILABLE (as string for now due to Schema)
-          userId: user ? user._id.toString() : (userId || null),
+          // 📌 FIX: Store Firebase UID directly (userId) instead of MongoDB _id
+          userId: userId || null,
           pricing: {
             subtotal: pricing.subtotal,
             codFee: pricing.codFee || 0,
@@ -490,7 +490,7 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
       orderId,
       customer,
       items: enrichedItems,
-      userId: userObjectId ? userObjectId.toString() : (userId || null),
+      userId: userId || null,
       pricing: {
         subtotal: pricing.subtotal,
         codFee: 0,
