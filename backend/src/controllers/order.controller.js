@@ -300,13 +300,7 @@ exports.createOrder = async (req, res, next) => {
       });
     }
 
-    const shippingFee = calcSubtotal >= 500 ? 0 : 50;
-    // Note: discountAmount is safe (calculated on server above)
-    // codFee: Trusted from body? Ideally should be calculated.
-    // Assuming standard 0 or 50. Let's force it if COD?
-    // User instruction said: subtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
-    // We will stick to request but override subtotal.
-    const finalTotal = calcSubtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
+    // Old duplicate calculation removed here
 
     while (!order && attempts < 3) {
       try {
