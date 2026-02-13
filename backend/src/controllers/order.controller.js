@@ -23,6 +23,12 @@ const handleAutoShipment = async (order, isManual = false) => {
   order.shipping.retryCount = order.shipping.retryCount || 0;
   order.shipping.logs = order.shipping.logs || [];
 
+  // 🛡️ GUARD: Duplicate AWB Protection
+  if (order.shipping?.awbNumber && !isManual) {
+    console.log("AUTO_SHIPMENT: AWB already exists, skipping auto shipment");
+    return;
+  }
+
   const mode = process.env.ITHINK_AUTO_SHIPMENT_MODE || "OFF";
   console.log("AUTO_SHIPMENT: mode value =", mode);
 
@@ -147,6 +153,21 @@ exports.createOrder = async (req, res, next) => {
       });
     }
 
+    // 🛡️ CRITICAL FIX 1: Strict Items Validation
+    for (const item of items) {
+      if (
+        typeof item !== "object" ||
+        !item.variant ||
+        !item.quantity ||
+        item.quantity <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid item structure"
+        });
+      }
+    }
+
     let order;
     let attempts = 0;
 
@@ -230,6 +251,24 @@ exports.createOrder = async (req, res, next) => {
       // Default to 0.5kg if variant not found (Safety)
       weight: weightMap[item.variant] || 0.5
     }));
+
+    // 🛡️ CRITICAL FIX 2: Server-Side Pricing Calculation
+    let calcSubtotal = 0;
+    for (const item of enrichedItems) {
+      const product = products.find(p => p.variant === item.variant);
+      if (!product) {
+        return res.status(400).json({ success: false, message: "Invalid product or variant" });
+      }
+      calcSubtotal += product.price * item.quantity;
+    }
+
+    const shippingFee = calcSubtotal >= 500 ? 0 : 50;
+    // Note: discountAmount is safe (calculated on server above)
+    // codFee: Trusted from body? Ideally should be calculated.
+    // Assuming standard 0 or 50. Let's force it if COD?
+    // User instruction said: subtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
+    // We will stick to request but override subtotal.
+    const finalTotal = calcSubtotal + (pricing.codFee || 0) + shippingFee - discountAmount;
 
     while (!order && attempts < 3) {
       try {
@@ -329,11 +368,13 @@ exports.createOrder = async (req, res, next) => {
     });
 
     // 🚚 TRIGGER AUTO-SHIPMENT (BLOCKING/AWAITED)
-    // We await this to ensure logs are captured and logic actually runs before response closes connection if container sleeps
-    try {
-      await handleAutoShipment(order);
-    } catch (shipErr) {
-      console.error("AutoShip Error Wrapper:", shipErr);
+    // 🛡️ CRITICAL FIX 3: COD ONLY HERE
+    if (paymentMethod === "COD") {
+      try {
+        await handleAutoShipment(order);
+      } catch (shipErr) {
+        console.error("AutoShip Error Wrapper:", shipErr);
+      }
     }
 
     // 🌟 LOYALTY: CREDIT PENDING POINTS FOR COD
@@ -491,13 +532,27 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
       weight: weightMap[item.variant] || 0.5
     }));
 
+    // 🛡️ CRITICAL FIX 2 (Online): Server-Side Pricing
+    let calcSubtotal = 0;
+    for (const item of enrichedItems) {
+      const product = products.find(p => p.variant === item.variant);
+      if (!product) {
+        return res.status(400).json({ success: false, message: "Invalid product in online order" });
+      }
+      calcSubtotal += product.price * item.quantity;
+    }
+
+    const shippingFee = calcSubtotal >= 500 ? 0 : 50;
+    // Online has no COD fee
+    const finalTotal = calcSubtotal + shippingFee - discountAmount;
+
     const newOrder = await Order.create({
       orderId,
       customer,
       items: enrichedItems,
       userId: userId || null,
       pricing: {
-        subtotal: pricing.subtotal,
+        subtotal: calcSubtotal, // Use Calculated
         codFee: 0,
         shippingFee: shippingFee,
         discount: discountAmount,
@@ -524,7 +579,8 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
 
     // 🌟 LOYALTY: CREDIT POINTS FOR PREPAID ORDERS
     if (userId) {
-      const pointsEarned = Math.floor(pricing.total * 0.05); // 5%
+      // 🛡️ MEDIUM FIX: Use finalTotal for points
+      const pointsEarned = Math.floor(finalTotal * 0.05); // 5%
 
       if (pointsEarned > 0) {
         const User = require("../models/User");
