@@ -28,10 +28,25 @@ exports.createOrder = async (order) => {
 
         console.log("📦 iThink FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        const res = await axios.post(BASE_URL, payload, {
-            headers: { "Content-Type": "application/json" },
-            timeout: 20000,
-        });
+        const res = await axios.post(
+            BASE_URL,
+            {
+                shipments: [shipment],
+                pickup_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
+                logistics: "",
+                s_type: "surface",
+                order_type: "forward",
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "access-token": process.env.ITHINK_ACCESS_TOKEN,
+                    "secret-key": process.env.ITHINK_SECRET_KEY,
+                },
+                timeout: 20000,
+            }
+        );
+
 
         console.log("📦 iThink RAW RESPONSE:", JSON.stringify(res.data, null, 2));
 
