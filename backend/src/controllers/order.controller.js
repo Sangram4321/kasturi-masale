@@ -1493,7 +1493,9 @@ exports.trackOrder = async (req, res) => {
     }
 
     // 2. Call Tracking Service
-    const trackingData = await trackShipment(awb);
+    // Note: ensure trackOrder is imported as trackShipment or just trackOrder
+    const { trackOrder } = require("../services/ithink.service");
+    const trackingData = await trackOrder(awb);
 
     if (!trackingData) {
       return res.json({

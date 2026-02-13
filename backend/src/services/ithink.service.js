@@ -205,3 +205,36 @@ exports.formatOrderPayload = (order) => {
         return_address_id: String(process.env.ITHINK_PICKUP_ADDRESS_ID),
     };
 };
+
+/* =====================================================
+   TRACK SHIPMENT — V3
+===================================================== */
+exports.trackOrder = async (awb) => {
+    try {
+        if (!awb) throw new Error("AWB is required for tracking");
+
+        const payload = {
+            data: {
+                awb_number_list: String(awb),
+                access_token: process.env.ITHINK_ACCESS_TOKEN,
+                secret_key: process.env.ITHINK_SECRET_KEY
+            }
+        };
+
+        const res = await axios.post("https://manage.ithinklogistics.com/api_v3/order/track.json", payload, {
+            headers: { "Content-Type": "application/json" }
+        });
+
+        if (res.data?.status === "success" || res.data?.status_code === 200) {
+            // iThink returns { "1": { ...tracking... } } or just the data
+            const trackData = res.data?.data?.[awb] || res.data?.data?.["1"] || res.data?.data;
+            return trackData;
+        }
+
+        return null;
+
+    } catch (err) {
+        console.error("❌ iThink TRACK EXCEPTION:", err.message);
+        return null;
+    }
+};
