@@ -259,6 +259,8 @@ exports.createOrder = async (req, res, next) => {
       // TODO: Add 'price' to Product model and migrate.
 
       const itemPrice = Number(item.price);
+      const qty = Number(item.quantity); // Restored missing definition
+
       if (!itemPrice || itemPrice <= 0) {
         // Fallback/Safety: If (rarely) price is 0 (e.g. sample), allow it? 
         // For now, consistent with previous valid logic, ensure positive.
@@ -568,6 +570,8 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
       // TODO: Add 'price' to Product model and migrate.
 
       const itemPrice = Number(item.price);
+      const qty = Number(item.quantity); // Restored missing definition
+
       if (!itemPrice || itemPrice <= 0) {
         return res.status(400).json({ success: false, message: "Invalid item price in online order" });
       }
