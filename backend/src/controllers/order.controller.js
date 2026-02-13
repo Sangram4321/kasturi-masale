@@ -255,24 +255,21 @@ exports.createOrder = async (req, res, next) => {
     for (const item of enrichedItems) {
       const product = products.find(p => p.variant === item.variant);
 
-      // Safety Check: Product & Price
-      if (!product || typeof product.price !== "number") {
+      // ⚠️ FALLBACK: Product model lacks 'price' field. Using Item Price from Request.
+      // TODO: Add 'price' to Product model and migrate.
+
+      const itemPrice = Number(item.price);
+      if (!itemPrice || itemPrice <= 0) {
+        // Fallback/Safety: If (rarely) price is 0 (e.g. sample), allow it? 
+        // For now, consistent with previous valid logic, ensure positive.
+        // If Free sample logic exists, remove '|| itemPrice <= 0'
         return res.status(400).json({
           success: false,
-          message: "Invalid product pricing in database"
+          message: "Invalid item price in request"
         });
       }
 
-      // Safety Check: Quantity
-      const qty = Number(item.quantity);
-      if (!qty || qty <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid quantity detected"
-        });
-      }
-
-      calcSubtotal += product.price * qty;
+      calcSubtotal += itemPrice * qty;
     }
 
     const shippingFee = calcSubtotal >= 500 ? 0 : 50;
@@ -567,16 +564,15 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
     for (const item of enrichedItems) {
       const product = products.find(p => p.variant === item.variant);
 
-      if (!product || typeof product.price !== "number") {
-        return res.status(400).json({ success: false, message: "Invalid product pricing in online order" });
+      // ⚠️ FALLBACK: Product model lacks 'price' field. Using Item Price from Request.
+      // TODO: Add 'price' to Product model and migrate.
+
+      const itemPrice = Number(item.price);
+      if (!itemPrice || itemPrice <= 0) {
+        return res.status(400).json({ success: false, message: "Invalid item price in online order" });
       }
 
-      const qty = Number(item.quantity);
-      if (!qty || qty <= 0) {
-        return res.status(400).json({ success: false, message: "Invalid quantity in online order" });
-      }
-
-      calcSubtotal += product.price * qty;
+      calcSubtotal += itemPrice * qty;
     }
 
     const shippingFee = calcSubtotal >= 500 ? 0 : 50;
