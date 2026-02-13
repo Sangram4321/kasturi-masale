@@ -250,14 +250,54 @@ exports.createOrder = async (req, res, next) => {
       weight: weightMap[item.variant] || 0.5
     }));
 
-    // 🛡️ CRITICAL FIX 2: Server-Side Pricing Calculation
+    // 🛡️ CRITICAL FIX 2: Server-Side Pricing Calculation (SAFE MODE)
     let calcSubtotal = 0;
     for (const item of enrichedItems) {
       const product = products.find(p => p.variant === item.variant);
-      if (!product) {
-        return res.status(400).json({ success: false, message: "Invalid product or variant" });
+
+      // Safety Check: Product & Price
+      if (!product || typeof product.price !== "number") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid product pricing in database"
+        });
       }
-      calcSubtotal += product.price * item.quantity;
+
+      // Safety Check: Quantity
+      const qty = Number(item.quantity);
+      if (!qty || qty <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid quantity detected"
+        });
+      }
+
+      calcSubtotal += product.price * qty;
+    }
+
+    const shippingFee = calcSubtotal >= 500 ? 0 : 50;
+    const codFee = Number(pricing?.codFee || 0); // Ensure Number
+
+    // SAFE TOTAL CALCULATION
+    const finalTotal = calcSubtotal + codFee + shippingFee - discountAmount;
+
+    // 🛡️ NaN GUARD: Final Total
+    if (!Number.isFinite(finalTotal)) {
+      return res.status(400).json({
+        success: false,
+        message: "Total calculation error (Result was NaN/Infinity)"
+      });
+    }
+
+    // 🛡️ NaN GUARD: Financials
+    const taxableValue = finalTotal / 1.05;
+    const gstAmount = finalTotal - taxableValue;
+
+    if (![taxableValue, gstAmount].every(Number.isFinite)) {
+      return res.status(400).json({
+        success: false,
+        message: "Financial calculation error (GST/Taxable NaN)"
+      });
     }
 
     const shippingFee = calcSubtotal >= 500 ? 0 : 50;
@@ -285,11 +325,11 @@ exports.createOrder = async (req, res, next) => {
             coinsRedeemed: coinsRedeemed,
             total: finalTotal // ✅ CORRECT: Use calculated final total
           },
-          // 💰 INIT FINANCIALS (For Dashboard Pending View)
+          // 💰 INIT FINANCIALS (Safe)
           financials: {
             grossRevenue: finalTotal,
-            taxableValue: finalTotal / 1.05,
-            gstAmount: finalTotal - (finalTotal / 1.05),
+            taxableValue: taxableValue,
+            gstAmount: gstAmount,
             // Costs & Profit populated on Delivery
             netProfit: 0,
             profitMargin: 0
@@ -528,19 +568,47 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
       weight: weightMap[item.variant] || 0.5
     }));
 
-    // 🛡️ CRITICAL FIX 2 (Online): Server-Side Pricing
+    // 🛡️ CRITICAL FIX 2 (Online): Server-Side Pricing (SAFE MODE)
     let calcSubtotal = 0;
     for (const item of enrichedItems) {
       const product = products.find(p => p.variant === item.variant);
-      if (!product) {
-        return res.status(400).json({ success: false, message: "Invalid product in online order" });
+
+      if (!product || typeof product.price !== "number") {
+        return res.status(400).json({ success: false, message: "Invalid product pricing in online order" });
       }
-      calcSubtotal += product.price * item.quantity;
+
+      const qty = Number(item.quantity);
+      if (!qty || qty <= 0) {
+        return res.status(400).json({ success: false, message: "Invalid quantity in online order" });
+      }
+
+      calcSubtotal += product.price * qty;
     }
 
     const shippingFee = calcSubtotal >= 500 ? 0 : 50;
-    // Online has no COD fee
+    // Online has no COD fee (Force 0)
+    const codFee = 0;
+
     const finalTotal = calcSubtotal + shippingFee - discountAmount;
+
+    // 🛡️ NaN GUARD: Final Total
+    if (!Number.isFinite(finalTotal)) {
+      return res.status(400).json({
+        success: false,
+        message: "Online Total calculation error"
+      });
+    }
+
+    // 🛡️ NaN GUARD: Financials
+    const taxableValue = finalTotal / 1.05;
+    const gstAmount = finalTotal - taxableValue;
+
+    if (![taxableValue, gstAmount].every(Number.isFinite)) {
+      return res.status(400).json({
+        success: false,
+        message: "Online Financial calculation error"
+      });
+    }
 
     const newOrder = await Order.create({
       orderId,
@@ -555,11 +623,11 @@ exports.verifyPaymentAndCreateOrder = async (req, res, next) => {
         coinsRedeemed: coinsRedeemed,
         total: finalTotal // ✅ CORRECT: Use calculated final total
       },
-      // 💰 INIT FINANCIALS (For Dashboard Pending View)
+      // 💰 INIT FINANCIALS (Safe)
       financials: {
         grossRevenue: finalTotal,
-        taxableValue: finalTotal / 1.05,
-        gstAmount: finalTotal - (finalTotal / 1.05),
+        taxableValue: taxableValue,
+        gstAmount: gstAmount,
         netProfit: 0,
         profitMargin: 0
       },
