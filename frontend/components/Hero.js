@@ -101,15 +101,15 @@ export default function Hero() {
             {/* Dark Gradient Overlay for Readability/Mood */}
             <div className="cinematic-overlay" />
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {slides[currentSlide].type === 'video' ? (
                 <motion.div
-                  key="slide-video"
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
-                  style={{ width: '100%', height: '100%' }}
+                  key={`slide-${currentSlide}`}
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
                 >
                   <video
                     ref={videoRef}
@@ -124,17 +124,17 @@ export default function Hero() {
                 </motion.div>
               ) : (
                 <motion.div
-                  key="slide-image"
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
-                  style={{ width: '100%', height: '100%' }}
+                  key={`slide-${currentSlide}`}
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
                 >
                   <img
                     src={slides[currentSlide].src}
                     alt="Kasturi Masale Hero"
-                    className="cinematic-video" // Reuse class for object-fit cover
+                    className="cinematic-video"
                   />
                 </motion.div>
               )}
