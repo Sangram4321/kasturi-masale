@@ -42,8 +42,16 @@ export default function ProductShowcase() {
                 {/* 3. Product Details - Elegant Typography */}
                 <div className="details-area">
                     <h3 className="product-name">{product.name}</h3>
+
+                    {/* Price Tag (New) */}
+                    <div className="price-block">
+                        <span className="currency">₹</span>
+                        <span className="amount">{product.price}</span>
+                        <span className="per-weight">/ 500g</span>
+                    </div>
+
                     <p className="product-desc">
-                        Hand-pounded precision. Authentic taste loved by 1200+ homes.
+                        Hand-pounded precision. Authentic taste.
                     </p>
 
                     {/* Trust Badges - Minimal */}
@@ -51,8 +59,6 @@ export default function ProductShowcase() {
                         <span className="trust-pill">No Preservatives</span>
                         <span className="trust-dot">•</span>
                         <span className="trust-pill">Kandap Ground</span>
-                        <span className="trust-dot">•</span>
-                        <span className="trust-pill">100% Natural</span>
                     </div>
 
                     {/* 4. CTA - Pill Shape */}
@@ -142,7 +148,26 @@ export default function ProductShowcase() {
                     font-family: var(--font-heading, 'Playfair Display', serif);
                     font-size: clamp(24px, 4vw, 36px);
                     color: #1a1a1a;
-                    margin: 0 0 16px;
+                    margin: 0 0 8px; /* Reduced margin for price */
+                }
+
+                .price-block {
+                    font-family: var(--font-heading, 'Playfair Display', serif);
+                    color: #B1121B; /* Brand Red */
+                    margin-bottom: 16px;
+                    display: flex;
+                    align-items: baseline;
+                    justify-content: center;
+                    gap: 4px;
+                }
+                .currency { font-size: 20px; font-weight: 600; }
+                .amount { font-size: 32px; font-weight: 700; }
+                .per-weight { 
+                    font-family: var(--font-body); 
+                    font-size: 14px; 
+                    color: #666; 
+                    font-weight: 500;
+                    margin-left: 4px;
                 }
 
                 .product-desc {
@@ -196,11 +221,44 @@ export default function ProductShowcase() {
                 .arrow { font-size: 20px; transition: transform 0.2s; }
                 .shop-pill-btn:hover .arrow { transform: translateX(4px); }
 
-                /* MOBILE OPTIMIZATIONS */
+                /* MOBILE OPTIMIZATIONS (CONVERSION FOCUSED) */
                 @media (max-width: 768px) {
-                    .product-showcase { padding: 60px 20px 80px; }
-                    .image-container { height: 350px; } /* Slightly smaller on mobile but still dominant */
-                    .shop-pill-btn { width: 100%; justify-content: center; }
+                    .product-showcase { 
+                        padding: 40px 20px 60px; /* Much tighter padding */
+                    }
+                    
+                    .header-area { margin-bottom: 24px; } /* Reduce gap */
+                    .main-title { margin-bottom: 0; font-size: 28px; } /* Smaller title */
+                    
+                    .artifact-stage { margin-bottom: 24px; }
+                    
+                    .image-container { 
+                        height: 260px; /* CRITICAL: Reduced height to fit fold */
+                    } 
+                    
+                    .product-name { font-size: 22px; margin-bottom: 4px; }
+                    
+                    .price-block { margin-bottom: 12px; }
+                    .amount { font-size: 28px; }
+                    
+                    .product-desc { 
+                        /* Hide description on mobile to prioritize CTA? Or keep very short. User said "Emotion -> Price -> Buy" */
+                        /* Let's keep it but maybe 1 line? User said 1 line max. */
+                        margin-bottom: 16px;
+                        font-size: 14px;
+                    }
+
+                    .trust-row {
+                        margin-bottom: 24px;
+                        gap: 8px;
+                    }
+                    .trust-pill { font-size: 11px; }
+
+                    .shop-pill-btn { 
+                        width: 100%; 
+                        justify-content: center; 
+                        padding: 16px 32px; /* Slightly more compact */
+                    }
                 }
             `}</style>
         </section>
