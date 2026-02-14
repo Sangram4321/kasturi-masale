@@ -26,6 +26,16 @@ const CartIcon = ({ size = 22 }) => (
 export default function HeaderMobile() {
     const [open, setOpen] = useState(false)
     const [loggedIn, setLoggedIn] = useState(false)
+    const [scrolled, setScrolled] = useState(false)
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50)
+        }
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        handleScroll() // Check on mount
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
 
     const router = useRouter()
     const { cart } = useCart()
@@ -220,12 +230,15 @@ export default function HeaderMobile() {
           width: 100%;
           z-index: 3000;
           height: 76px;
-          background: rgba(255, 255, 255, 0.94);
-          backdrop-filter: blur(5px);
-          -webkit-backdrop-filter: blur(5px);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-          border-bottom: 1px solid rgba(0,0,0,0.03);
-          transition: transform 0.3s ease;
+          
+          /* Default: Transparent for Hero */
+          background: ${scrolled ? 'rgba(255, 255, 255, 0.94)' : 'transparent'};
+          backdrop-filter: ${scrolled ? 'blur(12px)' : 'none'};
+          -webkit-backdrop-filter: ${scrolled ? 'blur(12px)' : 'none'};
+          box-shadow: ${scrolled ? '0 4px 20px rgba(0,0,0,0.03)' : 'none'};
+          border-bottom: ${scrolled ? '1px solid rgba(0,0,0,0.03)' : 'none'};
+          
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex; align-items: center;
         }
 
@@ -266,8 +279,9 @@ export default function HeaderMobile() {
           border: none;
           position: relative;
           font-size: 28px;
-          color: #2d2a26;
-          transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          /* Color change: White on hero (unscrolled), Dark on white header (scrolled) */
+          color: ${scrolled ? '#2d2a26' : '#ffffff'};
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           border-radius: 50%;
         }
 

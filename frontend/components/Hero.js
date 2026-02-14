@@ -44,41 +44,49 @@ export default function Hero() {
 
   return (
     <section className="hero-section" ref={containerRef}>
+      {/* MOBILE BACKGROUND (CSS handles visibility) */}
+      <div className="mobile-hero-bg" />
+      <div className="mobile-overlay" />
+
       <div className="safe-container">
 
         {/* TEXT CONTENT */}
         <div className="hero-text-col">
           <h1 className="hero-heading hero-text-element">
-            Asli Kolhapuri <br />
+            Assal Kolhapuri <br />
             Kanda Lasun Masala
           </h1>
 
-          <h2 className="hero-subline hero-text-element">
+          {/* Mobile Subtitle */}
+          <p className="mobile-subtitle hero-text-element">HOMEMADE</p>
+
+          {/* Desktop Subline (Hidden on Mobile) */}
+          <h2 className="hero-subline hero-text-element desktop-only">
             Bina color. Bina chemical. <br />
             Roz use hone wala.
           </h2>
 
-          <p className="emotional-line hero-text-element">
+          <p className="emotional-line hero-text-element desktop-only">
             <em>The taste of authentic tradition, preserved for your kitchen.</em>
           </p>
 
-          <p className="micro-trust hero-text-element">
+          <p className="micro-trust hero-text-element desktop-only">
             Fresh batches • Limited quantity • Made in Kolhapur
           </p>
 
           <div className="btn-container hero-text-element">
             <Link href="/product" legacyBehavior>
               <a className="premium-cta" onClick={() => import('../lib/feedback').then(({ feedback }) => feedback.trigger('cta'))}>
-                ORDER NOW
+                BUY NOW
                 <span className="arrow-icon">→</span>
               </a>
             </Link>
-            <p className="cta-subtext">COD Available | Ships in 24 hrs</p>
+            <p className="cta-subtext desktop-only">COD Available | Ships in 24 hrs</p>
           </div>
         </div>
 
-        {/* VISUAL CONTENT */}
-        <div className="hero-visual-col">
+        {/* VISUAL CONTENT (Desktop Only) */}
+        <div className="hero-visual-col desktop-only">
           <div className="visual-container">
             {/* Dark Gradient Overlay for Readability/Mood */}
             <div className="cinematic-overlay" />
@@ -111,15 +119,24 @@ export default function Hero() {
             position: relative;
         }
 
+        .mobile-hero-bg {
+            display: none;
+        }
+        .mobile-overlay {
+            display: none;
+        }
+
         .safe-container {
             width: 100%;
-            max-width: 1320px; /* Slightly wider for cinematic feel */
+            max-width: 1320px;
             margin: 0 auto;
             padding: 0 24px;
             display: grid;
-            grid-template-columns: 0.9fr 1.1fr; /* Video dominant on desktop */
+            grid-template-columns: 0.9fr 1.1fr;
             gap: 60px;
             align-items: center;
+            position: relative;
+            z-index: 2;
         }
 
         /* --- TEXT COLUMN --- */
@@ -147,6 +164,10 @@ export default function Hero() {
             line-height: 1.4;
             color: #4a4a4a;
             margin-bottom: 16px;
+        }
+
+        .mobile-subtitle {
+            display: none; /* Desktop hidden */
         }
 
         .emotional-line {
@@ -245,52 +266,88 @@ export default function Hero() {
         }
 
         /* --- MOBILE LAYOUT --- */
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
             .hero-section {
-                padding-top: 112px;
-                min-height: auto;
+                padding-top: 0; /* Full bleed */
+                min-height: 100vh; /* Full height */
+                display: flex;
                 flex-direction: column;
-                align-items: stretch;
-                padding-bottom: 60px;
+                justify-content: flex-end; /* Align content to bottom/center */
+                padding-bottom: 120px; /* Space for bottom interaction */
+                position: relative;
+            }
+
+            .mobile-hero-bg {
+                display: block;
+                position: absolute;
+                inset: 0;
+                background-image: url('/images/mobile-hero/IMG_5470.PNG');
+                background-size: cover;
+                background-position: center;
+                z-index: 0;
+            }
+
+            .mobile-overlay {
+                display: block;
+                position: absolute;
+                inset: 0;
+                /* Dark gradient from bottom */
+                background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
+                z-index: 1;
+            }
+
+            .desktop-only {
+                display: none !important;
             }
 
             .safe-container {
                 grid-template-columns: 1fr;
-                gap: 32px;
+                gap: 0;
                 display: flex;
                 flex-direction: column;
-            }
-
-            /* Visual First on Mobile */
-            .hero-visual-col {
-                order: -1;
-                width: 100%;
-            }
-
-            .visual-container {
-                width: 100%;
-                height: 50vh; /* CONSTRAINT: 48-52vh */
-                max-height: 500px;
-                border-radius: 20px;
+                justify-content: flex-end;
+                height: 100%;
             }
 
             .hero-text-col {
                 align-items: center;
                 text-align: center;
-                padding: 0 12px;
+                width: 100%;
             }
 
-            .emotional-line {
-                margin: 0 auto 24px;
-                border: none;
-                padding: 0;
-                font-size: 1.1rem;
+            .hero-heading {
+                color: #fff;
+                font-size: 3rem; /* Bigger for impact */
+                margin-bottom: 8px;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            }
+
+            .mobile-subtitle {
+                display: block;
+                color: #e0e0e0;
+                font-family: var(--font-body, 'Inter', sans-serif);
+                font-size: 0.9rem;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                margin-bottom: 32px;
+                font-weight: 600;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.5);
             }
 
             .premium-cta {
-                width: 100%;
+                width: auto;
+                min-width: 200px;
                 justify-content: center;
-                padding: 18px 32px;
+                padding: 18px 40px;
+                font-size: 1.1rem;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                background: #fff; /* White button on dark bg? Or brand red? */
+                /* User said premium looking. White text on Red is brand. 
+                   But maybe White button with Red text looks distinctive on dark hero?
+                   Let's stick to Brand Red for consistency, but maybe add a white border or glow?
+                   "Buy Now button" requested.
+                   Let's keep the gradient red, it pops on dark.
+                */
             }
         }
       `}</style>
