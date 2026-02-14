@@ -1,298 +1,208 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { ShoppingBag, Check } from "lucide-react"
 
-/* 
-  PRODUCT SHOWCASE SECTION
-  - Grid Layout (Mobile 2-col, Desktop 4-col)
-  - Mobile-First Add to Cart (Visible always)
-  - Trust Indicators
-*/
-
-const PRODUCTS = [
-    {
+export default function ProductShowcase() {
+    const product = {
         id: "kanda-lasun-500",
         name: "Kolhapuri Kanda Lasun Masala",
+        tagline: "The Original Ghati Masala",
         weight: "500g",
         price: 280,
         image: "/images/mobile-hero/IMG_5470.PNG"
     }
-]
 
-export default function ProductShowcase() {
     return (
-        <section className="product-section">
+        <section className="product-showcase">
             <div className="container">
 
-                {/* HEADLINE */}
-                <div className="section-header">
-                    <h2 className="section-title">The Pride of Kolhapur</h2>
-                    <p className="section-subtitle">Our signature blend, loved by 1200+ homes.</p>
+                {/* 1. Header Area - Very Clean */}
+                <div className="header-area">
+                    <span className="premium-tag">The Pride of Kolhapur</span>
+                    <h2 className="main-title">Our Signature Blend</h2>
                 </div>
 
-                {/* PRODUCT HIGHLIGHT */}
-                <div className="product-highlight">
-                    {PRODUCTS.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
+                {/* 2. The Artifact (Image) */}
+                <div className="artifact-stage">
+                    {/* Ambient Glow behind the product */}
+                    <div className="glow-backdrop" />
+
+                    <div className="image-container">
+                        <Image
+                            src={product.image}
+                            alt={product.name}
+                            layout="fill"
+                            objectFit="contain"
+                            className="product-image"
+                            priority
+                        />
+                    </div>
                 </div>
 
-                {/* TRUST INDICATORS (Guarantee) */}
-                <div className="trust-strip">
-                    <TrustItem icon="🌶️" label="No Artificial Color" sub="100% Natural Ingredients" />
-                    <TrustItem icon="🥣" label="Traditionally Pounded" sub="Kandap Machine Method" />
-                    <TrustItem icon="🏡" label="Made in Kolhapur" sub="Authentic Local Taste" />
+                {/* 3. Product Details - Elegant Typography */}
+                <div className="details-area">
+                    <h3 className="product-name">{product.name}</h3>
+                    <p className="product-desc">
+                        Hand-pounded precision. Authentic taste loved by 1200+ homes.
+                    </p>
+
+                    {/* Trust Badges - Minimal */}
+                    <div className="trust-row">
+                        <span className="trust-pill">No Preservatives</span>
+                        <span className="trust-dot">•</span>
+                        <span className="trust-pill">Kandap Ground</span>
+                        <span className="trust-dot">•</span>
+                        <span className="trust-pill">100% Natural</span>
+                    </div>
+
+                    {/* 4. CTA - Pill Shape */}
+                    <div className="action-area">
+                        <Link href="/product" legacyBehavior>
+                            <a className="shop-pill-btn">
+                                Order Now <span className="arrow">→</span>
+                            </a>
+                        </Link>
+                    </div>
                 </div>
 
             </div>
 
             <style jsx>{`
-                .product-section {
-                    padding: 80px 24px;
-                    background: #F9F6F1;
+                .product-showcase {
+                    padding: 80px 24px 100px;
+                    background: #F9F6F1; /* Seamless blend */
                     position: relative;
-                    z-index: 10;
-                    overflow: hidden; /* Contain glow */
+                    overflow: hidden;
+                    text-align: center;
                 }
-                
+
                 .container {
-                    max-width: 1280px;
+                    max-width: 1000px;
                     margin: 0 auto;
                     position: relative;
-                    z-index: 2; /* Lift content above glow */
+                    z-index: 2;
                 }
 
-                .section-header {
-                    text-align: center;
-                    margin-bottom: 48px;
+                /* HEADER */
+                .premium-tag {
+                    display: block;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    color: #8B4513; /* Earthy Bronze */
+                    margin-bottom: 12px;
+                    font-weight: 600;
                 }
 
-                .section-title {
-                    font-family: var(--font-heading);
-                    font-size: 36px;
-                    color: var(--color-text-dark);
-                    margin-bottom: 8px;
+                .main-title {
+                    font-family: var(--font-heading, 'Playfair Display', serif);
+                    font-size: clamp(32px, 5vw, 48px);
+                    color: #2D2A26;
+                    margin: 0 0 40px;
+                    font-weight: 800;
                 }
 
-                .section-subtitle {
-                    color: var(--color-text-muted);
-                    margin-bottom: 16px;
-                    font-size: 16px;
-                }
-
-                .product-highlight {
+                /* ARTIFACT STAGE */
+                .artifact-stage {
+                    position: relative;
+                    width: 100%;
+                    max-width: 500px; /* Generous width */
+                    margin: 0 auto 40px;
                     display: flex;
                     justify-content: center;
-                    margin-bottom: 64px;
-                }
-                
-                :global(.product-card) {
-                    width: 100%;
-                    max-width: 380px; /* Single Card Limit */
                 }
 
-                .trust-strip {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 20px;
-                    padding-top: 40px;
-                    border-top: 1px solid rgba(0,0,0,0.05); /* Optional: Keep or remove based on strictness */
+                .glow-backdrop {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 120%;
+                    height: 120%;
+                    transform: translate(-50%, -50%);
+                    background: radial-gradient(circle, rgba(255, 165, 0, 0.15) 0%, transparent 70%);
+                    filter: blur(40px);
+                    z-index: 0;
                 }
-                @media (max-width: 600px) {
-                    .trust-strip {
-                        grid-template-columns: 1fr;
-                        gap: 16px;
-                        text-align: center;
-                    }
+
+                .image-container {
+                    position: relative;
+                    width: 100%;
+                    height: 500px; /* Tall and proud */
+                    z-index: 1;
+                    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15)); /* Soft shadow for depth */
+                    transition: transform 0.5s ease-out;
+                }
+                
+                .image-container:hover {
+                    transform: scale(1.02);
+                }
+
+                /* DETAILS */
+                .product-name {
+                    font-family: var(--font-heading, 'Playfair Display', serif);
+                    font-size: clamp(24px, 4vw, 36px);
+                    color: #1a1a1a;
+                    margin: 0 0 16px;
+                }
+
+                .product-desc {
+                    font-size: 16px;
+                    color: #555;
+                    max-width: 600px;
+                    margin: 0 auto 24px;
+                    line-height: 1.6;
+                }
+
+                .trust-row {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 40px;
+                    flex-wrap: wrap;
+                }
+
+                .trust-pill {
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: #666;
+                    font-weight: 500;
+                }
+                .trust-dot { color: #ccc; }
+
+                /* CTA */
+                .shop-pill-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: #B1121B; /* Brand Red */
+                    color: white;
+                    padding: 18px 48px;
+                    border-radius: 50px; /* Full Pill */
+                    font-size: 18px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 10px 25px rgba(177, 18, 27, 0.3);
+                }
+
+                .shop-pill-btn:hover {
+                    background: #8E0E15;
+                    transform: translateY(-2px);
+                    box-shadow: 0 15px 30px rgba(177, 18, 27, 0.4);
+                }
+
+                .arrow { font-size: 20px; transition: transform 0.2s; }
+                .shop-pill-btn:hover .arrow { transform: translateX(4px); }
+
+                /* MOBILE OPTIMIZATIONS */
+                @media (max-width: 768px) {
+                    .product-showcase { padding: 60px 20px 80px; }
+                    .image-container { height: 350px; } /* Slightly smaller on mobile but still dominant */
+                    .shop-pill-btn { width: 100%; justify-content: center; }
                 }
             `}</style>
         </section>
-    )
-}
-
-function ProductCard({ product }) {
-    return (
-        <div className="product-card-wrapper">
-            {/* 1. Ambient Glow (Energy from product) */}
-            <div className="ambient-glow" style={{ zIndex: 0 }} />
-
-            {/* 2. Localized Contrast (For blur to read) */}
-            <div className="glass-contrast" style={{ zIndex: 1 }} />
-
-            {/* 3. The Glass Card itself */}
-            <div className="product-card glass-card">
-                {/* IMAGE AREA */}
-                <div className="image-wrapper">
-                    {/* Fallback placeholder logic or Image */}
-                    <Image
-                        src={product.image}
-                        alt={product.name}
-                        layout="fill"
-                        objectFit="contain"
-                        className="prod-img"
-                    />
-                </div>
-
-                {/* INFO AREA */}
-                <div className="info-wrapper">
-                    <h3 className="prod-name">{product.name}</h3>
-
-                    {/* CTA BUTTON */}
-                    <Link href="/product" legacyBehavior>
-                        <a className="add-btn" onClick={() => import('../lib/feedback').then(({ feedback }) => feedback.trigger('cta'))}>
-                            ORDER NOW
-                        </a>
-                    </Link>
-                </div>
-            </div>
-
-            <style jsx>{`
-                .product-card-wrapper {
-                    position: relative; /* Anchor for glow/contrast */
-                    transition: transform 0.3s ease;
-                    /* Ensure wrapper has size */
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .product-card-wrapper:hover {
-                    transform: translateY(-6px);
-                }
-
-                .product-card {
-                    /* STRICT GLASSMORPHISM APPLIED VIA .glass-card GLOBAL CLASS */
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    position: relative; /* z-index context */
-                    z-index: 10; /* Top layer */
-                    width: 100%; /* Fill wrapper */
-                }
-                
-                /* Resetting any conflicting styles */
-                .product-card {
-                     background: var(--glass-bg); 
-                }
-                
-                /* Ensure Contrast Patch matches card size */
-                :global(.glass-contrast) {
-                    border-radius: 20px;
-                }
-
-                /* MOBILE OPTIMIZATION */
-                @media (max-width: 768px) {
-                    :global(.ambient-glow) {
-                        opacity: 0.4; /* Significantly reduced */
-                        transform: translate(-50%, -50%) scale(0.7); /* Smaller */
-                    }
-                    :global(.glass-contrast) {
-                        /* Keep contrast but ensure it doesn't look odd with reduced glow */
-                    }
-                    .product-card-wrapper {
-                        padding: 0 8px; /* Ensure breathing room */
-                    }
-                }
-
-                .image-wrapper {
-                    width: 100%;
-                    aspect-ratio: 1;
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 16px;
-                }
-                
-                :global(.prod-img) {
-                    border-radius: 14px;
-                    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.18));
-                }
-
-                .info-wrapper {
-                    padding: 24px 16px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-
-                .prod-name {
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: var(--color-text-dark);
-                    margin: 0 0 16px 0;
-                    line-height: 1.3;
-                    text-align: center;
-                }
-
-                .add-btn {
-                    width: 100%;
-                    background: var(--color-brand-red); 
-                    color: #fff;
-                    padding: 12px;
-                    border-radius: 12px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    text-decoration: none;
-                    border: none;
-                    box-shadow: 0 4px 12px rgba(177, 18, 27, 0.2);
-                }
-                .add-btn:hover {
-                    background: #8e0e15;
-                    transform: scale(1.02);
-                }
-            `}</style>
-        </div>
-    )
-}
-
-function TrustItem({ icon, label, sub }) {
-    return (
-        <div className="trust-item">
-            <span className="trust-icon">{icon}</span>
-            <div className="trust-info">
-                <span className="trust-label">{label}</span>
-                <span className="trust-sub">{sub}</span>
-            </div>
-            <style jsx>{`
-                .trust-item {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 12px;
-                    padding: 12px;
-                    background: #FAFAFA;
-                    border-radius: 12px;
-                }
-                .trust-icon {
-                    font-size: 24px;
-                }
-                .trust-info {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .trust-label {
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: var(--color-text-dark);
-                }
-                .trust-sub {
-                    font-size: 12px;
-                    color: var(--color-text-muted);
-                }
-                @media (max-width: 600px) {
-                    .trust-item {
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-                }
-            `}</style>
-        </div>
     )
 }
