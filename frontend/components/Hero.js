@@ -91,7 +91,11 @@ export default function Hero() {
                 <span className="arrow-icon">→</span>
               </a>
             </Link>
-            <p className="cta-subtext desktop-only">COD Available | Ships in 24 hrs</p>
+            {/* TRUST SIGNALS (New - Mobile & Desktop) */}
+            <div className="trust-signals-hero">
+              <p className="purity-line">Fresh Homemade • No Palm Oil • No Preservatives</p>
+              <p className="cod-line">Cash on Delivery Available</p>
+            </div>
           </div>
         </div>
 
@@ -400,6 +404,47 @@ export default function Hero() {
                 border: 2px solid #ffffff;
             }
         }
+        /* TRUST SIGNALS CSS */
+        .trust-signals-hero {
+            margin-top: 16px;
+            color: #fff; /* White on Hero Overlay */
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Readability on image */
+        }
+        .purity-line {
+            font-size: 12px;
+            margin: 0 0 4px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        .cod-line {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .cod-line::before {
+            content: '●';
+            color: #4ade80; /* Bright Green dot */
+            font-size: 8px;
+        }
+
+        @media (min-width: 768px) {
+             .trust-signals-hero {
+                color: #444; /* Dark on Desktop white bg */
+                text-align: left;
+                text-shadow: none;
+                margin-left: 4px;
+             }
+             .purity-line { color: #666; }
+             .cod-line { color: #222; justify-content: flex-start; }
+             .cod-line::before { color: #16a34a; } /* Darker green */
+        }
+
       `}</style>
     </section>
   )

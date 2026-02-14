@@ -68,6 +68,12 @@ export default function ProductShowcase() {
                                 Order Now <span className="arrow">→</span>
                             </a>
                         </Link>
+
+                        {/* TRUST SIGNALS (New) */}
+                        <div className="trust-signals-hero">
+                            <p className="purity-line">Fresh Homemade • No Palm Oil • No Preservatives</p>
+                            <p className="cod-line">Cash on Delivery Available</p>
+                        </div>
                     </div>
                 </div>
 
@@ -220,6 +226,34 @@ export default function ProductShowcase() {
 
                 .arrow { font-size: 20px; transition: transform 0.2s; }
                 .shop-pill-btn:hover .arrow { transform: translateX(4px); }
+                
+                /* TRUST SIGNALS CSS */
+                .trust-signals-hero {
+                    margin-top: 20px;
+                    color: #666;
+                }
+                .purity-line {
+                    font-size: 12px;
+                    margin: 0 0 4px;
+                    font-weight: 500;
+                    opacity: 0.9;
+                }
+                .cod-line {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #444; /* Slightly darker */
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                }
+                /* Add a subtle icon or dot if needed, but text is clean */
+                .cod-line::before {
+                    content: '●';
+                    color: #16a34a; /* Green dot for availability */
+                    font-size: 8px;
+                }
 
                 /* MOBILE OPTIMIZATIONS (CONVERSION FOCUSED) */
                 @media (max-width: 768px) {
