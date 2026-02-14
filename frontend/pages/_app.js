@@ -5,6 +5,7 @@ import { useRouter } from "next/router"
 import Script from "next/script"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
+import WhatsAppButton from "../components/WhatsAppButton"
 
 import Preloader from "../components/Preloader"
 import CustomCursor from "../components/CustomCursor"
@@ -216,6 +217,8 @@ export default function App({ Component, pageProps }) {
               </PageTransition>
             </AnimatePresence>
 
+            <WhatsAppButton />
+
             <div>
               <Footer />
             </div>
@@ -229,4 +232,3 @@ export default function App({ Component, pageProps }) {
     </>
   )
 }
-
