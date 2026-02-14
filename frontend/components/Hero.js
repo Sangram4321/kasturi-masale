@@ -1,10 +1,34 @@
 import React, { useRef, useEffect } from "react"
 import Link from "next/link"
 import gsap from "gsap"
+import { AnimatePresence, motion } from "framer-motion"
 
 export default function Hero() {
   const containerRef = useRef(null)
+  const videoRef = useRef(null)
   const tlRef = useRef(null)
+  const [currentSlide, setCurrentSlide] = React.useState(0)
+
+  // Slides Configuration
+  const slides = [
+    { type: 'video', src: '/images/making/masala-making.MP4', poster: '/images/hero/hero-kasturi-silbatta.png', duration: null }, // Duration managed by onEnded
+    { type: 'image', src: '/images/hero/hero-kasturi-silbatta.png', duration: 6000 }
+  ]
+
+  // Auto-Rotation Logic
+  useEffect(() => {
+    let timer
+    const slide = slides[currentSlide]
+
+    if (slide.type === 'image') {
+      timer = setTimeout(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length)
+      }, slide.duration)
+    }
+    // Note: Video slide handles rotation via onEnded event on the element
+
+    return () => clearTimeout(timer)
+  }, [currentSlide])
 
   // 🎬 GSAP ENTRANCE ANIMATION
   useEffect(() => {
@@ -77,11 +101,45 @@ export default function Hero() {
             {/* Dark Gradient Overlay for Readability/Mood */}
             <div className="cinematic-overlay" />
 
-            <img
-              src="/images/mobile-hero/IMG_5470.PNG"
-              alt="Kasturi Masale Hero"
-              className="cinematic-video" // Keeping class for object-fit: cover styles
-            />
+            <AnimatePresence initial={false}>
+              {slides[currentSlide].type === 'video' ? (
+                <motion.div
+                  key={`slide-${currentSlide}`}
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
+                >
+                  <video
+                    ref={videoRef}
+                    src={slides[currentSlide].src}
+                    poster={slides[currentSlide].poster}
+                    autoPlay
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="cinematic-video"
+                    onEnded={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`slide-${currentSlide}`}
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
+                >
+                  <img
+                    src={slides[currentSlide].src}
+                    alt="Kasturi Masale Hero"
+                    className="cinematic-video"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
