@@ -1,4 +1,5 @@
 import Hero from "../components/Hero"
+import MakingVideo from "../components/MakingVideo"
 // import BenefitBadges from "../components/BenefitBadges" // Replaced by Premium Section
 import TrustComparisonSection from '../components/TrustComparisonSection'
 import ComparisonGrid from '../components/ComparisonGrid'
@@ -23,7 +24,10 @@ export default function Home({ lang = "en" }) {
       {/* 1. HERO */}
       <Hero />
 
-      {/* 2. WHY KASTURI IS PREMIUM (The new "Trust" Block) */}
+      {/* 2. MAKING PROCESS VIDEO */}
+      <MakingVideo />
+
+      {/* 3. WHY KASTURI IS PREMIUM (The new "Trust" Block) */}
       <section style={{ position: 'relative', zIndex: 10, background: '#F9F6F1' }}>
         <TrustComparisonSection />
         <div style={{ marginTop: 60 }}>
