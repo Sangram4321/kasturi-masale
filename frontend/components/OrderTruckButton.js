@@ -3,18 +3,29 @@ import { useState } from "react"
 export default function OrderTruckButton({ onAnimationCommit, isLoading, isValid, label }) {
     const [animate, setAnimate] = useState(false)
 
-    const handleClick = () => {
+    const handleClick = async () => {
         if (!isValid || isLoading || animate) return
 
         // 1. Start Animation
         setAnimate(true)
 
-        // 2. Play for 10 seconds (duration of CSS animation)
-        setTimeout(() => {
-            // 3. Animation Done -> Trigger Confirm Flow
+        // 2. Run Animation Timer (3s) AND Action in Parallel
+        const minAnimationTime = new Promise(resolve => setTimeout(resolve, 3000))
+
+        try {
+            // Wait for BOTH the minimum animation time AND the actual action to finish
+            await Promise.all([
+                minAnimationTime,
+                onAnimationCommit() // This should now be a Promise returning function
+            ])
+        } catch (error) {
+            // If action fails, stop animation (optional, or let parent handle error)
             setAnimate(false)
-            if (onAnimationCommit) onAnimationCommit()
-        }, 10000)
+            console.error("Order action failed:", error)
+        }
+
+        // Note: If success, the parent typically unmounts this component or redirects,
+        // so we might not even reach here. If we do, it means we're done.
     }
 
     return (
@@ -24,12 +35,9 @@ export default function OrderTruckButton({ onAnimationCommit, isLoading, isValid
             disabled={!isValid || isLoading || animate}
             style={{ opacity: isValid ? 1 : 0.6, pointerEvents: (isValid && !animate) ? 'all' : 'none' }}
         >
-            <span className="default">{animate ? "Sending..." : label}</span>
+            <span className="default">{animate ? "Processing..." : label}</span>
             <span className="success">
-                Order Placed
-                <svg viewBox="0 0 12 10">
-                    <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                </svg>
+                {/* Success state is now handled by the parent's UI (Success Card) */}
             </span>
             <div className="box"></div>
             <div className="truck">

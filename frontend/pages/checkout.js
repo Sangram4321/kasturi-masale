@@ -98,15 +98,17 @@ export default function Checkout() {
 
 
   /* ACTIONS */
-  // 1. Called after Truck Animation Finishes
-  const handleTruckAnimationComplete = () => {
+
+  // Called when User clicks the Truck Button
+  // Returns a Promise that resolves when the Order is placed OR Payment Modal is ready
+  const handlePlaceOrder = async () => {
     haptic(50)
-    confirmOrder()
+
+    // confirmOrder now needs to return a Promise
+    return confirmOrder()
   }
 
-  // 2. Called when User clicks "Confirm Order" in Modal
   const confirmOrder = async () => {
-    // setShowConfirmation(false) // Removed
     setLoading(true)
 
     try {
@@ -144,13 +146,14 @@ export default function Checkout() {
         if (!res.ok || !data.success) throw new Error(data?.message || "Order failed")
 
         handleSuccess(data)
+        return true // Resolve Promise
 
         /* 2. ONLINE FLOW (RAZORPAY) */
       } else {
         // A. Init Payment on Backend
         const orderRes = await fetch(`${API}/api/orders/create-payment`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: total }) // Amount in Rupees
+          body: JSON.stringify({ amount: total })
         });
 
         const orderText = await orderRes.text();
@@ -165,16 +168,19 @@ export default function Checkout() {
 
         // B. Open Razorpay
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Key from .env.local
-          // Actually, key_id is public. Safe to be here or env.
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: orderData.order.amount,
           currency: "INR",
           name: "Kasturi Masale",
           description: "Authentic Kolhapuri Masale",
           image: "/images/logo.png",
-          order_id: orderData.order.id, // RZP Order ID
+          order_id: orderData.order.id,
           handler: async function (response) {
             // C. Verify & Place Order
+            // Note: This happens AFTER simple button animation is done. 
+            // The "Loading" state might need to persist if we want to block UI, 
+            // but usually RZP modal handles its own overlay.
+            setLoading(true)
             try {
               const verifyRes = await fetch(`${API}/api/orders/verify-payment`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -182,7 +188,7 @@ export default function Checkout() {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  orderData: payload // Pass full order details to create it after payment
+                  orderData: payload
                 })
               });
 
@@ -208,11 +214,16 @@ export default function Checkout() {
           },
           prefill: {
             name: customer.name,
-            email: "", // collect email if needed
+            email: "",
             contact: customer.phone
           },
           theme: {
             color: "#C02729"
+          },
+          modal: {
+            ondismiss: function () {
+              setLoading(false)
+            }
           }
         };
 
@@ -222,12 +233,15 @@ export default function Checkout() {
           setLoading(false);
         });
         rzp1.open();
+
+        return true // Resolve Promise as "Ready to Pay"
       }
 
     } catch (err) {
       console.error(err)
       alert(err.message || "Connection failed. Please try again.")
       setLoading(false)
+      throw err // Re-throw so button knows it failed
     }
   }
 
@@ -461,7 +475,7 @@ export default function Checkout() {
             {/* FIXED FOOTER ACTION (TRUCK BUTTON) */}
             <div style={styles.footer}>
               <OrderTruckButton
-                onAnimationCommit={handleTruckAnimationComplete}
+                onAnimationCommit={handlePlaceOrder}
                 isLoading={loading}
                 isValid={isValid}
                 label={paymentMethod === "cod" ? `Place Order (Pay ₹${total} on Delivery)` : `Pay ₹${total} & Place Order`}
