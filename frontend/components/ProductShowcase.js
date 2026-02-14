@@ -224,40 +224,38 @@ export default function ProductShowcase() {
                 /* MOBILE OPTIMIZATIONS (CONVERSION FOCUSED) */
                 @media (max-width: 768px) {
                     .product-showcase { 
-                        padding: 40px 20px 60px; /* Much tighter padding */
+                        padding: 40px 20px 60px !important; /* Force tight padding */
                     }
                     
-                    .header-area { margin-bottom: 24px; } /* Reduce gap */
-                    .main-title { margin-bottom: 0; font-size: 28px; } /* Smaller title */
+                    .header-area { margin-bottom: 24px !important; }
+                    .main-title { margin-bottom: 0 !important; font-size: 28px !important; }
                     
-                    .artifact-stage { margin-bottom: 24px; }
+                    .artifact-stage { margin-bottom: 24px !important; }
                     
                     .image-container { 
-                        height: 260px; /* CRITICAL: Reduced height to fit fold */
+                        height: 260px !important; /* CRITICAL: Force reduced height */
                     } 
                     
-                    .product-name { font-size: 22px; margin-bottom: 4px; }
+                    .product-name { font-size: 22px !important; margin-bottom: 4px !important; }
                     
-                    .price-block { margin-bottom: 12px; }
-                    .amount { font-size: 28px; }
+                    .price-block { margin-bottom: 12px !important; }
+                    .amount { font-size: 28px !important; }
                     
                     .product-desc { 
-                        /* Hide description on mobile to prioritize CTA? Or keep very short. User said "Emotion -> Price -> Buy" */
-                        /* Let's keep it but maybe 1 line? User said 1 line max. */
                         margin-bottom: 16px;
                         font-size: 14px;
                     }
 
                     .trust-row {
-                        margin-bottom: 24px;
-                        gap: 8px;
+                        margin-bottom: 24px !important;
+                        gap: 8px !important;
                     }
-                    .trust-pill { font-size: 11px; }
+                    .trust-pill { font-size: 11px !important; }
 
                     .shop-pill-btn { 
-                        width: 100%; 
-                        justify-content: center; 
-                        padding: 16px 32px; /* Slightly more compact */
+                        width: 100% !important; 
+                        justify-content: center !important; 
+                        padding: 16px 32px !important;
                     }
                 }
             `}</style>
