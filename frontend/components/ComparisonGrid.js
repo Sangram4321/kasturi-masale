@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const ComparisonGrid = () => {
     return (
@@ -54,18 +55,82 @@ const ComparisonGrid = () => {
                     kasturiText={<>Premium ingredients<br />Careful processing</>}
                     marketText={<>Bulk production<br />Cost-first approach</>}
                 />
+
+                {/* MOBILE CTA */}
+                <div className="mobile-cta-container">
+                    <Link href="/product" legacyBehavior>
+                        <a className="mobile-shop-btn">Shop Fresh Masala</a>
+                    </Link>
+                </div>
             </div>
 
             <style jsx>{`
                 /* Global selectors needed because these classes are inside the child component ComparisonRow */
                 :global(.desktop-icon) { display: flex; }
                 :global(.mobile-label) { display: none; }
+                .mobile-cta-container { display: none; }
                 
                 @media (max-width: 768px) {
                     .desktop-header { display: none !important; }
-                    :global(.comparison-row) { grid-template-columns: 1fr !important; gap: 16px !important; margin-bottom: 32px; display: grid; }
+                    
+                    /* Stacked Grid Layout for Mobile */
+                    :global(.comparison-row) { 
+                        display: flex !important; 
+                        flex-direction: column !important; 
+                        gap: 0 !important; 
+                        margin-bottom: 24px; 
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        border: 1px solid #e0e0e0;
+                    }
+
                     :global(.desktop-icon) { display: none !important; }
-                    :global(.mobile-label) { display: block !important; margin-bottom: 8px; text-align: center; }
+                    
+                    :global(.mobile-label) { 
+                        display: block !important; 
+                        text-align: center; 
+                        background: #333; /* Dark header for contrast */
+                        color: #fff !important;
+                        padding: 10px;
+                        font-size: 1rem;
+                        letter-spacing: 0.5px;
+                    }
+
+                    :global(.kasturi-card-mobile) {
+                        background: #F0FDF4 !important; /* Rich Green Tint */
+                        border: none !important;
+                        border-bottom: 1px dashed #A7F3D0 !important;
+                        border-radius: 0 !important;
+                        padding: 20px !important;
+                    }
+                    
+                    :global(.market-card-mobile) {
+                        background: #F9FAFB !important; /* Muted Grey */
+                        border: none !important;
+                        border-radius: 0 !important;
+                        padding: 20px !important;
+                    }
+
+                    .mobile-cta-container {
+                        display: block;
+                        text-align: center;
+                        margin-top: 32px;
+                        margin-bottom: 40px;
+                    }
+
+                    .mobile-shop-btn {
+                        background: #B1121B; /* Brand Red */
+                        color: #fff;
+                        padding: 16px 32px;
+                        border-radius: 50px;
+                        font-weight: 700;
+                        font-size: 1.1rem;
+                        text-decoration: none;
+                        box-shadow: 0 4px 14px rgba(177, 18, 27, 0.4);
+                        display: inline-block;
+                        width: 80%;
+                    }
                 }
             `}</style>
         </div>
@@ -79,28 +144,53 @@ const ComparisonRow = ({ icon, label, kasturiText, marketText }) => (
         viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.5 }}
         style={styles.row}
-        className="comparison-row" // Added class for targeting
+        className="comparison-row"
     >
-        {/* Mobile Label */}
+        {/* Mobile Label Header */}
         <div style={styles.mobileLabel} className="mobile-label">
-            <span style={styles.iconWrapper}>{icon}</span>
             {label}
         </div>
 
         {/* Kasturi Card */}
-        <div style={{ ...styles.card, ...styles.kasturiCard }}>
+        <div style={{ ...styles.card, ...styles.kasturiCard }} className="kasturi-card-mobile">
             <div style={styles.desktopIcon} className="desktop-icon">{icon}</div>
             <div style={styles.cardContent}>
-                <span style={styles.cardText}>{kasturiText}</span>
+                {/* Mobile 'Kasturi' Badge */}
+                <span className="mobile-badge kasturi-badge">✓ Kasturi Masala</span>
+                <span style={styles.cardText} className="card-text-content">{kasturiText}</span>
             </div>
         </div>
 
         {/* Market Card */}
-        <div style={{ ...styles.card, ...styles.marketCard }}>
+        <div style={{ ...styles.card, ...styles.marketCard }} className="market-card-mobile">
             <div style={styles.cardContent}>
-                <span style={styles.cardText}>{marketText}</span>
+                {/* Mobile 'Market' Badge */}
+                <span className="mobile-badge market-badge">✕ Market Masala</span>
+                <span style={styles.cardText} className="card-text-content">{marketText}</span>
             </div>
         </div>
+
+        <style jsx>{`
+            .mobile-badge { display: none; }
+
+            @media (max-width: 768px) {
+                .mobile-badge {
+                    display: block;
+                    font-size: 0.75rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    margin-bottom: 6px;
+                    letter-spacing: 0.5px;
+                }
+                .kasturi-badge { color: #059669; }
+                .market-badge { color: #991B1B; }
+                
+                .card-text-content {
+                    font-weight: 500;
+                    color: #1f2937;
+                }
+            }
+        `}</style>
     </motion.div>
 );
 
@@ -112,7 +202,7 @@ const PeanutIcon = () => (
         <path d="M12 12C9 9 13 5 15.5 7.5" />
         <path d="M12 12C15 15 11 19 8.5 16.5" />
     </svg>
-); // Approximated peanut/drop shape logic or generic oil drop
+);
 
 const ChilliIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -121,7 +211,7 @@ const ChilliIcon = () => (
         <path d="M10 20 C10 20 8 22 6 22" />
         <path d="M13 10C10 6 6 5 4 5" />
     </svg>
-); // Simplified chili shape
+);
 
 const SaltIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -174,12 +264,8 @@ const styles = {
         padding: '12px',
         borderRadius: '12px',
     },
-    kasturiHeader: {
-        // background: 'rgba(5, 150, 105, 0.1)',
-    },
-    marketHeader: {
-        // background: 'rgba(239, 68, 68, 0.1)',
-    },
+    kasturiHeader: {},
+    marketHeader: {},
     brandName: {
         fontSize: '1.25rem',
         fontWeight: 800,
