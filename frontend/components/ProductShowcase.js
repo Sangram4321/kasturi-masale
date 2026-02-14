@@ -16,7 +16,7 @@ const PRODUCTS = [
         name: "Kolhapuri Kanda Lasun Masala",
         weight: "500g",
         price: 280,
-        image: "/images/products/kanda-lasun-500.png"
+        image: "/images/mobile-hero/IMG_5470.PNG"
     }
 ]
 
