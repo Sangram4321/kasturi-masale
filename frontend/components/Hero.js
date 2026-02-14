@@ -101,15 +101,15 @@ export default function Hero() {
             {/* Dark Gradient Overlay for Readability/Mood */}
             <div className="cinematic-overlay" />
 
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {slides[currentSlide].type === 'video' ? (
                 <motion.div
                   key={`slide-${currentSlide}`}
                   initial={{ x: '100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '-100%' }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
                 >
                   <video
                     ref={videoRef}
@@ -118,6 +118,7 @@ export default function Hero() {
                     autoPlay
                     muted
                     playsInline
+                    preload="auto"
                     className="cinematic-video"
                     onEnded={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
                   />
@@ -128,8 +129,8 @@ export default function Hero() {
                   initial={{ x: '100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '-100%' }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
                 >
                   <img
                     src={slides[currentSlide].src}
