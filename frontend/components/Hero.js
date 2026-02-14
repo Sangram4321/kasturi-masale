@@ -285,14 +285,20 @@ export default function Hero() {
                 background-size: cover;
                 background-position: center;
                 z-index: 0;
+                animation: floatHero 20s infinite alternate ease-in-out;
+            }
+
+            @keyframes floatHero {
+                0% { transform: scale(1); }
+                100% { transform: scale(1.15); }
             }
 
             .mobile-overlay {
                 display: block;
                 position: absolute;
                 inset: 0;
-                /* Dark gradient from bottom */
-                background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
+                /* Enhanced Gradient for text readability */
+                background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 100%);
                 z-index: 1;
             }
 
@@ -307,6 +313,7 @@ export default function Hero() {
                 flex-direction: column;
                 justify-content: flex-end;
                 height: 100%;
+                padding-bottom: 20px; /* Slight lift */
             }
 
             .hero-text-col {
@@ -317,37 +324,42 @@ export default function Hero() {
 
             .hero-heading {
                 color: #fff;
-                font-size: 3rem; /* Bigger for impact */
+                font-size: 2.8rem;
                 margin-bottom: 8px;
-                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                line-height: 1.1;
+                width: 90%;
             }
 
             .mobile-subtitle {
                 display: block;
-                color: #e0e0e0;
+                color: #f0f0f0;
                 font-family: var(--font-body, 'Inter', sans-serif);
-                font-size: 0.9rem;
-                letter-spacing: 0.2em;
+                font-size: 0.85rem;
+                letter-spacing: 0.3em;
                 text-transform: uppercase;
-                margin-bottom: 32px;
-                font-weight: 600;
-                text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+                margin-bottom: 40px;
+                font-weight: 700;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+                border: 1px solid rgba(255,255,255,0.3);
+                padding: 6px 16px;
+                border-radius: 50px;
+                background: rgba(0,0,0,0.2);
+                backdrop-filter: blur(4px);
             }
 
             .premium-cta {
                 width: auto;
-                min-width: 200px;
+                min-width: 220px;
                 justify-content: center;
                 padding: 18px 40px;
                 font-size: 1.1rem;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                background: #fff; /* White button on dark bg? Or brand red? */
-                /* User said premium looking. White text on Red is brand. 
-                   But maybe White button with Red text looks distinctive on dark hero?
-                   Let's stick to Brand Red for consistency, but maybe add a white border or glow?
-                   "Buy Now button" requested.
-                   Let's keep the gradient red, it pops on dark.
-                */
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+                
+                /* FIX: Explicit White Background with Brand Red Text */
+                background: #ffffff !important;
+                color: #B1121B !important; 
+                border: 2px solid #ffffff;
             }
         }
       `}</style>
