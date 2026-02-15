@@ -1,28 +1,28 @@
 import Link from 'next/link';
 
 export default function HeritageTeaser() {
-    return (
-        <section className="heritage-teaser">
-            <div className="container">
-                <div className="content-wrapper">
-                    <div className="text-content">
-                        <span className="subtitle">Authentic Kolhapuri Taste</span>
-                        <h2>Pounded to Perfection, Preserved for You</h2>
-                        <p>
-                            For over <strong>25 years</strong>, Kasturi Masale has crafted spices that define the true taste of Kolhapur.
-                            Made in small batches using the traditional <strong>Kandap (pounding) method</strong>, our Kanda Lasun Masala retains its natural oils and fiery flavor.
-                            No artificial colors, no preservatives—just pure, homemade goodness loved by <strong>1,200+ kitchens</strong> and premium restaurants.
-                        </p>
-                        <div className="cta-wrapper">
-                            <Link href="/product" className="primary-btn">
-                                Shop Authentic Kolhapuri Masale
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <section className="heritage-teaser">
+      <div className="container">
+        <div className="content-wrapper">
+          <div className="text-content">
+            <span className="subtitle">Authentic Kolhapuri Taste</span>
+            <h2>Pounded to Perfection, Preserved for You</h2>
+            <p>
+              For over <strong>25 years</strong>, Kasturi Masale has crafted spices that define the true taste of Kolhapur.
+              Made in small batches using the traditional <strong>Kandap (pounding) method</strong>, our Kanda Lasun Masala retains its natural oils and fiery flavor.
+              Each packet blends <strong>25+ spices</strong> and <strong>premium sun-dried chillies</strong>—no artificial colors, no preservatives. Just pure, homemade goodness loved by <strong>thousands of families across Maharashtra</strong>.
+            </p>
+            <div className="cta-wrapper">
+              <Link href="/product" className="primary-btn">
+                Shop Authentic Kolhapuri Masale
+              </Link>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <style jsx>{`
+      <style jsx>{`
         .heritage-teaser {
           padding: 60px 20px;
           background-color: #fff;
@@ -95,6 +95,6 @@ export default function HeritageTeaser() {
           }
         }
       `}</style>
-        </section>
-    );
+    </section>
+  );
 }

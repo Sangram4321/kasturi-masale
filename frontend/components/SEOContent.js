@@ -2,74 +2,74 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function SEOContent() {
-    const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-    return (
-        <section className="seo-content-section">
-            <div className="container">
-                <div className="header">
-                    <h2>Why Kasturi is the Best Kolhapuri Spice Manufacturer</h2>
-                    <p className="intro">
-                        For decades, the unparalleled taste of Kolhapur has been a secret shared between families. As a premier <strong>Kolhapuri spice manufacturer</strong>, we have taken a vow to keep this secret pure.
-                    </p>
-                </div>
+  return (
+    <section className="seo-content-section">
+      <div className="container">
+        <div className="header">
+          <h2>Why Kasturi is the Best Kolhapuri Spice Manufacturer</h2>
+          <p className="intro">
+            For decades, the unparalleled taste of Kolhapur has been a secret shared between families. As a premier <strong>Kolhapuri spice manufacturer</strong>, we have taken a vow to keep this secret pure.
+          </p>
+        </div>
 
-                <div className={`content-body ${isExpanded ? 'expanded' : 'collapsed'}`}>
-                    <div className="grid">
-                        <div className="column">
-                            <h3>The Secret to Authentic Kanda Lasun Masala</h3>
-                            <p>
-                                The world knows Kolhapur for its heat, but locals know it for its flavor. A true <strong>Kanda Lasun Masala</strong> balances the pungency of garlic (<em>lasun</em>) and the sweetness of onion (<em>kanda</em>) with a complex blend of dry spices.
-                                We use premium <strong>Byadgi chillies</strong> for that deep, rich red color without the need for artificial dyes. Our <em>Lavangi</em> chillies provide the signature masterful kick. Every batch is crafted with patience, ensuring that when you cook a <em>Misal</em>, <em>Tambada Rassa</em>, or a simple potato fry, the aroma tells you it’s genuine.
-                            </p>
-                        </div>
-                        <div className="column">
-                            <h3>Traditional 'Kandap' vs. Modern Pulverizers</h3>
-                            <p>
-                                Why does our masala taste different? It’s the <strong>Kandap</strong> difference. Modern high-speed pulverizers generate heat that burns off the delicate natural oils of spices. At Kasturi, we use the traditional pounding method. This low-temperature process locks in the flavor, aroma, and essential oils. This is why our <strong>Masale in Kolhapur</strong> are revered—they taste fresh for months, just like they did the day they were pounded.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="trust-block">
-                        <h3>Trusted by Home Chefs & Restaurants</h3>
-                        <p>
-                            It is not just a spice; it is a tradition. Kasturi Masale is the preferred choice for over <strong>1,200 home kitchens</strong> and authentically driven restaurants across Maharashtra. Our commitment to quality means:
-                        </p>
-                        <ul>
-                            <li><strong>Zero Compromise:</strong> No cheap fillers, no palm oil, no preservatives.</li>
-                            <li><strong>Consistent Taste:</strong> Standardized traditional recipes ensuring the same great taste in every pack.</li>
-                            <li><strong>Freshness Guaranteed:</strong> Made in small batches to ensure you get the freshest spice blend possible.</li>
-                        </ul>
-                    </div>
-
-                    <div className="buying-guide">
-                        <h3>Buy Kolhapuri Masala Online – Fresh from the Source</h3>
-                        <p>
-                            Finding authentic spices outside Kolhapur can be a challenge. Grocery store shelves are filled with mass-produced packets that lack soul. We’ve changed that.
-                        </p>
-                        <p>
-                            Whether you are in Pune, Mumbai, or anywhere in India, you can <strong>buy Kolhapuri masala online</strong> from our website and get it delivered straight to your kitchen. We ship directly from our production unit in Kolhapur, cutting out middlemen to give you the best price and freshest quality.
-                        </p>
-                        <p className="final-note">
-                            Experience the difference. Taste the heritage of Kolhapur, preserved with care, delivered with love.
-                        </p>
-                        <div className="seo-links">
-                            <Link href="/product">Shop Kanda Lasun Masala</Link> | <Link href="/about">Our Heritage</Link> | <Link href="/wholesale">Bulk Orders</Link>
-                        </div>
-                    </div>
-                </div>
-
-                <button
-                    className="toggle-btn"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    aria-label={isExpanded ? "Read less about Kasturi Masale" : "Read more about Kasturi Masale"}
-                >
-                    {isExpanded ? 'Read Less' : 'Read More About Our Process'}
-                </button>
+        <div className={`content-body ${isExpanded ? 'expanded' : 'collapsed'}`}>
+          <div className="grid">
+            <div className="column">
+              <h3>The Secret to Authentic Kanda Lasun Masala</h3>
+              <p>
+                It is not just chilli and garlic; it is an <strong>orchestrated blend</strong>. A true <strong>Kanda Lasun Masala</strong> balances the pungency of garlic (<em>lasun</em>) and the sweetness of onion (<em>kanda</em>) with over <strong>25 whole spices</strong>.
+                We use a mix of <strong>5 to 6 premium chilli varieties</strong> (including deep red Byadgi and fiery Lavangi), all <strong>sun-dried naturally</strong> to preserve their real heat. Every batch is crafted with patience, ensuring that when you cook a <em>Misal</em> or <em>Ramass</em>, the aroma tells you it’s genuine.
+              </p>
             </div>
+            <div className="column">
+              <h3>Traditional 'Kandap' & Double-Filtered Oil</h3>
+              <p>
+                Why does our masala taste different? It’s the <strong>Kandap</strong> difference. Modern high-speed pulverizers generate heat that burns off delicate essential oils. At Kasturi, we use the traditional pounding method and only <strong>double-filtered cottonseed oil</strong>. This low-temperature process locks in the flavor, aroma, and freshness for months.
+              </p>
+            </div>
+          </div>
 
-            <style jsx>{`
+          <div className="trust-block">
+            <h3>Purity You Can Trust (and Taste)</h3>
+            <p>
+              We are often asked why our prices are slightly higher than the average market packet. The answer is simple: <strong>We assume no cost-cutting.</strong> Kasturi Masale is the preferred choice for food lovers across homes in Maharashtra who value health and taste over cheap fillers.
+            </p>
+            <ul>
+              <li><strong>Sun-Dried Ingredients:</strong> We use natural sunlight, not industrial dryers.</li>
+              <li><strong>Zero Compromise:</strong> No artificial colors, no chemicals, no palm oil.</li>
+              <li><strong>Fresh from Kolhapur:</strong> Made in small batches to ensure you get the freshest spice blend possible.</li>
+            </ul>
+          </div>
+
+          <div className="buying-guide">
+            <h3>Buy Kolhapuri Masala Online – Direct from Our Home</h3>
+            <p>
+              Finding authentic spices outside Kolhapur can be a challenge. Grocery store shelves are filled with mass-produced packets that lack soul. We’ve changed that.
+            </p>
+            <p>
+              Whether you are in Pune, Mumbai, or anywhere in India, you can <strong>buy Kolhapuri masala online</strong> from our website and get it delivered straight to your kitchen. We ship directly from our production unit, ensuring no middlemen and maximum freshness.
+            </p>
+            <p className="final-note">
+              <strong>Experience the real taste of Kolhapur—unadulterated, unforgettable, and delivered with love.</strong>
+            </p>
+            <div className="seo-links">
+              <Link href="/product">Shop Kanda Lasun Masala</Link> | <Link href="/about">Our Heritage</Link> | <Link href="/wholesale">Bulk Orders</Link>
+            </div>
+          </div>
+        </div>
+
+        <button
+          className="toggle-btn"
+          onClick={() => setIsExpanded(!isExpanded)}
+          aria-label={isExpanded ? "Read less about Kasturi Masale" : "Read more about Kasturi Masale"}
+        >
+          {isExpanded ? 'Read Less' : 'Read More About Our Process'}
+        </button>
+      </div>
+
+      <style jsx>{`
         .seo-content-section {
           padding: 60px 20px;
           background-color: #f9f9f9;
@@ -197,6 +197,6 @@ export default function SEOContent() {
           }
         }
       `}</style>
-        </section>
-    );
+    </section>
+  );
 }
