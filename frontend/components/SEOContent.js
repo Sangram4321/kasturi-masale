@@ -55,7 +55,9 @@ export default function SEOContent() {
               <strong>Experience the real taste of Kolhapur—unadulterated, unforgettable, and delivered with love.</strong>
             </p>
             <div className="seo-links">
-              <Link href="/product">Shop Kanda Lasun Masala</Link> | <Link href="/about">Our Heritage</Link> | <Link href="/wholesale">Bulk Orders</Link>
+              <Link href="/product">Shop Kanda Lasun Masala</Link>
+              <Link href="/about">Our Heritage</Link>
+              <Link href="/wholesale">Bulk Orders</Link>
             </div>
           </div>
         </div>
@@ -138,12 +140,15 @@ export default function SEOContent() {
           margin-top: 20px;
           font-size: 0.95rem;
           text-align: center;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 10px;
         }
         .seo-links a {
           color: #d32f2f;
           text-decoration: none;
           font-weight: 500;
-          margin: 0 5px;
         }
         .seo-links a:hover {
           text-decoration: underline;

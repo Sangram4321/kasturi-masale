@@ -93,6 +93,11 @@ export default function HeritageTeaser() {
           p {
             font-size: 1rem;
           }
+          .primary-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+          }
         }
       `}</style>
     </section>
