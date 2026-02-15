@@ -56,6 +56,7 @@ export default function Hero() {
     <section className="hero-section" ref={containerRef}>
       {/* MOBILE BACKGROUND (CSS handles visibility) */}
       <div className="mobile-hero-bg" />
+      <div className="mobile-hero-blur" />
       <div className="mobile-overlay" />
 
       <div className="safe-container">
@@ -165,6 +166,9 @@ export default function Hero() {
             display: none;
         }
         .mobile-overlay {
+            display: none;
+        }
+        .mobile-hero-blur {
             display: none;
         }
 
@@ -327,8 +331,25 @@ export default function Hero() {
                 background-size: cover;
                 background-position: center;
                 z-index: 0;
-                filter: blur(4px); /* ~15-20% blur */
+                /* filter: blur(4px); REMOVED - Using gradient blur instead */
                 animation: floatHero 20s infinite alternate ease-in-out;
+            }
+
+            .mobile-hero-blur {
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 65%; /* Blur top 65% where text usually is */
+                z-index: 1; /* Above bg, below content overlay */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                
+                /* Gradient Mask: Solid at top, transparent at bottom */
+                mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+                pointer-events: none;
             }
 
             @keyframes floatHero {
