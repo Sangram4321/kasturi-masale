@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import MagneticButton from './MagneticButton';
 
 export default function HeritageTeaser() {
   return (
@@ -21,8 +22,12 @@ export default function HeritageTeaser() {
               </p>
 
               <div className="cta-wrapper">
-                <Link href="/product" className="primary-btn">
-                  Shop Authentic Masala
+                <Link href="/product" passHref legacyBehavior>
+                  <a style={{ textDecoration: 'none', display: 'inline-block' }}>
+                    <MagneticButton style={{ backgroundColor: '#B1121B', border: 'none', color: '#fff' }}>
+                      Shop Authentic Masala
+                    </MagneticButton>
+                  </a>
                 </Link>
               </div>
             </div>
@@ -136,24 +141,7 @@ export default function HeritageTeaser() {
           font-weight: 600;
         }
 
-        .primary-btn {
-          display: inline-block;
-          background-color: #B1121B;
-          color: #fff;
-          padding: 16px 48px;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          transition: all 0.3s ease;
-          border: 1px solid #B1121B;
-        }
 
-        .primary-btn:hover {
-          background-color: transparent;
-          color: #B1121B;
-        }
 
         @media (max-width: 768px) {
           .heritage-teaser {
