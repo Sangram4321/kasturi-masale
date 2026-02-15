@@ -22,12 +22,10 @@ export default function HeritageTeaser() {
               </p>
 
               <div className="cta-wrapper">
-                <Link href="/product" passHref legacyBehavior>
-                  <a style={{ textDecoration: 'none', display: 'inline-block' }}>
-                    <MagneticButton style={{ backgroundColor: '#B1121B', border: 'none', color: '#fff' }}>
-                      Shop Authentic Masala
-                    </MagneticButton>
-                  </a>
+                <Link href="/product" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                  <MagneticButton style={{ backgroundColor: '#B1121B', border: 'none', color: '#fff' }}>
+                    Shop Authentic Masala
+                  </MagneticButton>
                 </Link>
               </div>
             </div>
