@@ -322,11 +322,12 @@ export default function Hero() {
             .mobile-hero-bg {
                 display: block;
                 position: absolute;
-                inset: 0;
+                inset: -10px; /* Expand to hide blur edges */
                 background-image: url('/images/mobile-hero/IMG_5470.PNG');
                 background-size: cover;
                 background-position: center;
                 z-index: 0;
+                filter: blur(4px); /* ~15-20% blur */
                 animation: floatHero 20s infinite alternate ease-in-out;
             }
 
