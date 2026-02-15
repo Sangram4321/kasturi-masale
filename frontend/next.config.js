@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    trailingSlash: true,
     async rewrites() {
         // Use NEXT_PUBLIC_BACKEND_URL for client-side and build-time access
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:5000";
