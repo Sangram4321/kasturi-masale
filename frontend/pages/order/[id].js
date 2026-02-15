@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { ArrowLeft, MapPin, Package, CreditCard } from "lucide-react";
 import TrackingTimeline from "../../components/TrackingTimeline";
+import OrderTracker from "../../components/OrderTracker";
 
 /* ================= COMPONENT ================= */
 export default function OrderDetails() {
@@ -77,11 +78,14 @@ export default function OrderDetails() {
                     <>
                         {/* We display tracking timeline even if we don't have full order details yet */}
                         {tracking ? (
-                            <TrackingTimeline
-                                history={tracking.history}
-                                currentStatus={tracking.status}
-                                awb={tracking.awb}
-                            />
+                            <>
+                                <OrderTracker status={tracking.status} awb={tracking.awb} />
+                                <TrackingTimeline
+                                    history={tracking.history}
+                                    currentStatus={tracking.status}
+                                    awb={tracking.awb}
+                                />
+                            </>
                         ) : (
                             <div style={styles.error}>
                                 Tracking information unavailable.
