@@ -81,6 +81,7 @@ const IMAGE_MAP = {
 
 import SoftTruck from "../components/SoftTruck"
 import PremiumShort from "../components/PremiumShort"
+import CurryVideoSection from "../components/CurryVideoSection"
 
 import Head from "next/head"
 
@@ -421,6 +422,9 @@ export default function Product() {
         </motion.div >
       </div >
 
+      {/* 🌶️ CURRY VIDEO SECTION */}
+      <CurryVideoSection />
+
       {/* 📱 MOBILE STICKY CTA BAR */}
       <AnimatePresence>
         {isMobile && showSticky && (
@@ -472,14 +476,14 @@ const styles = {
   page: {
     background: "var(--color-cream)",
     minHeight: "100vh",
-    padding: 24,
+    padding: 0,
     fontFamily: "var(--font-primary)",
     color: "var(--color-text-dark)",
     paddingBottom: 100 // Extra space for sticky
   },
   // ... Keep existing containers ...
-  container: { maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 56, paddingTop: 40, alignItems: 'start' },
-  containerMobile: { maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28, paddingBottom: 40 },
+  container: { maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 56, padding: "40px 24px", alignItems: 'start' },
+  containerMobile: { maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28, padding: "0 24px 40px" },
 
   // ... Keep existing image styles ...
   imageContainer: { position: "sticky", top: 40, display: "flex", justifyContent: "center", width: "100%" },
