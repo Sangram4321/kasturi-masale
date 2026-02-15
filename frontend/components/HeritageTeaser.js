@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import MagneticButton from './MagneticButton';
+
 
 export default function HeritageTeaser() {
   return (
@@ -21,13 +20,7 @@ export default function HeritageTeaser() {
                 No artificial colors. No preservatives.<br />Just pure, homemade goodness.
               </p>
 
-              <div className="cta-wrapper">
-                <Link href="/product" style={{ textDecoration: 'none', display: 'inline-block' }}>
-                  <MagneticButton style={{ backgroundColor: '#B1121B', border: 'none', color: '#fff' }}>
-                    Shop Authentic Masala
-                  </MagneticButton>
-                </Link>
-              </div>
+
             </div>
           </div>
         </div>
