@@ -1,192 +1,235 @@
 import Link from 'next/link';
 import { useState } from 'react';
+import { ShieldCheck, Sun, Truck, Award, ChefHat, Leaf } from 'lucide-react';
 
 export default function SEOContent() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Default expanded for improved UX/SEO
+
+  const features = [
+    {
+      icon: <ChefHat size={32} color="#B1121B" />,
+      title: "Traditional Kandap Method",
+      text: "We use the age-old pounding method (Kandap) instead of high-speed grinders. This low-heat process preserves the essential oils and authentic aroma."
+    },
+    {
+      icon: <Sun size={32} color="#E0A106" />,
+      title: "Sun-Dried to Perfection",
+      text: "No industrial dryers. We naturally sun-dry our chillies and spices to retain their vibrant color and nutritional value."
+    },
+    {
+      icon: <ShieldCheck size={32} color="#B1121B" />,
+      title: "Zero Compromise",
+      text: "No artificial colors, no preservatives, and absolutely no fillers. Just 100% pure spice blends loved by families for decades."
+    },
+    {
+      icon: <Leaf size={32} color="#2E7D32" />,
+      title: "Premium Ingredients",
+      text: "A blend of 25+ whole spices including Dagad Phool, Nagkesar, and Teppal, sourced directly from trusted farmers."
+    }
+  ];
 
   return (
     <section className="seo-content-section">
+      <div className="pattern-overlay"></div>
       <div className="container">
         <div className="header">
-          <h2>Why Kasturi is the Best Kolhapuri Spice Manufacturer</h2>
+          <span className="subtitle">The Kasturi Promise</span>
+          <h2>Why We Are Maharashtra's Choice</h2>
+          <div className="separator"></div>
           <p className="intro">
-            For decades, the unparalleled taste of Kolhapur has been a secret shared between families. As a premier <strong>Kolhapuri spice manufacturer</strong>, we have taken a vow to keep this secret pure.
+            For decades, the unparalleled taste of Kolhapur has been a secret shared between families.
+            As a premier <strong>Kolhapuri spice brand</strong>, we have taken a vow to keep this secret pure.
           </p>
         </div>
 
-        <div className={`content-body ${isExpanded ? 'expanded' : 'collapsed'}`}>
-          <div className="grid">
-            <div className="column">
-              <h3>The Secret to Authentic Kanda Lasun Masala</h3>
-              <p>
-                It is not just chilli and garlic; it is an <strong>orchestrated blend</strong>. A true <strong>Kanda Lasun Masala</strong> balances the pungency of garlic (<em>lasun</em>) and the sweetness of onion (<em>kanda</em>) with over <strong>25 whole spices</strong>.
-                We use a mix of <strong>5 to 6 premium chilli varieties</strong> (including deep red Byadgi and fiery Lavangi), all <strong>sun-dried naturally</strong> to preserve their real heat. Every batch is crafted with patience, ensuring that when you cook a <em>Misal</em> or <em>Ramass</em>, the aroma tells you it’s genuine.
-              </p>
+        <div className="grid">
+          {features.map((f, i) => (
+            <div className="feature-card" key={i}>
+              <div className="icon-wrapper">{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
             </div>
-            <div className="column">
-              <h3>Traditional 'Kandap' & Double-Filtered Oil</h3>
-              <p>
-                Why does our masala taste different? It’s the <strong>Kandap</strong> difference. Modern high-speed pulverizers generate heat that burns off delicate essential oils. At Kasturi, we use the traditional pounding method and only <strong>double-filtered cottonseed oil</strong>. This low-temperature process locks in the flavor, aroma, and freshness for months.
-              </p>
-            </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="trust-block">
-            <h3>Purity You Can Trust (and Taste)</h3>
+        <div className="buying-guide-box">
+          <div className="box-content">
+            <h3>Authentic Taste, Delivered to Your Doorstep</h3>
             <p>
-              We are often asked why our prices are slightly higher than the average market packet. The answer is simple: <strong>We assume no cost-cutting.</strong> Kasturi Masale is the preferred choice for food lovers across homes in Maharashtra who value health and taste over cheap fillers.
+              Whether you are in Pune, Mumbai, or anywhere in India, you don't have to settle for mass-produced masala.
+              <strong> Buy Authentic Kolhapuri Masala Online</strong> directly from our production unit.
             </p>
-            <ul>
-              <li><strong>Sun-Dried Ingredients:</strong> We use natural sunlight, not industrial dryers.</li>
-              <li><strong>Zero Compromise:</strong> No artificial colors, no chemicals, no palm oil.</li>
-              <li><strong>Fresh from Kolhapur:</strong> Made in small batches to ensure you get the freshest spice blend possible.</li>
-            </ul>
-          </div>
-
-          <div className="buying-guide">
-            <h3>Buy Kolhapuri Masala Online – Direct from Our Home</h3>
-            <p>
-              Finding authentic spices outside Kolhapur can be a challenge. Grocery store shelves are filled with mass-produced packets that lack soul. We’ve changed that.
-            </p>
-            <p>
-              Whether you are in Pune, Mumbai, or anywhere in India, you can <strong>buy Kolhapuri masala online</strong> from our website and get it delivered straight to your kitchen. We ship directly from our production unit, ensuring no middlemen and maximum freshness.
-            </p>
-            <p className="final-note">
-              <strong>Experience the real taste of Kolhapur—unadulterated, unforgettable, and delivered with love.</strong>
-            </p>
-            <div className="seo-links">
-              <Link href="/product">Shop Kanda Lasun Masala</Link>
-              <Link href="/about">Our Heritage</Link>
-              <Link href="/wholesale">Bulk Orders</Link>
+            <div className="links-row">
+              <Link href="/product" legacyBehavior><a className="text-link">Shop Now</a></Link>
+              <span className="dot">•</span>
+              <Link href="/about" legacyBehavior><a className="text-link">Our Story</a></Link>
+              <span className="dot">•</span>
+              <Link href="/wholesale" legacyBehavior><a className="text-link">Bulk Orders</a></Link>
             </div>
           </div>
         </div>
-
-        <button
-          className="toggle-btn"
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-label={isExpanded ? "Read less about Kasturi Masale" : "Read more about Kasturi Masale"}
-        >
-          {isExpanded ? 'Read Less' : 'Read More About Our Process'}
-        </button>
       </div>
 
       <style jsx>{`
         .seo-content-section {
-          padding: 60px 20px;
-          background-color: #f9f9f9;
-          border-top: 1px solid #eee;
+          padding: 80px 24px;
+          background-color: #fff;
+          position: relative;
           color: #333;
+          border-top: 1px solid #f0f0f0;
         }
+
         .container {
-          max-width: 1000px;
+          max-width: 1100px;
           margin: 0 auto;
+          position: relative;
+          z-index: 2;
         }
+
         .header {
           text-align: center;
-          margin-bottom: 30px;
+          margin-bottom: 60px;
         }
+
+        .subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 12px;
+        }
+
         h2 {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 2.2rem;
-          color: #222;
-          margin-bottom: 15px;
+          font-size: 2.8rem;
+          color: #1a1a1a;
+          margin-bottom: 20px;
+          line-height: 1.1;
         }
+
+        .separator {
+            width: 60px;
+            height: 2px;
+            background: #B1121B;
+            margin: 0 auto 24px;
+        }
+
         .intro {
-          font-size: 1.1rem;
           font-family: 'Inter', sans-serif;
+          font-size: 1.1rem;
+          color: #555;
           max-width: 700px;
           margin: 0 auto;
           line-height: 1.6;
         }
-        h3 {
-          font-family: 'Inter', sans-serif;
-          font-size: 1.3rem;
-          font-weight: 600;
-          color: #d32f2f;
-          margin-bottom: 12px;
-          margin-top: 0;
-        }
-        p {
-          font-family: 'Inter', sans-serif;
-          font-size: 1rem;
-          line-height: 1.7;
-          margin-bottom: 20px;
-          color: #444;
-        }
+
         .grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40px;
-          margin-bottom: 30px;
-        }
-        .trust-block {
-          background: #fff;
-          padding: 30px;
-          border-radius: 8px;
-          border: 1px solid #eee;
-          margin-bottom: 30px;
-        }
-        ul {
-          padding-left: 20px;
-          margin-bottom: 20px;
-        }
-        li {
-          margin-bottom: 10px;
-          font-family: 'Inter', sans-serif;
-          color: #444;
-        }
-        .seo-links {
-          margin-top: 20px;
-          font-size: 0.95rem;
-          text-align: center;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 10px;
-        }
-        .seo-links a {
-          color: #d32f2f;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        .seo-links a:hover {
-          text-decoration: underline;
-        }
-        
-        .content-body.collapsed {
-          max-height: 0; /* Or a small height like 200px if we want to show a snippet */
-          overflow: hidden;
-          transition: max-height 0.5s ease;
-          opacity: 0; 
-          visibility: hidden;
-        }
-        
-        /* Ideally we might want to show *some* content even when collapsed for SEO, 
-           but 'display: none' or hidden might devalue it. 
-           Let's use a method where it's structurally present but visually toggled 
-           or just start expanded/collapsed based on preference. 
-           Actually, for SEO, it's better if it's visible or easily accessible. 
-           Let's start expanded for crawlers or just visually hide locally if user wants cleaner UI.
-           User approved placement at bottom. Let's make it fully visible but clean.
-        */
-        
-        .content-body {
-             /* Resetting collapse for now to ensure SEO value. 
-                If user wants it collapsible, we can enable. 
-                For now, let's keep it visible but maybe distinct. */
-             opacity: 1;
-             visibility: visible;
-             height: auto;
-        }
-        
-        .content-body.collapsed {
-             /* Overriding the collapse logic to keep it visible based on "Visible section" requirement.
-                The toggle button will be hidden for now unless we really need it. */
+          grid-template-columns: repeat(2, 1fr);
+          gap: 30px;
+          margin-bottom: 60px;
         }
 
-        .toggle-btn {
-            display: none; /* Hiding toggle for now to ensure content is always visible for SEO */
+        .feature-card {
+            background: #F9F6F1;
+            padding: 32px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-color: #E0A106;
+            border: 1px solid #E0A106;
+        }
+
+        .icon-wrapper {
+            background: #fff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        h3 {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #2D2A26;
+          margin-bottom: 12px;
+        }
+
+        p {
+          font-family: 'Inter', sans-serif;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          color: #666;
+          margin: 0;
+        }
+
+        .buying-guide-box {
+            background: linear-gradient(135deg, #2D2A26, #453F39);
+            color: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .buying-guide-box h3 {
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .buying-guide-box p {
+            color: #ccc;
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto 24px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .buying-guide-box strong {
+            color: #E0A106;
+        }
+
+        .links-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .text-link {
+            color: #fff;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .text-link:hover {
+            color: #E0A106;
+            border-bottom-color: #E0A106;
+        }
+
+        .dot {
+            color: #666;
         }
 
         @media (max-width: 768px) {
@@ -195,10 +238,13 @@ export default function SEOContent() {
             gap: 20px;
           }
           .seo-content-section {
-            padding: 40px 15px;
+            padding: 50px 20px;
           }
           h2 {
-            font-size: 1.8rem;
+            font-size: 2.2rem;
+          }
+          .buying-guide-box {
+              padding: 30px 20px;
           }
         }
       `}</style>
