@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import Hero from "../components/Hero"
+import Hero2 from "../components/Hero2"
 import HeritageTeaser from "../components/HeritageTeaser" // [NEW] SEO Teaser
 // import BenefitBadges from "../components/BenefitBadges" // Replaced by Premium Section
 import TrustComparisonSection from '../components/TrustComparisonSection'
@@ -32,7 +33,10 @@ export default function Home({ lang = "en" }) {
       {/* 1. HERO */}
       <Hero />
 
-      {/* 2. HERITAGE TEASER (SEO Top) */}
+      {/* 2. HERO 2 (Marquee) */}
+      <Hero2 />
+
+      {/* 3. HERITAGE TEASER (SEO Top) */}
       <HeritageTeaser />
 
       {/* 3. WHY KASTURI IS PREMIUM (The new "Trust" Block) */}
