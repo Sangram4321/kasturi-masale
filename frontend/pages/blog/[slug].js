@@ -1,29 +1,62 @@
 import React from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { blogPosts } from '../../data/blogPosts'
 
-export default function BlogPost() {
-    const router = useRouter()
-    const { slug } = router.query
+// 1. Generate Static Paths (SSG) - Tells Next.js which pages to build
+export async function getStaticPaths() {
+    const paths = blogPosts.map((post) => ({
+        params: { slug: post.slug },
+    }))
 
-    // Find post (in a real app, use getStaticProps/Paths)
-    const post = blogPosts.find(p => p.slug === slug)
+    return { paths, fallback: false }
+}
 
-    if (!post && typeof window !== 'undefined') {
-        return <div style={{ padding: 100, textAlign: 'center' }}>Loading article...</div>
+// 2. Fetch Data for Each Page (SSG) - Passes data to the component
+export async function getStaticProps({ params }) {
+    const post = blogPosts.find((p) => p.slug === params.slug)
+
+    // If not found (shouldn't happen with fallback:false but good practice)
+    if (!post) {
+        return { notFound: true }
     }
 
-    if (!post) return null // server side safe
+    return {
+        props: { post },
+    }
+}
+
+export default function BlogPost({ post }) {
+    if (!post) return null
 
     return (
         <div style={styles.page}>
             <Head>
                 <title>{post.title} | Masala Guide</title>
                 <meta name="description" content={post.excerpt} />
+
+                {/* Structured Data for SEO */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@type": "BlogPosting",
+                            "headline": post.title,
+                            "image": [
+                                `https://kasturimasale.in${post.coverImage}`
+                            ],
+                            "datePublished": post.date,
+                            "author": {
+                                "@type": "Organization",
+                                "name": "Kasturi Masale"
+                            },
+                            "description": post.excerpt
+                        })
+                    }}
+                />
             </Head>
 
             <div style={styles.container}>
@@ -40,7 +73,11 @@ export default function BlogPost() {
                 >
                     <header style={styles.header}>
                         <div style={styles.meta}>
-                            {post.readTime} • {new Date(post.date).toLocaleDateString()}
+                            {post.readTime} • {new Date(post.date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
                         </div>
                         <h1 style={styles.title}>{post.title}</h1>
                     </header>
@@ -55,6 +92,7 @@ export default function BlogPost() {
 
                 <style jsx global>{`
                     .blog-content p {
+                        font-family: 'Inter', sans-serif;
                         font-size: 18px;
                         line-height: 1.8;
                         color: #333;
@@ -80,6 +118,11 @@ export default function BlogPost() {
                         margin-bottom: 12px;
                         font-size: 17px;
                         color: #444;
+                        line-height: 1.6;
+                    }
+                    .blog-content strong {
+                        font-weight: 600;
+                        color: #111;
                     }
                     .blog-cta {
                         background: #FFF5F5;
@@ -92,6 +135,7 @@ export default function BlogPost() {
                         margin-bottom: 12px;
                         color: #2D2A26;
                         font-size: 17px;
+                        font-weight: 500;
                     }
                     .blog-cta a {
                         color: #C02729;
@@ -100,6 +144,8 @@ export default function BlogPost() {
                         font-size: 15px;
                         text-transform: uppercase;
                         letter-spacing: 0.5px;
+                        display: inline-block;
+                        margin-top: 5px;
                     }
                     .blog-cta a:hover {
                         text-decoration: underline;

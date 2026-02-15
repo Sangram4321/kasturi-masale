@@ -130,5 +130,137 @@ export const blogPosts = [
                 <a href="/product">Taste the Tradition →</a>
             </div>
         `
+    },
+    {
+        id: 6,
+        slug: "authentic-kolhapuri-misal-recipe",
+        title: "Authentic Kolhapuri Misal Pav Recipe (The Secret Ingredient)",
+        excerpt: "Want to make Misal that tastes exactly like Phadtare or Bawada Misal? The secret isn't the sprouts—it's the Rassa masala.",
+        date: "2024-03-05",
+        readTime: "6 min read",
+        coverImage: "/images/blog/misal-recipe.jpg",
+        content: `
+            <p>Kolhapuri Misal is not just a dish; it's an emotion. Spicy, tangy, and topped with crunchy farsan using the right <strong>Kolhapuri masala</strong> is crucial. Here is how to make it at home.</p>
+
+            <h3>Ingredients for the 'Kat' (Rassa)</h3>
+            <ul>
+                <li><strong>Mutton/Chicken Stock or Vegetable Stock:</strong> 1 liter</li>
+                <li><strong>Kasturi Kanda Lasun Masala:</strong> 3 tbsp (The Hero Ingredient)</li>
+                <li><strong>Dry Coconut & Onion Paste:</strong> 1 cup (Roasted dark brown)</li>
+                <li><strong>Oil:</strong> Generous amount (Tarri is essential!)</li>
+            </ul>
+
+            <h3>The Secret Process</h3>
+            <p>Most people burn the masala. The trick is to sauté the coconut-onion paste until oil separates, THEN add the <strong>Kanda Lasun Masala</strong> and immediately add a splash of hot water. This "shocks" the spices, releasing their essential oils without burning them.</p>
+            
+            <p>Simmer on low heat for 20 minutes until a thick red layer (Tarri) floats on top. Serve hot with pav and lemon.</p>
+
+            <div class="blog-cta">
+                <p>Don't settle for bland Misal. Use the <strong>Original Kanda Lasun Masala</strong> for that authentic red Tarri.</p>
+                <a href="/product">Buy Masala Now →</a>
+            </div>
+        `
+    },
+    {
+        id: 7,
+        slug: "how-to-store-spices-freshness",
+        title: "How to Store Spices for Maximum Freshness",
+        excerpt: "Is your masala losing flavor? You might be storing it wrong. Learn the 3 golden rules of spice storage.",
+        date: "2024-03-20",
+        readTime: "4 min read",
+        coverImage: "/images/blog/spice-storage.jpg",
+        content: `
+            <p>Spices are volatile. Their flavor comes from essential oils that evaporate when exposed to air, heat, and light. Here is how to keep your <strong>Kolhapuri masala</strong> fresh for a year.</p>
+
+            <h3>1. The Air-Tight Rule</h3>
+            <p>Oxygen is the enemy. Always store your daily-use masala in a small stiff container, and keep the bulk stock in a large, sealed steel, glass, or high-quality plastic jar. Open the bulk jar only when you need to refill.</p>
+
+            <h3>2. Dark & Cool</h3>
+            <p>Never keep your spice box (Masala Dabba) near the gas stove. The heat kills the flavor. Store it in a cool, dark cupboard away from direct sunlight.</p>
+
+            <h3>3. No Wet Spoons</h3>
+            <p>Moisture leads to fungus. Always use a dry stainless steel spoon. If you live in a humid area (like Mumbai/Konkan), you can even refrigerate the masala in an airtight container to extend its life.</p>
+
+            <div class="blog-cta">
+                <p>Our packaging is designed to lock in freshness. <strong>Order fresh batches directly from Kolhapur.</strong></p>
+            </div>
+        `
+    },
+    {
+        id: 8,
+        slug: "sun-dried-chillies-digestion",
+        title: "Why Sun-Dried Chillies are Better for Digestion",
+        excerpt: "Spicy food doesn't have to cause acidity. The traditional sun-drying method makes all the difference.",
+        date: "2024-04-10",
+        readTime: "3 min read",
+        coverImage: "/images/blog/sun-dried.jpg",
+        content: `
+            <p>Many people avoid spicy food fearing acidity. But in Kolhapur, people eat spicy food daily without issues. Why? It's about how the chilli is processed.</p>
+
+            <h3>Sun-Drying vs. Industrial Heating</h3>
+            <p>Modern factories use rapid heat dryers to dehydrate chillies in hours. this kills the natural enzymes. We using <strong>traditional sun-drying</strong> over 3-4 days. This slow process breaks down complex capsaicin structures naturally, making the spice easier on the stomach.</p>
+
+            <h3>The Garlic Factor</h3>
+            <p>Our Kanda Lasun Masala contains a significant amount of garlic. Garlic is a natural digestive aid that counteracts the heat of the chilli, preventing that "burning" sensation.</p>
+
+            <div class="blog-cta">
+                <p>Enjoy the spice, skip the acidity. Try our <strong>Sun-Dried Kanda Lasun Masala</strong> today.</p>
+                <a href="/product">Shop Now →</a>
+            </div>
+        `
+    },
+    {
+        id: 9,
+        slug: "history-of-kanda-lasun-masala",
+        title: "The History of Kanda Lasun Masala",
+        excerpt: "From the Maratha warriors to modern kitchens, how this humble spice blend became the heart of Maharashtrian cuisine.",
+        date: "2024-04-25",
+        readTime: "5 min read",
+        coverImage: "/images/blog/history.jpg",
+        content: `
+            <p>Start asking about Maharashtrian cuisine, and "Kaala Masala" or "Kanda Lasun Masala" will come up. But where did it come from?</p>
+
+            <h3>A Warrior's Fuel</h3>
+            <p>History suggests that during the Maratha empire, armies needed food that was easy to carry, preserved well, and tasted good with just water and millet bread (Bhakri). A pounded mix of dried onions (lightweight), garlic (immunity), and spices acted as an instant flavor bomb.</p>
+
+            <h3>The 'Chat' Culture</h3>
+            <p>In Kolhapur, 'Chat' refers to the spicy relishes. The Kanda Lasun Masala evolved as a way to preserve onions—which rot quickly—by frying and drying them with spices. This preserved the taste of onion for months, allowing people to make rich gravies even when fresh vegetables weren't available.</p>
+
+            <div class="blog-cta">
+                <p>Taste a piece of history. <strong>Kasturi Masale</strong> preserves this centuries-old recipe.</p>
+            </div>
+        `
+    },
+    {
+        id: 10,
+        slug: "5-mistakes-cooking-kolhapuri",
+        title: "5 Mistakes to Avoid When Cooking Kolhapuri Dishes",
+        excerpt: "Adding tomato? Using raw onion? Stop making these common mistakes for authentic taste.",
+        date: "2024-05-02",
+        readTime: "4 min read",
+        coverImage: "/images/blog/cooking-mistakes.jpg",
+        content: `
+            <p>Authentic Kolhapuri cooking is simple, but technique-sensitive. Here are 5 common mistakes to avoid:</p>
+
+            <h3>1. Adding Too Much Tomato</h3>
+            <p><strong>Mistake:</strong> Adding tomato puree to everything.<br><strong>Fix:</strong> Traditional Kolhapuri rassa relies on onion, coconut, and masala for thickness, NOT tomatoes. Tomatoes ruin the authentic earthy color.</p>
+
+            <h3>2. Using Raw Onion Paste</h3>
+            <p><strong>Mistake:</strong> Boiling onion paste.<br><strong>Fix:</strong> Onion must be sliced and golden-fried effectively before grinding. The 'roasted' flavor is essential.</p>
+
+            <h3>3. Burning the Masala</h3>
+            <p>masala burns in seconds. Always add it to medium-hot oil and immediately follow with liquid or meat.</p>
+
+            <h3>4. Ignoring the 'Rest'</h3>
+            <p>Kolhapuri dishes taste better the next day. The spices need time to mature in the curry.</p>
+
+            <h3>5. Using Generic Garam Masala</h3>
+            <p>Nothing kills the dish faster than generic store-bought garam masala. It lacks the essential Dagad Phool and Nakeshwar notes of true Kolhapuri blends.</p>
+
+            <div class="blog-cta">
+                <p>Fix mistake #5 instantly. Switch to <strong>Authentic Kasturi Kanda Lasun Masala</strong>.</p>
+                <a href="/product">Get the Real Deal →</a>
+            </div>
+        `
     }
 ]
