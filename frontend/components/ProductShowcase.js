@@ -45,8 +45,8 @@ export default function ProductShowcase() {
             price: 120,
             images: [
                 "/images/products/kanda-lasun-200.png",
-                "/images/products/trust-cert.png",
-                "/images/products/nutritional.png"
+                "/images/products/nutritional.png",
+                "/images/products/trust-cert.png"
             ]
         },
         "500g": {
@@ -55,8 +55,8 @@ export default function ProductShowcase() {
             price: 280,
             images: [
                 "/images/products/kanda-lasun-500.png",
-                "/images/products/trust-cert.png",
-                "/images/products/nutritional.png"
+                "/images/products/nutritional.png",
+                "/images/products/trust-cert.png"
             ]
         },
         "1kg": {
@@ -65,8 +65,8 @@ export default function ProductShowcase() {
             price: 499,
             images: [
                 "/images/products/kanda-lasun-1000.png",
-                "/images/products/trust-cert.png",
-                "/images/products/nutritional.png"
+                "/images/products/nutritional.png",
+                "/images/products/trust-cert.png"
             ]
         },
         "2kg": {
@@ -75,8 +75,8 @@ export default function ProductShowcase() {
             price: 899,
             images: [
                 "/images/products/kanda-lasun-2000.png",
-                "/images/products/trust-cert.png",
-                "/images/products/nutritional.png"
+                "/images/products/nutritional.png",
+                "/images/products/trust-cert.png"
             ]
         }
     }
@@ -130,6 +130,7 @@ export default function ProductShowcase() {
                                 drag="x"
                                 dragConstraints={{ left: 0, right: 0 }}
                                 dragElastic={1}
+                                dragDirectionLock={true}
                                 onDragEnd={(e, { offset, velocity }) => {
                                     const swipe = swipePower(offset.x, velocity.x);
 
@@ -304,7 +305,10 @@ export default function ProductShowcase() {
                 .image-container {
                     position: relative;
                     width: 100%;
-                    height: 500px; /* Tall and proud */
+                    max-width: 450px; /* Optimal reading/viewing width */
+                    aspect-ratio: 4/5; /* Modern vertical ratio */
+                    height: auto; /* Allow scaling */
+                    margin: 0 auto; /* Center it */
                     z-index: 1;
                     /* Removed drop-shadow for cleaner, natural look */
                     overflow: hidden; /* CRITICAL for slide animations */
@@ -328,7 +332,7 @@ export default function ProductShowcase() {
 
                 .image-nav {
                     position: absolute;
-                    bottom: -30px;
+                    bottom: 20px; /* Moved inside or close to bottom */
                     left: 50%;
                     transform: translateX(-50%);
                     display: flex;
@@ -508,7 +512,9 @@ export default function ProductShowcase() {
                     .artifact-stage { margin-bottom: 24px !important; }
                     
                     .image-container { 
-                        height: 260px !important; /* CRITICAL: Force reduced height */
+                        aspect-ratio: 1/1 !important;
+                        height: auto !important;
+                        max-width: 350px !important;
                     } 
                     
                     .product-name { font-size: 22px !important; margin-bottom: 4px !important; }
