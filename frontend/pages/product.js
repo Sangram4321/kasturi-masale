@@ -71,10 +71,26 @@ const MRP_MAP = {
 }
 
 const IMAGE_MAP = {
-  "200": "/images/products/kanda-lasun-200.png",
-  "500": "/images/products/kanda-lasun-500.png",
-  "1000": "/images/products/kanda-lasun-1000.png",
-  "2000": "/images/products/kanda-lasun-2000.png"
+  "200": [
+    "/images/products/kanda-lasun-200.png",
+    "/images/products/nutritional.png",
+    "/images/products/trust-cert.png"
+  ],
+  "500": [
+    "/images/products/kanda-lasun-500.png",
+    "/images/products/nutritional.png",
+    "/images/products/trust-cert.png"
+  ],
+  "1000": [
+    "/images/products/kanda-lasun-1000.png",
+    "/images/products/nutritional.png",
+    "/images/products/trust-cert.png"
+  ],
+  "2000": [
+    "/images/products/kanda-lasun-2000.png",
+    "/images/products/nutritional.png",
+    "/images/products/trust-cert.png"
+  ]
 }
 
 /* ================= COMPONENT ================= */
@@ -85,15 +101,37 @@ import CurryVideoSection from "../components/CurryVideoSection"
 
 import Head from "next/head"
 
+const swipeConfidenceThreshold = 300;
+const swipePower = (offset, velocity) => {
+  return Math.abs(offset) * velocity;
+};
+
 export default function Product() {
   const t = COPY.en
   const { addToCart, cart } = useCart()
-  // const { triggerLoading } = useTruck() // Removed Global Truck
 
   const [variant, setVariant] = useState("500")
   const [isMobile, setIsMobile] = useState(false)
   const [added, setAdded] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Gallery State
+  const [activeImage, setActiveImage] = useState(0)
+  const [direction, setDirection] = useState(0)
+
+  const paginate = (newDirection) => {
+    setDirection(newDirection);
+    let nextIndex = activeImage + newDirection;
+    const images = IMAGE_MAP[variant];
+    if (nextIndex < 0) nextIndex = images.length - 1;
+    if (nextIndex >= images.length) nextIndex = 0;
+    setActiveImage(nextIndex);
+  };
+
+  // Reset image on variant change
+  useEffect(() => {
+    setActiveImage(0);
+  }, [variant]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -192,33 +230,94 @@ export default function Product() {
       </Head>
       <div style={isMobile ? styles.containerMobile : styles.container}>
 
-        {/* IMAGE */}
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{
-            ...styles.imageContainer,
-            ...(isMobile ? styles.imageContainerMobile : {})
-          }}
-        >
-          {/* ... Image Logic (Unchanged) ... */}
-          <motion.div
-            key={variant}
-            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            whileHover={{ scale: 1.05, rotate: 2, transition: { duration: 0.3 } }}
-            style={isMobile ? { ...styles.imageBox, width: "100%", height: "auto" } : styles.imageBox}
-          >
-            <div style={styles.softBackdrop} />
-            <motion.img
-              src={IMAGE_MAP[variant]}
-              alt="Product"
-              style={styles.productImage}
-            />
-          </motion.div>
-        </motion.div>
+        {/* GALLERY STAGE */}
+        <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+          <div style={isMobile ? styles.imageContainerMobile : styles.imageContainer}>
+            {/* Ground Shadow */}
+            <div style={{
+              position: "absolute",
+              bottom: -20,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "70%",
+              height: 40,
+              background: "radial-gradient(ellipse at center, rgba(100, 70, 50, 0.15) 0%, transparent 70%)",
+              filter: "blur(10px)",
+              zIndex: 0
+            }} />
+
+            <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                  key={`${variant}-${activeImage}`}
+                  custom={direction}
+                  variants={{
+                    enter: (direction) => ({ x: direction > 0 ? 500 : -500, opacity: 0, scale: 0.5, zIndex: 0 }),
+                    center: { zIndex: 1, x: 0, opacity: 1, scale: 1 },
+                    exit: (direction) => ({ zIndex: 0, x: direction < 0 ? 500 : -500, opacity: 0, scale: 0.5 })
+                  }}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={1}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    const swipe = swipePower(offset.x, velocity.x);
+                    if (swipe < -swipeConfidenceThreshold) paginate(1);
+                    else if (swipe > swipeConfidenceThreshold) paginate(-1);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    touchAction: 'pan-y'
+                  }}
+                >
+                  <Image
+                    src={IMAGE_MAP[variant][activeImage]}
+                    alt="Product View"
+                    width={500}
+                    height={500}
+                    style={{ width: 'auto', height: '100%', maxHeight: '100%', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
+                    priority
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Dots Navigation */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 24, zIndex: 10 }}>
+            {IMAGE_MAP[variant].map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setDirection(idx > activeImage ? 1 : -1)
+                  setActiveImage(idx)
+                }}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: idx === activeImage ? '#B1121B' : '#ddd',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  transform: idx === activeImage ? 'scale(1.2)' : 'scale(1)'
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* CONTENT */}
         <motion.div
@@ -486,9 +585,8 @@ const styles = {
   containerMobile: { maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28, padding: "0 24px 40px" },
 
   // ... Keep existing image styles ...
-  imageContainer: { position: "sticky", top: 40, display: "flex", justifyContent: "center", width: "100%" },
-  imageContainerMobile: { position: "relative", top: 0, marginBottom: 20 },
-  imageBox: { width: 500, height: 500, maxWidth: "100%", aspectRatio: "1/1", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" },
+  imageContainer: { position: "sticky", top: 40, width: "100%", maxWidth: 450, aspectRatio: "4/5", margin: "0 auto" },
+  imageContainerMobile: { position: "relative", width: "100%", aspectRatio: "1/1", marginBottom: 20 },
   softBackdrop: { position: "absolute", width: "120%", height: "120%", background: "radial-gradient(circle, rgba(255, 248, 225, 0.8) 0%, rgba(255, 248, 225, 0) 70%)", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 0, opacity: 0.08 },
   productImage: { width: "85%", height: "auto", objectFit: "contain", zIndex: 2, filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.3))" },
 
