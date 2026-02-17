@@ -1,13 +1,44 @@
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import React from "react"
+
+const swipeConfidenceThreshold = 10000;
+const swipePower = (offset, velocity) => {
+    return Math.abs(offset) * velocity;
+};
 
 export default function ProductShowcase() {
     const [selectedVariant, setSelectedVariant] = React.useState("500g")
     const [activeImage, setActiveImage] = React.useState(0)
+    const [direction, setDirection] = React.useState(0)
 
     const variants = {
+        enter: (direction) => {
+            return {
+                x: direction > 0 ? 1000 : -1000,
+                opacity: 0,
+                scale: 0.5,
+                zIndex: 0
+            };
+        },
+        center: {
+            zIndex: 1,
+            x: 0,
+            opacity: 1,
+            scale: 1
+        },
+        exit: (direction) => {
+            return {
+                zIndex: 0,
+                x: direction < 0 ? 1000 : -1000,
+                opacity: 0,
+                scale: 0.5
+            };
+        }
+    };
+
+    const productVariants = {
         "200g": {
             id: "kanda-lasun-200",
             weight: "200g",
@@ -50,7 +81,18 @@ export default function ProductShowcase() {
         }
     }
 
-    const currentVariant = variants[selectedVariant]
+    const currentVariant = productVariants[selectedVariant]
+
+    const paginate = (newDirection) => {
+        setDirection(newDirection);
+        let nextIndex = activeImage + newDirection;
+
+        // Infinite loop logic
+        if (nextIndex < 0) nextIndex = currentVariant.images.length - 1;
+        if (nextIndex >= currentVariant.images.length) nextIndex = 0;
+
+        setActiveImage(nextIndex);
+    };
 
     // Reset active image when variant changes
     React.useEffect(() => {
@@ -73,22 +115,61 @@ export default function ProductShowcase() {
                     <div className="glow-backdrop" />
 
                     <div className="image-container">
-                        <motion.div
-                            key={`${selectedVariant}-${activeImage}`}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4 }}
-                            className="image-wrapper"
-                        >
+                        <AnimatePresence initial={false} custom={direction}>
+                            <motion.div
+                                key={`${selectedVariant}-${activeImage}`}
+                                custom={direction}
+                                variants={variants}
+                                initial="enter"
+                                animate="center"
+                                exit="exit"
+                                transition={{
+                                    x: { type: "spring", stiffness: 300, damping: 30 },
+                                    opacity: { duration: 0.2 }
+                                }}
+                                drag="x"
+                                dragConstraints={{ left: 0, right: 0 }}
+                                dragElastic={1}
+                                onDragEnd={(e, { offset, velocity }) => {
+                                    const swipe = swipePower(offset.x, velocity.x);
+
+                                    if (swipe < -swipeConfidenceThreshold) {
+                                        paginate(1);
+                                    } else if (swipe > swipeConfidenceThreshold) {
+                                        paginate(-1);
+                                    }
+                                }}
+                                className="image-wrapper"
+                            >
+                                <Image
+                                    src={currentVariant.images[activeImage]}
+                                    alt={`Kolhapuri Kanda Lasun Masala ${currentVariant.weight} - View ${activeImage + 1}`}
+                                    layout="fill"
+                                    objectFit="contain"
+                                    className="product-image"
+                                    priority
+                                    sizes="(max-width: 768px) 100vw, 500px"
+                                    quality={90}
+                                    draggable={false}
+                                />
+                            </motion.div>
+                        </AnimatePresence>
+
+                        {/* Preload Next/Prev Images for instant swipe */}
+                        <div style={{ display: 'none' }}>
                             <Image
-                                src={currentVariant.images[activeImage]}
-                                alt={`Kolhapuri Kanda Lasun Masala ${currentVariant.weight}`}
+                                src={currentVariant.images[(activeImage + 1) % currentVariant.images.length]}
+                                alt="preload next"
                                 layout="fill"
-                                objectFit="contain"
-                                className="product-image"
                                 priority
                             />
-                        </motion.div>
+                            <Image
+                                src={currentVariant.images[(activeImage - 1 + currentVariant.images.length) % currentVariant.images.length]}
+                                alt="preload prev"
+                                layout="fill"
+                                priority
+                            />
+                        </div>
                     </div>
 
                     {/* Image Navigation Dots */}
@@ -96,7 +177,10 @@ export default function ProductShowcase() {
                         {currentVariant.images.map((_, idx) => (
                             <button
                                 key={idx}
-                                onClick={() => setActiveImage(idx)}
+                                onClick={() => {
+                                    setDirection(idx > activeImage ? 1 : -1)
+                                    setActiveImage(idx)
+                                }}
                                 className={`nav-dot ${idx === activeImage ? 'active' : ''}`}
                                 aria-label={`View image ${idx + 1}`}
                             />
@@ -111,7 +195,7 @@ export default function ProductShowcase() {
 
                     {/* Variant Selector */}
                     <div className="variant-selector">
-                        {Object.keys(variants).map((weight) => (
+                        {Object.keys(productVariants).map((weight) => (
                             <button
                                 key={weight}
                                 onClick={() => setSelectedVariant(weight)}
@@ -222,15 +306,21 @@ export default function ProductShowcase() {
                     height: 500px; /* Tall and proud */
                     z-index: 1;
                     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15)); /* Soft shadow for depth */
-                    transition: transform 0.5s ease-out;
+                    overflow: hidden; /* CRITICAL for slide animations */
                 }
                 
                 .image-container:hover {
-                    transform: scale(1.02);
+                    /* Transform removed to prevent conflict with drag gesture */
+                    cursor: grab;
+                }
+                .image-container:active {
+                    cursor: grabbing;
                 }
 
                 .image-wrapper {
-                    position: relative;
+                    position: absolute; /* CRITICAL for AnimatePresence sliding */
+                    top: 0;
+                    left: 0;
                     width: 100%;
                     height: 100%;
                 }
