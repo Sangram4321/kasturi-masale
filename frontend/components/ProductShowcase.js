@@ -140,6 +140,7 @@ export default function ProductShowcase() {
                                     }
                                 }}
                                 className="image-wrapper"
+                                style={{ touchAction: "pan-y" }}
                             >
                                 <Image
                                     src={currentVariant.images[activeImage]}
