@@ -4,20 +4,58 @@ import { motion } from "framer-motion"
 import React from "react"
 
 export default function ProductShowcase() {
+    const [selectedVariant, setSelectedVariant] = React.useState("500g")
     const [activeImage, setActiveImage] = React.useState(0)
 
-    const product = {
-        id: "kanda-lasun-500",
-        name: "Kolhapuri Kanda Lasun Masala",
-        tagline: "The Original Ghati Masala",
-        weight: "500g",
-        price: 280,
-        images: [
-            "/images/products/kanda-lasun-500.png",
-            "/images/products/trust-cert.png",
-            "/images/products/nutritional.png"
-        ]
+    const variants = {
+        "200g": {
+            id: "kanda-lasun-200",
+            weight: "200g",
+            price: 120,
+            images: [
+                "/images/products/kanda-lasun-200.png",
+                "/images/products/trust-cert.png",
+                "/images/products/nutritional.png"
+            ]
+        },
+        "500g": {
+            id: "kanda-lasun-500",
+            weight: "500g",
+            price: 280,
+            images: [
+                "/images/products/kanda-lasun-500.png",
+                "/images/products/trust-cert.png",
+                "/images/products/nutritional.png"
+            ]
+        },
+        "1kg": {
+            id: "kanda-lasun-1000",
+            weight: "1kg",
+            price: 499,
+            images: [
+                "/images/products/kanda-lasun-1000.png",
+                "/images/products/trust-cert.png",
+                "/images/products/nutritional.png"
+            ]
+        },
+        "2kg": {
+            id: "kanda-lasun-2000",
+            weight: "2kg",
+            price: 899,
+            images: [
+                "/images/products/kanda-lasun-2000.png",
+                "/images/products/trust-cert.png",
+                "/images/products/nutritional.png"
+            ]
+        }
     }
+
+    const currentVariant = variants[selectedVariant]
+
+    // Reset active image when variant changes
+    React.useEffect(() => {
+        setActiveImage(0)
+    }, [selectedVariant])
 
     return (
         <section className="product-showcase">
@@ -36,15 +74,15 @@ export default function ProductShowcase() {
 
                     <div className="image-container">
                         <motion.div
-                            key={activeImage}
+                            key={`${selectedVariant}-${activeImage}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.4 }}
                             className="image-wrapper"
                         >
                             <Image
-                                src={product.images[activeImage]}
-                                alt={product.name}
+                                src={currentVariant.images[activeImage]}
+                                alt={`Kolhapuri Kanda Lasun Masala ${currentVariant.weight}`}
                                 layout="fill"
                                 objectFit="contain"
                                 className="product-image"
@@ -55,7 +93,7 @@ export default function ProductShowcase() {
 
                     {/* Image Navigation Dots */}
                     <div className="image-nav">
-                        {product.images.map((_, idx) => (
+                        {currentVariant.images.map((_, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => setActiveImage(idx)}
@@ -68,18 +106,33 @@ export default function ProductShowcase() {
 
                 {/* 3. Product Details - Elegant Typography */}
                 <div className="details-area">
-                    <h3 className="product-name">{product.name}</h3>
+                    <h3 className="product-name">Kolhapuri Kanda Lasun Masala</h3>
+                    <p className="tagline">The Original Ghati Masala</p>
 
-                    {/* Price Tag (New) */}
+                    {/* Variant Selector */}
+                    <div className="variant-selector">
+                        {Object.keys(variants).map((weight) => (
+                            <button
+                                key={weight}
+                                onClick={() => setSelectedVariant(weight)}
+                                className={`variant-btn ${selectedVariant === weight ? 'active' : ''}`}
+                            >
+                                {weight}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Price Tag */}
                     <div className="price-block">
                         <span className="currency">₹</span>
-                        <span className="amount">{product.price}</span>
-                        <span className="per-weight">/ 500g</span>
+                        <span className="amount">{currentVariant.price}</span>
+                        <span className="per-weight">/ {currentVariant.weight}</span>
                     </div>
 
                     <p className="product-desc">
                         Hand-pounded precision. Authentic taste.
                     </p>
+
 
                     {/* Trust Badges - Minimal */}
                     <div className="trust-row">
@@ -212,7 +265,46 @@ export default function ProductShowcase() {
                     font-family: var(--font-heading, 'Playfair Display', serif);
                     font-size: clamp(24px, 4vw, 36px);
                     color: #1a1a1a;
-                    margin: 0 0 8px; /* Reduced margin for price */
+                    margin: 0 0 4px;
+                }
+
+                .tagline {
+                    font-size: 14px;
+                    color: #666;
+                    margin-bottom: 24px;
+                    font-style: italic;
+                }
+
+                .variant-selector {
+                    display: flex;
+                    justify-content: center;
+                    gap: 12px;
+                    margin-bottom: 24px;
+                    flex-wrap: wrap;
+                }
+
+                .variant-btn {
+                    padding: 8px 20px;
+                    border: 1px solid #ddd;
+                    background: transparent;
+                    border-radius: 30px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #555;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .variant-btn:hover {
+                    border-color: #B1121B;
+                    color: #B1121B;
+                }
+
+                .variant-btn.active {
+                    background: #B1121B;
+                    color: white;
+                    border-color: #B1121B;
+                    box-shadow: 0 4px 10px rgba(177, 18, 27, 0.2);
                 }
 
                 .price-block {
