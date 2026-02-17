@@ -111,8 +111,8 @@ export default function ProductShowcase() {
 
                 {/* 2. The Artifact (Image Gallery) */}
                 <div className="artifact-stage">
-                    {/* Ambient Glow behind the product */}
-                    <div className="glow-backdrop" />
+                    {/* Realistic Ground Shadow */}
+                    <div className="ground-shadow" />
 
                     <div className="image-container">
                         <AnimatePresence initial={false} custom={direction}>
@@ -289,15 +289,15 @@ export default function ProductShowcase() {
                     justify-content: center;
                 }
 
-                .glow-backdrop {
+                .ground-shadow {
                     position: absolute;
-                    top: 50%;
+                    bottom: -20px;
                     left: 50%;
-                    width: 120%;
-                    height: 120%;
-                    transform: translate(-50%, -50%);
-                    background: radial-gradient(circle, rgba(255, 165, 0, 0.15) 0%, transparent 70%);
-                    filter: blur(40px);
+                    transform: translateX(-50%);
+                    width: 70%;
+                    height: 40px;
+                    background: radial-gradient(ellipse at center, rgba(100, 70, 50, 0.15) 0%, transparent 70%); /* Warm earthly shadow */
+                    filter: blur(10px);
                     z-index: 0;
                 }
 
@@ -306,7 +306,7 @@ export default function ProductShowcase() {
                     width: 100%;
                     height: 500px; /* Tall and proud */
                     z-index: 1;
-                    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.15)); /* Soft shadow for depth */
+                    /* Removed drop-shadow for cleaner, natural look */
                     overflow: hidden; /* CRITICAL for slide animations */
                 }
                 
