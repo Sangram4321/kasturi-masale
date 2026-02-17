@@ -1,15 +1,22 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import React from "react"
 
 export default function ProductShowcase() {
+    const [activeImage, setActiveImage] = React.useState(0)
+
     const product = {
         id: "kanda-lasun-500",
         name: "Kolhapuri Kanda Lasun Masala",
         tagline: "The Original Ghati Masala",
         weight: "500g",
         price: 280,
-        image: "/images/mobile-hero/IMG_5470.PNG"
+        images: [
+            "/images/products/kanda-lasun-500.png",
+            "/images/products/trust-cert.png",
+            "/images/products/nutritional.png"
+        ]
     }
 
     return (
@@ -22,20 +29,40 @@ export default function ProductShowcase() {
                     <h2 className="main-title">Our Signature Blend</h2>
                 </div>
 
-                {/* 2. The Artifact (Image) */}
+                {/* 2. The Artifact (Image Gallery) */}
                 <div className="artifact-stage">
                     {/* Ambient Glow behind the product */}
                     <div className="glow-backdrop" />
 
                     <div className="image-container">
-                        <Image
-                            src={product.image}
-                            alt={product.name}
-                            layout="fill"
-                            objectFit="contain"
-                            className="product-image"
-                            priority
-                        />
+                        <motion.div
+                            key={activeImage}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4 }}
+                            className="image-wrapper"
+                        >
+                            <Image
+                                src={product.images[activeImage]}
+                                alt={product.name}
+                                layout="fill"
+                                objectFit="contain"
+                                className="product-image"
+                                priority
+                            />
+                        </motion.div>
+                    </div>
+
+                    {/* Image Navigation Dots */}
+                    <div className="image-nav">
+                        {product.images.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setActiveImage(idx)}
+                                className={`nav-dot ${idx === activeImage ? 'active' : ''}`}
+                                aria-label={`View image ${idx + 1}`}
+                            />
+                        ))}
                     </div>
                 </div>
 
@@ -147,6 +174,37 @@ export default function ProductShowcase() {
                 
                 .image-container:hover {
                     transform: scale(1.02);
+                }
+
+                .image-wrapper {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .image-nav {
+                    position: absolute;
+                    bottom: -30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    gap: 10px;
+                    z-index: 10;
+                }
+
+                .nav-dot {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: #ddd;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .nav-dot.active {
+                    background: #B1121B;
+                    transform: scale(1.2);
                 }
 
                 /* DETAILS */
