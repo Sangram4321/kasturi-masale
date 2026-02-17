@@ -3,8 +3,8 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import React from "react"
 
-const swipeConfidenceThreshold = 500; // Lowered for easier swiping
-// v2.0 Gallery Update - Force Deploy
+const swipeConfidenceThreshold = 300; // Ultra responsive
+// v2.2 FORCE DEPLOY - 2026-02-17
 const swipePower = (offset, velocity) => {
     return Math.abs(offset) * velocity;
 };
@@ -14,239 +14,244 @@ export default function ProductShowcase() {
     const [activeImage, setActiveImage] = React.useState(0)
     const [direction, setDirection] = React.useState(0)
 
+        // ... variants definition ...
+
+        < span style = {{ display: 'none' }
+} data - version="2.2" > v2.2</span >
+
     const variants = {
-        enter: (direction) => {
-            return {
-                x: direction > 0 ? 1000 : -1000,
-                opacity: 0,
-                scale: 0.5,
-                zIndex: 0
-            };
-        },
-        center: {
-            zIndex: 1,
-            x: 0,
-            opacity: 1,
-            scale: 1
-        },
-        exit: (direction) => {
-            return {
-                zIndex: 0,
-                x: direction < 0 ? 1000 : -1000,
-                opacity: 0,
-                scale: 0.5
-            };
-        }
-    };
-
-    const productVariants = {
-        "200g": {
-            id: "kanda-lasun-200",
-            weight: "200g",
-            price: 120,
-            images: [
-                "/images/products/kanda-lasun-200.png",
-                "/images/products/nutritional.png",
-                "/images/products/trust-cert.png"
-            ]
-        },
-        "500g": {
-            id: "kanda-lasun-500",
-            weight: "500g",
-            price: 280,
-            images: [
-                "/images/products/kanda-lasun-500.png",
-                "/images/products/nutritional.png",
-                "/images/products/trust-cert.png"
-            ]
-        },
-        "1kg": {
-            id: "kanda-lasun-1000",
-            weight: "1kg",
-            price: 499,
-            images: [
-                "/images/products/kanda-lasun-1000.png",
-                "/images/products/nutritional.png",
-                "/images/products/trust-cert.png"
-            ]
-        },
-        "2kg": {
-            id: "kanda-lasun-2000",
-            weight: "2kg",
-            price: 899,
-            images: [
-                "/images/products/kanda-lasun-2000.png",
-                "/images/products/nutritional.png",
-                "/images/products/trust-cert.png"
-            ]
-        }
+    enter: (direction) => {
+        return {
+            x: direction > 0 ? 1000 : -1000,
+            opacity: 0,
+            scale: 0.5,
+            zIndex: 0
+        };
+    },
+    center: {
+        zIndex: 1,
+        x: 0,
+        opacity: 1,
+        scale: 1
+    },
+    exit: (direction) => {
+        return {
+            zIndex: 0,
+            x: direction < 0 ? 1000 : -1000,
+            opacity: 0,
+            scale: 0.5
+        };
     }
+};
 
-    const currentVariant = productVariants[selectedVariant]
+const productVariants = {
+    "200g": {
+        id: "kanda-lasun-200",
+        weight: "200g",
+        price: 120,
+        images: [
+            "/images/products/kanda-lasun-200.png",
+            "/images/products/nutritional.png",
+            "/images/products/trust-cert.png"
+        ]
+    },
+    "500g": {
+        id: "kanda-lasun-500",
+        weight: "500g",
+        price: 280,
+        images: [
+            "/images/products/kanda-lasun-500.png",
+            "/images/products/nutritional.png",
+            "/images/products/trust-cert.png"
+        ]
+    },
+    "1kg": {
+        id: "kanda-lasun-1000",
+        weight: "1kg",
+        price: 499,
+        images: [
+            "/images/products/kanda-lasun-1000.png",
+            "/images/products/nutritional.png",
+            "/images/products/trust-cert.png"
+        ]
+    },
+    "2kg": {
+        id: "kanda-lasun-2000",
+        weight: "2kg",
+        price: 899,
+        images: [
+            "/images/products/kanda-lasun-2000.png",
+            "/images/products/nutritional.png",
+            "/images/products/trust-cert.png"
+        ]
+    }
+}
 
-    const paginate = (newDirection) => {
-        setDirection(newDirection);
-        let nextIndex = activeImage + newDirection;
+const currentVariant = productVariants[selectedVariant]
 
-        // Infinite loop logic
-        if (nextIndex < 0) nextIndex = currentVariant.images.length - 1;
-        if (nextIndex >= currentVariant.images.length) nextIndex = 0;
+const paginate = (newDirection) => {
+    setDirection(newDirection);
+    let nextIndex = activeImage + newDirection;
 
-        setActiveImage(nextIndex);
-    };
+    // Infinite loop logic
+    if (nextIndex < 0) nextIndex = currentVariant.images.length - 1;
+    if (nextIndex >= currentVariant.images.length) nextIndex = 0;
 
-    // Reset active image when variant changes
-    React.useEffect(() => {
-        setActiveImage(0)
-    }, [selectedVariant])
+    setActiveImage(nextIndex);
+};
 
-    return (
-        <section className="product-showcase">
-            <div className="container">
+// Reset active image when variant changes
+React.useEffect(() => {
+    setActiveImage(0)
+}, [selectedVariant])
 
-                {/* 1. Header Area - Very Clean */}
-                <div className="header-area">
-                    <span className="premium-tag">The Pride of Kolhapur</span>
-                    <h2 className="main-title">Our Signature Blend</h2>
-                </div>
+return (
+    <section className="product-showcase">
+        <div className="container">
 
-                {/* 2. The Artifact (Image Gallery) */}
-                <div className="artifact-stage">
-                    {/* Realistic Ground Shadow */}
-                    <div className="ground-shadow" />
-
-                    <div className="image-container">
-                        <AnimatePresence initial={false} custom={direction}>
-                            <motion.div
-                                key={`${selectedVariant}-${activeImage}`}
-                                custom={direction}
-                                variants={variants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                transition={{
-                                    x: { type: "spring", stiffness: 300, damping: 30 },
-                                    opacity: { duration: 0.2 }
-                                }}
-                                drag="x"
-                                dragConstraints={{ left: 0, right: 0 }}
-                                dragElastic={1}
-                                dragDirectionLock={true}
-                                onDragEnd={(e, { offset, velocity }) => {
-                                    const swipe = swipePower(offset.x, velocity.x);
-
-                                    if (swipe < -swipeConfidenceThreshold) {
-                                        paginate(1);
-                                    } else if (swipe > swipeConfidenceThreshold) {
-                                        paginate(-1);
-                                    }
-                                }}
-                                className="image-wrapper"
-                                style={{ touchAction: "pan-y" }}
-                            >
-                                <Image
-                                    src={currentVariant.images[activeImage]}
-                                    alt={`Kolhapuri Kanda Lasun Masala ${currentVariant.weight} - View ${activeImage + 1}`}
-                                    layout="fill"
-                                    objectFit="contain"
-                                    className="product-image"
-                                    priority
-                                    sizes="(max-width: 768px) 100vw, 500px"
-                                    quality={90}
-                                    draggable={false}
-                                />
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Preload Next/Prev Images for instant swipe */}
-                        <div style={{ display: 'none' }}>
-                            <Image
-                                src={currentVariant.images[(activeImage + 1) % currentVariant.images.length]}
-                                alt="preload next"
-                                layout="fill"
-                                priority
-                            />
-                            <Image
-                                src={currentVariant.images[(activeImage - 1 + currentVariant.images.length) % currentVariant.images.length]}
-                                alt="preload prev"
-                                layout="fill"
-                                priority
-                            />
-                        </div>
-                    </div>
-
-                    {/* Image Navigation Dots */}
-                    <div className="image-nav">
-                        {currentVariant.images.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => {
-                                    setDirection(idx > activeImage ? 1 : -1)
-                                    setActiveImage(idx)
-                                }}
-                                className={`nav-dot ${idx === activeImage ? 'active' : ''}`}
-                                aria-label={`View image ${idx + 1}`}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* 3. Product Details - Elegant Typography */}
-                <div className="details-area">
-                    <h3 className="product-name">Kolhapuri Kanda Lasun Masala</h3>
-                    <p className="tagline">The Original Ghati Masala</p>
-
-                    {/* Variant Selector */}
-                    <div className="variant-selector">
-                        {Object.keys(productVariants).map((weight) => (
-                            <button
-                                key={weight}
-                                onClick={() => setSelectedVariant(weight)}
-                                className={`variant-btn ${selectedVariant === weight ? 'active' : ''}`}
-                            >
-                                {weight}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Price Tag */}
-                    <div className="price-block">
-                        <span className="currency">₹</span>
-                        <span className="amount">{currentVariant.price}</span>
-                        <span className="per-weight">/ {currentVariant.weight}</span>
-                    </div>
-
-                    <p className="product-desc">
-                        Hand-pounded precision. Authentic taste.
-                    </p>
-
-
-                    {/* Trust Badges - Minimal */}
-                    <div className="trust-row">
-                        <span className="trust-pill">No Preservatives</span>
-                        <span className="trust-dot">•</span>
-                        <span className="trust-pill">Kandap Ground</span>
-                    </div>
-
-                    {/* 4. CTA - Pill Shape */}
-                    <div className="action-area">
-                        <Link href="/product" legacyBehavior>
-                            <a className="shop-pill-btn">
-                                Order Now <span className="arrow">→</span>
-                            </a>
-                        </Link>
-
-                        {/* TRUST SIGNALS (New) */}
-                        <div className="trust-signals-hero">
-                            <p className="purity-line">Fresh Homemade • No Palm Oil • No Preservatives</p>
-                            <p className="cod-line">Cash on Delivery Available</p>
-                        </div>
-                    </div>
-                </div>
-
+            {/* 1. Header Area - Very Clean */}
+            <div className="header-area">
+                <span className="premium-tag">The Pride of Kolhapur</span>
+                <h2 className="main-title">Our Signature Blend</h2>
             </div>
 
-            <style jsx>{`
+            {/* 2. The Artifact (Image Gallery) */}
+            <div className="artifact-stage">
+                {/* Realistic Ground Shadow */}
+                <div className="ground-shadow" />
+
+                <div className="image-container">
+                    <AnimatePresence initial={false} custom={direction}>
+                        <motion.div
+                            key={`${selectedVariant}-${activeImage}`}
+                            custom={direction}
+                            variants={variants}
+                            initial="enter"
+                            animate="center"
+                            exit="exit"
+                            transition={{
+                                x: { type: "spring", stiffness: 300, damping: 30 },
+                                opacity: { duration: 0.2 }
+                            }}
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
+                            dragElastic={1}
+                            dragDirectionLock={true}
+                            onDragEnd={(e, { offset, velocity }) => {
+                                const swipe = swipePower(offset.x, velocity.x);
+
+                                if (swipe < -swipeConfidenceThreshold) {
+                                    paginate(1);
+                                } else if (swipe > swipeConfidenceThreshold) {
+                                    paginate(-1);
+                                }
+                            }}
+                            className="image-wrapper"
+                            style={{ touchAction: "pan-y" }}
+                        >
+                            <Image
+                                src={currentVariant.images[activeImage]}
+                                alt={`Kolhapuri Kanda Lasun Masala ${currentVariant.weight} - View ${activeImage + 1}`}
+                                layout="fill"
+                                objectFit="contain"
+                                className="product-image"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 500px"
+                                quality={90}
+                                draggable={false}
+                            />
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Preload Next/Prev Images for instant swipe */}
+                    <div style={{ display: 'none' }}>
+                        <Image
+                            src={currentVariant.images[(activeImage + 1) % currentVariant.images.length]}
+                            alt="preload next"
+                            layout="fill"
+                            priority
+                        />
+                        <Image
+                            src={currentVariant.images[(activeImage - 1 + currentVariant.images.length) % currentVariant.images.length]}
+                            alt="preload prev"
+                            layout="fill"
+                            priority
+                        />
+                    </div>
+                </div>
+
+                {/* Image Navigation Dots */}
+                <div className="image-nav">
+                    {currentVariant.images.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                setDirection(idx > activeImage ? 1 : -1)
+                                setActiveImage(idx)
+                            }}
+                            className={`nav-dot ${idx === activeImage ? 'active' : ''}`}
+                            aria-label={`View image ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* 3. Product Details - Elegant Typography */}
+            <div className="details-area">
+                <h3 className="product-name">Kolhapuri Kanda Lasun Masala</h3>
+                <p className="tagline">The Original Ghati Masala</p>
+
+                {/* Variant Selector */}
+                <div className="variant-selector">
+                    {Object.keys(productVariants).map((weight) => (
+                        <button
+                            key={weight}
+                            onClick={() => setSelectedVariant(weight)}
+                            className={`variant-btn ${selectedVariant === weight ? 'active' : ''}`}
+                        >
+                            {weight}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Price Tag */}
+                <div className="price-block">
+                    <span className="currency">₹</span>
+                    <span className="amount">{currentVariant.price}</span>
+                    <span className="per-weight">/ {currentVariant.weight}</span>
+                </div>
+
+                <p className="product-desc">
+                    Hand-pounded precision. Authentic taste.
+                </p>
+
+
+                {/* Trust Badges - Minimal */}
+                <div className="trust-row">
+                    <span className="trust-pill">No Preservatives</span>
+                    <span className="trust-dot">•</span>
+                    <span className="trust-pill">Kandap Ground</span>
+                </div>
+
+                {/* 4. CTA - Pill Shape */}
+                <div className="action-area">
+                    <Link href="/product" legacyBehavior>
+                        <a className="shop-pill-btn">
+                            Order Now <span className="arrow">→</span>
+                        </a>
+                    </Link>
+
+                    {/* TRUST SIGNALS (New) */}
+                    <div className="trust-signals-hero">
+                        <p className="purity-line">Fresh Homemade • No Palm Oil • No Preservatives</p>
+                        <p className="cod-line">Cash on Delivery Available</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <style jsx>{`
                 .product-showcase {
                     padding: 80px 24px 100px;
                     background: #F9F6F1; /* Seamless blend */
@@ -541,6 +546,6 @@ export default function ProductShowcase() {
                     }
                 }
             `}</style>
-        </section>
-    )
+    </section>
+)
 }
