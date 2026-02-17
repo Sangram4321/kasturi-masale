@@ -3,7 +3,8 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import React from "react"
 
-const swipeConfidenceThreshold = 10000;
+const swipeConfidenceThreshold = 500; // Lowered for easier swiping
+// v2.0 Gallery Update - Force Deploy
 const swipePower = (offset, velocity) => {
     return Math.abs(offset) * velocity;
 };
